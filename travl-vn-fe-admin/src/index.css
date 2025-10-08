@@ -1,0 +1,28 @@
+/* Baseline reset an toàn cho app React + AntD */
+html, body, #root {
+  height: 100%;
+  width: 100%;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Tuỳ chọn: giúp layout luôn đầy màn hình */
+#root {
+  min-height: 100vh;
+  display: flex;           /* nếu App của bạn là 1 layout gốc */
+  flex-direction: column;
+}
+
+/* AntD Layout thường muốn full height */
+.ant-layout {
+  min-height: 100vh;
+}
