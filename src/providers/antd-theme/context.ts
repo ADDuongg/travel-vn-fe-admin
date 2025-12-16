@@ -8,12 +8,11 @@ export type ThemeCtx = {
   resolvedMode: 'light' | 'dark';
 };
 
-// Context KHÔNG nằm chung file với component để tránh cảnh báo
 export const ThemeContext = createContext<ThemeCtx | null>(null);
 
-// Hook này export ở file riêng (không có component nào ở đây)
 export function useThemeMode() {
   const ctx = useContext(ThemeContext);
-  if (!ctx) throw new Error('useThemeMode must be used within AntdThemeProvider');
+  if (!ctx)
+    throw new Error('useThemeMode must be used within AntdThemeProvider');
   return ctx;
 }

@@ -1,29 +1,25 @@
+import LogoPHX from '@/assets/images/logo_phx.png';
+import { useThemeMode } from '@/providers/antd-theme/context';
 import {
-  DesktopOutlined,
-  FileOutlined,
   InfoCircleFilled,
   LogoutOutlined,
   PieChartOutlined,
   RightOutlined,
-  SettingFilled,
-  TeamOutlined,
-  UserOutlined,
 } from '@ant-design/icons';
 import {
   Button,
   Divider,
+  Image,
   Layout,
   Menu,
   theme,
   Typography,
-  Image,
   type MenuProps,
 } from 'antd';
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useThemeMode } from '@/providers/antd-theme/context';
 import styles from './sidebar.module.css';
-import LogoPHX from '@/assets/images/logo_phx.png';
+import { ROUTE_KEYS, ROUTES } from '@/constants/route.constant';
 
 const { Sider } = Layout;
 const { Text } = Typography;
@@ -49,38 +45,22 @@ const siderStyle: React.CSSProperties = {
   scrollbarGutter: 'stable',
 };
 
-// map key -> path (giữ key ngắn gọn, path rõ ràng)
+/**
+ * KEY -> PATH
+ * ❗ CHỈ map từ constant, KHÔNG string
+ */
 const KEY_TO_PATH: Record<string, string> = {
-  dashboard: '/dashboard',
-  room: '/dashboard/room',
-  option2: '/reports/option-2',
-  option3: '/analytics/option-3',
-  option4: '/analytics/option-4',
-  files: '/files',
-  'user:tom': '/users/tom',
-  'user:bill': '/users/bill',
-  'user:alex': '/users/alex',
-  'team:1': '/teams/1',
-  'team:2': '/teams/2',
-  account: '/dashboard/account',
+  [ROUTE_KEYS.DASHBOARD]: ROUTES.DASHBOARD,
+  [ROUTE_KEYS.ROOM]: ROUTES.ROOM.LIST,
+  [ROUTE_KEYS.ACCOUNT]: ROUTES.ACCOUNT,
 };
 
+/**
+ * Menu chính
+ */
 const items: MenuItem[] = [
-  getItem('Dashboard', 'dashboard', <PieChartOutlined />),
-  getItem('Room List', 'room', <PieChartOutlined />),
-  getItem('Option 2', 'option2', <DesktopOutlined />),
-  getItem('Option 3', 'option3', <PieChartOutlined />),
-  getItem('Option 4', 'option4', <DesktopOutlined />),
-  getItem('User', 'sub:user', <UserOutlined />, [
-    getItem('Tom', 'user:tom'),
-    getItem('Bill', 'user:bill'),
-    getItem('Alex', 'user:alex'),
-  ]),
-  getItem('Team', 'sub:team', <TeamOutlined />, [
-    getItem('Team 1', 'team:1'),
-    getItem('Team 2', 'team:2'),
-  ]),
-  getItem('Files', 'files', <FileOutlined />),
+  getItem('Dashboard', ROUTE_KEYS.DASHBOARD, <PieChartOutlined />),
+  getItem('Room List', ROUTE_KEYS.ROOM, <PieChartOutlined />),
 ];
 
 export default function Sidebar({
@@ -94,22 +74,16 @@ export default function Sidebar({
   const { token } = theme.useToken();
   const navigate = useNavigate();
   const location = useLocation();
-  console.log('location', location);
 
-  // Tính selectedKeys từ URL hiện tại (đảo chiều PATH->KEY)
-  const pathToKey = React.useMemo(() => {
-    const entries = Object.entries(KEY_TO_PATH);
-    const found = entries.find(([, path]) => location.pathname === path);
-
+  /**
+   * selectedKeys từ URL hiện tại
+   */
+  const selectedKeys = React.useMemo(() => {
+    const found = Object.entries(KEY_TO_PATH).find(
+      ([, path]) => location.pathname === path,
+    );
     return found ? [found[0]] : [];
   }, [location.pathname]);
-
-  // Mở sẵn submenu nếu key được chọn nằm trong đó
-  const defaultOpenKeys = React.useMemo(() => {
-    if (pathToKey[0]?.startsWith('user:')) return ['sub:user'];
-    if (pathToKey[0]?.startsWith('team:')) return ['sub:team'];
-    return [];
-  }, [pathToKey]);
 
   return (
     <Sider
@@ -120,7 +94,7 @@ export default function Sidebar({
       theme={resolvedMode}
       style={siderStyle}
     >
-      {/* Header */}
+      {/* ================= Header ================= */}
       <div
         style={{
           height: 56,
@@ -137,7 +111,7 @@ export default function Sidebar({
       >
         <div
           style={{
-            width: 28,
+            width: !collapsed ? 28 : '100%',
             height: 28,
             borderRadius: 6,
             background: token.colorPrimary,
@@ -151,14 +125,13 @@ export default function Sidebar({
         )}
       </div>
 
-      {/* Menu chính */}
+      {/* ================= Menu ================= */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
         <Menu
           theme={resolvedMode}
           mode="inline"
           items={items}
-          selectedKeys={pathToKey}
-          defaultOpenKeys={defaultOpenKeys}
+          selectedKeys={selectedKeys}
           onClick={(info) => {
             const key = String(info.key);
             const path = KEY_TO_PATH[key];
@@ -167,9 +140,10 @@ export default function Sidebar({
         />
       </div>
 
-      {/* Footer */}
+      {/* ================= Footer ================= */}
       <div>
         <Divider style={{ margin: 0 }} />
+
         <Button
           type="text"
           size="large"
@@ -183,29 +157,22 @@ export default function Sidebar({
           }
           onClick={() => setCollapsed(!collapsed)}
         />
+
         <Menu
           theme={resolvedMode}
-          selectedKeys={pathToKey}
+          selectedKeys={selectedKeys}
           onClick={(info) => {
-            if (info.key === 'logout') {
-              // TODO: thực hiện logout (để đăng xuất)
-              return;
-            }
+            if (info.key === 'logout') return;
 
-            const key = String(info.key);
-            const path = KEY_TO_PATH[key];
+            const path = KEY_TO_PATH[String(info.key)];
             if (path) navigate(path);
           }}
           items={[
-            getItem('Tài khoản', 'account', <InfoCircleFilled />),
-            {
-              key: 'reset-password',
-              icon: <SettingFilled />,
-              label: 'Đổi mật khẩu',
-            },
-            { key: 'logout', icon: <LogoutOutlined />, label: 'Đăng xuất' },
+            getItem('Tài khoản', ROUTE_KEYS.ACCOUNT, <InfoCircleFilled />),
+            getItem('Đăng xuất', 'logout', <LogoutOutlined />),
           ]}
         />
+
         <a
           href="https://www.phx-smartschool.com/"
           target="_blank"

@@ -1,24 +1,22 @@
-import { useThemeMode } from '@/providers/antd-theme/context';
+import { ROUTES } from '@/constants/route.constant';
 import {
   BellOutlined,
-  LaptopOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  MoonOutlined,
-  SunOutlined,
   UserOutlined,
 } from '@ant-design/icons';
 import CustomBreadCrumb from '@components/CustomBreadCrumb';
+import ThemeModeDropdown from '@components/ThemeModeDropdown';
 import {
   Avatar,
   Badge,
   Button,
   Dropdown,
-  Radio,
   Space,
   theme,
   Typography,
 } from 'antd';
+import { useNavigate } from 'react-router-dom';
 
 const { Text } = Typography;
 
@@ -30,14 +28,23 @@ export default function AppHeader({
   onToggleCollapsed: () => void;
 }) {
   const { token } = theme.useToken();
-  const { preference, setPreference, resolvedMode } = useThemeMode();
-
+  const navigate = useNavigate();
   const userMenu = {
     items: [
-      { key: 'profile', label: 'Profile' },
-      { key: 'settings', label: 'Settings' },
+      {
+        key: 'profile',
+        label: 'Profile',
+      },
+      {
+        key: 'role-permission',
+        label: 'Role & Permissions',
+        onClick: () => navigate(ROUTES.ROLE_PERMISSION),
+      },
       { type: 'divider' as const },
-      { key: 'logout', label: 'Logout' },
+      {
+        key: 'logout',
+        label: 'Logout',
+      },
     ],
   };
 
@@ -67,33 +74,11 @@ export default function AppHeader({
           gap: 12,
         }}
       >
-        <Radio.Group
-          size="small"
-          value={preference}
-          onChange={(e) => setPreference(e.target.value)}
-          optionType="button"
-          buttonStyle="solid"
-        >
-          <Radio.Button value="light">
-            <Space size={4}>
-              <SunOutlined /> Light
-            </Space>
-          </Radio.Button>
-          <Radio.Button value="dark">
-            <Space size={4}>
-              <MoonOutlined /> Dark
-            </Space>
-          </Radio.Button>
-          <Radio.Button value="system">
-            <Space size={4}>
-              <LaptopOutlined /> System
-            </Space>
-          </Radio.Button>
-        </Radio.Group>
+        <ThemeModeDropdown />
 
-        <Text type="secondary">
+        {/* <Text type="secondary">
           Mode: <b>{resolvedMode}</b>
-        </Text>
+        </Text> */}
 
         <Badge dot>
           <Button type="text" icon={<BellOutlined />} />
