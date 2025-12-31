@@ -15,7 +15,8 @@ export const replaceRouterRoles = async (
   roleCode: string,
   routerCodes: string[],
 ) => {
-  return api.post(`/api/v1/router-roles/replace/${roleCode}`, {
+  return api.post(`/api/v1/router-roles/replace`, {
     routerCodes,
+    roleCode,
   });
 };

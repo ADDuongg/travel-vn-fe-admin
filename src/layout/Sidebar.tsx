@@ -53,6 +53,7 @@ const KEY_TO_PATH: Record<string, string> = {
   [ROUTE_KEYS.DASHBOARD]: ROUTES.DASHBOARD,
   [ROUTE_KEYS.ROOM]: ROUTES.ROOM.LIST,
   [ROUTE_KEYS.ACCOUNT]: ROUTES.ACCOUNT,
+  [ROUTE_KEYS.SYSTEM]: ROUTES.SYSTEM,
 };
 
 /**
@@ -61,6 +62,7 @@ const KEY_TO_PATH: Record<string, string> = {
 const items: MenuItem[] = [
   getItem('Dashboard', ROUTE_KEYS.DASHBOARD, <PieChartOutlined />),
   getItem('Room List', ROUTE_KEYS.ROOM, <PieChartOutlined />),
+  getItem('System', ROUTE_KEYS.SYSTEM, <PieChartOutlined />),
 ];
 
 export default function Sidebar({

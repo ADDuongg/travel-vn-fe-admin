@@ -29,3 +29,10 @@ type CrumbRender = (
 export interface BreadcrumbHandle {
   breadcrumb: React.ReactNode | CrumbRender;
 }
+
+export type Language = {
+  code: string;
+  name: string;
+  flagUrl?: string;
+  isActive: boolean;
+};

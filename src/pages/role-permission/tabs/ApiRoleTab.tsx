@@ -40,7 +40,7 @@ export default function ApiRoleTab() {
     if (apiRoles) {
       setChecked(apiRoles.map((r) => r.apiCode));
     }
-  }, [roleCode]); // 👈 CHỈ chạy khi đổi role
+  }, [roleCode]);
 
   const onSave = () => {
     if (!roleCode) return;
