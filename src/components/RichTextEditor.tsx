@@ -7,17 +7,21 @@ type Props = {
 };
 
 export default function RichTextEditor({ value, onChange }: Props) {
-  const editor = useRef(null);
+  const contentRef = useRef(value || '');
 
   return (
     <JoditEditor
-      ref={editor}
-      value={value}
-      onChange={(content) => onChange?.(content)}
+      value={contentRef.current}
       config={{
         readonly: false,
         height: 250,
         toolbarAdaptive: false,
+      }}
+      onChange={(newContent) => {
+        contentRef.current = newContent;
+      }}
+      onBlur={() => {
+        onChange?.(contentRef.current);
       }}
     />
   );
