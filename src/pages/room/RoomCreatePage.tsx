@@ -14,6 +14,7 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useMemo } from 'react';
 import { useLanguages } from '@/queries/language.queries';
+import RichTextEditor from '@components/RichTextEditor';
 
 const { Title } = Typography;
 
@@ -110,7 +111,7 @@ export default function RoomEditPage() {
                         name={['translations', code, 'description']}
                         label="Description"
                       >
-                        <Input.TextArea rows={3} />
+                        <RichTextEditor />
                       </Form.Item>
                     </>
                   ),
