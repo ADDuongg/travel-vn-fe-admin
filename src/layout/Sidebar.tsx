@@ -45,23 +45,23 @@ const siderStyle: React.CSSProperties = {
   scrollbarGutter: 'stable',
 };
 
-/**
- * KEY -> PATH
- * ❗ CHỈ map từ constant, KHÔNG string
- */
 const KEY_TO_PATH: Record<string, string> = {
   [ROUTE_KEYS.DASHBOARD]: ROUTES.DASHBOARD,
-  [ROUTE_KEYS.ROOM]: ROUTES.ROOM.LIST,
+  [ROUTE_KEYS.ROOM as string]: '',
+  [ROUTE_KEYS.ROOM]: ROUTES.ROOM.INDEX,
+  [ROUTE_KEYS.ROOM_AMENITIES]: ROUTES.ROOM.AMENITIES,
+  [ROUTE_KEYS.ADMIN_REVIEWS]: ROUTES.ADMIN_REVIEWS,
   [ROUTE_KEYS.ACCOUNT]: ROUTES.ACCOUNT,
-  [ROUTE_KEYS.SYSTEM]: ROUTES.SYSTEM,
+  [ROUTE_KEYS.SYSTEM]: ROUTES.SYSTEM.INDEX,
 };
 
-/**
- * Menu chính
- */
 const items: MenuItem[] = [
   getItem('Dashboard', ROUTE_KEYS.DASHBOARD, <PieChartOutlined />),
-  getItem('Room List', ROUTE_KEYS.ROOM, <PieChartOutlined />),
+  getItem('Room', ROUTE_KEYS.ROOM, <PieChartOutlined />, [
+    getItem('Room List', ROUTE_KEYS.ROOM, <PieChartOutlined />),
+    getItem('Amenities', ROUTE_KEYS.ROOM_AMENITIES, <PieChartOutlined />),
+  ]),
+  getItem('Reviews', ROUTE_KEYS.ADMIN_REVIEWS, <PieChartOutlined />),
   getItem('System', ROUTE_KEYS.SYSTEM, <PieChartOutlined />),
 ];
 
@@ -77,9 +77,6 @@ export default function Sidebar({
   const navigate = useNavigate();
   const location = useLocation();
 
-  /**
-   * selectedKeys từ URL hiện tại
-   */
   const selectedKeys = React.useMemo(() => {
     const found = Object.entries(KEY_TO_PATH).find(
       ([, path]) => location.pathname === path,
@@ -96,7 +93,6 @@ export default function Sidebar({
       theme={resolvedMode}
       style={siderStyle}
     >
-      {/* ================= Header ================= */}
       <div
         style={{
           height: 56,
@@ -127,7 +123,6 @@ export default function Sidebar({
         )}
       </div>
 
-      {/* ================= Menu ================= */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
         <Menu
           theme={resolvedMode}
@@ -142,7 +137,6 @@ export default function Sidebar({
         />
       </div>
 
-      {/* ================= Footer ================= */}
       <div>
         <Divider style={{ margin: 0 }} />
 

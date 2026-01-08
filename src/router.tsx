@@ -10,6 +10,9 @@ import RoomPage from '@pages/room/Room';
 import RoomCreatePage from '@pages/room/RoomCreatePage';
 import SystemLanguagePage from '@pages/system/SystemLanguagePage';
 import SystemPage from '@pages/system/SystemPage';
+import RoomUpdatePage from '@pages/room/RoomUpdatePage';
+import AmenitiesPage from '@pages/room/amentities/AmentityPage';
+import AdminReviewPage from '@pages/review/ReviewPage';
 
 export const routes = [
   {
@@ -28,45 +31,57 @@ export const routes = [
 
       // ===== ROOM =====
       {
-        path: 'room',
+        path: ROUTES.ROOM.INDEX,
         element: <RoomPage />,
         handle: { breadcrumb: 'Room' },
       },
       {
-        path: 'room/create',
+        path: ROUTES.ROOM.CREATE,
         element: <RoomCreatePage />,
         handle: { breadcrumb: 'Create Room' },
       },
-      /* {
+      {
         path: 'room/:id/edit',
-        element: <RoomEditPage />,
+        element: <RoomUpdatePage />,
         handle: { breadcrumb: 'Edit Room' },
-      }, */
+      },
+      {
+        path: ROUTES.ROOM.AMENITIES,
+        element: <AmenitiesPage />,
+        handle: { breadcrumb: 'Amenities' },
+      },
 
       // ===== SYSTEM =====
       {
-        path: 'system',
+        path: ROUTES.SYSTEM.INDEX,
         element: <SystemPage />,
         handle: { breadcrumb: 'Quản lý chung' },
       },
       {
-        path: 'system/languages',
+        path: ROUTES.SYSTEM.LANGUAGES,
         element: <SystemLanguagePage />,
         handle: { breadcrumb: 'Ngôn ngữ' },
       },
 
       // ===== ROLE & PERMISSION =====
       {
-        path: 'role-permission',
+        path: ROUTES.ROLE_PERMISSION,
         element: <RolePermissionPage />,
         handle: { breadcrumb: 'Role & Permissions' },
       },
 
       // ===== ACCOUNT =====
       {
-        path: 'account',
+        path: ROUTES.ACCOUNT,
         element: <Account />,
         handle: { breadcrumb: 'Account' },
+      },
+
+      // ===== ADMIN REVIEWS =====
+      {
+        path: 'reviews',
+        element: <AdminReviewPage />,
+        handle: { breadcrumb: 'Reviews' },
       },
     ],
   },

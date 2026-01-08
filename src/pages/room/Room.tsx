@@ -8,25 +8,23 @@ import {
   Typography,
 } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
-import { mockRooms, type Room } from './room.mock';
+import { useRooms, useDeleteRoom } from '@/queries/room.queries';
 
 const { Title } = Typography;
 
 export default function RoomPage() {
-  const [data, setData] = useState<Room[]>(mockRooms);
   const navigate = useNavigate();
-
-  const onDelete = (id: string) => {
-    setData((prev) => prev.filter((r) => r._id !== id));
-  };
-
+  const { data = [], isLoading } = useRooms();
+  const deleteMutation = useDeleteRoom();
+  console.log('data', data);
+  const tableData = data.map(({ children, ...rest }) => ({
+    ...rest,
+    childrenCount: children,
+  }));
   return (
     <Card>
       <Space style={{ width: '100%', justifyContent: 'space-between' }}>
         <Title level={5}>Rooms</Title>
-
-        {/* 👉 NAVIGATE CREATE */}
         <Button
           type="primary"
           onClick={() => navigate('/dashboard/room/create')}
@@ -35,23 +33,21 @@ export default function RoomPage() {
         </Button>
       </Space>
 
-      <Table<Room>
+      <Table
         rowKey="_id"
+        loading={isLoading}
         style={{ marginTop: 16 }}
-        dataSource={data}
+        dataSource={tableData}
         columns={[
-          {
-            title: 'Code',
-            dataIndex: 'code',
-          },
+          { title: 'Code', dataIndex: 'code' },
           {
             title: 'Price',
-            dataIndex: 'price',
-            render: (v) => `${v.toLocaleString()} ₫`,
+            dataIndex: ['pricing', 'basePrice'],
+            render: (v) => v?.toLocaleString(),
           },
           {
             title: 'Capacity',
-            dataIndex: 'capacity',
+            dataIndex: 'maxGuests',
           },
           {
             title: 'Active',
@@ -62,7 +58,6 @@ export default function RoomPage() {
             title: 'Actions',
             render: (_, room) => (
               <Space>
-                {/* 👉 NAVIGATE EDIT */}
                 <Button
                   size="small"
                   onClick={() => navigate(`/dashboard/room/${room._id}/edit`)}
@@ -72,7 +67,7 @@ export default function RoomPage() {
 
                 <Popconfirm
                   title="Delete this room?"
-                  onConfirm={() => onDelete(room._id)}
+                  onConfirm={() => deleteMutation.mutate(room._id)}
                 >
                   <Button size="small" danger>
                     Delete

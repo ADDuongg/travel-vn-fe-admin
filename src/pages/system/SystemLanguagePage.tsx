@@ -22,50 +22,60 @@ import {
   useUpdateLanguage,
   useDeleteLanguage,
 } from '@/queries/language.queries';
-import { useUploadMedia } from '@/queries/media.queries';
 import type { Language } from '@interface/commons';
 
 const { Title } = Typography;
 
 export default function SystemLanguagePage() {
-  // ===== queries =====
   const { data = [], isLoading } = useLanguages();
   const createMutation = useCreateLanguage();
   const updateMutation = useUpdateLanguage();
   const deleteMutation = useDeleteLanguage();
-  const uploadMediaMutation = useUploadMedia();
 
-  // ===== UI state =====
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Language | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [form] = Form.useForm();
 
-  // ===== handlers =====
   const openCreate = () => {
     setEditing(null);
-    form.resetFields();
+    setFile(null);
     setPreviewUrl(null);
+    form.resetFields();
     setOpen(true);
   };
 
   const openEdit = (item: Language) => {
     setEditing(item);
-    form.setFieldsValue(item);
+    setFile(null);
     setPreviewUrl(item.flagUrl || null);
+    form.setFieldsValue(item);
     setOpen(true);
   };
 
   const onSubmit = async () => {
     const values = await form.validateFields();
 
+    const formData = new FormData();
+    formData.append('name', values.name);
+    formData.append('isActive', values.isActive ?? true);
+
+    if (!editing) {
+      formData.append('code', values.code);
+    }
+
+    if (file) {
+      formData.append('flag', file);
+    }
+
     if (editing) {
       updateMutation.mutate({
         code: editing.code,
-        data: values,
+        data: formData,
       });
     } else {
-      createMutation.mutate(values);
+      createMutation.mutate(formData);
     }
 
     setOpen(false);
@@ -139,29 +149,18 @@ export default function SystemLanguagePage() {
             <Input />
           </Form.Item>
 
-          {/* ===== Upload flag via /media ===== */}
+          {/* ===== Upload flag (local only) ===== */}
           <Form.Item label="Flag">
             <Upload
               accept="image/*"
               showUploadList={false}
-              beforeUpload={async (file) => {
-                try {
-                  const res = await uploadMediaMutation.mutateAsync(file);
-                  form.setFieldValue('flagUrl', res.secure_url);
-                  setPreviewUrl(res.secure_url);
-                  message.success('Upload thành công');
-                } catch {
-                  message.error('Upload ảnh thất bại');
-                }
-                return false;
+              beforeUpload={(f) => {
+                setFile(f);
+                setPreviewUrl(URL.createObjectURL(f));
+                return false; // ❗ không upload ngay
               }}
             >
-              <Button
-                icon={<UploadOutlined />}
-                loading={uploadMediaMutation.isPending}
-              >
-                Chọn ảnh
-              </Button>
+              <Button icon={<UploadOutlined />}>Chọn ảnh</Button>
             </Upload>
 
             {previewUrl && (
@@ -169,11 +168,6 @@ export default function SystemLanguagePage() {
                 <Avatar src={previewUrl} size={64} shape="square" />
               </div>
             )}
-          </Form.Item>
-
-          {/* hidden submit field */}
-          <Form.Item name="flagUrl" hidden>
-            <Input />
           </Form.Item>
 
           <Form.Item name="isActive" label="Active" valuePropName="checked">

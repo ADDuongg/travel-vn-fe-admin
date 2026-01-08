@@ -36,3 +36,15 @@ export type Language = {
   flagUrl?: string;
   isActive: boolean;
 };
+
+export type Amenity = {
+  _id: string;
+  name: string;
+  icon?: {
+    url: string;
+    publicId?: string;
+  };
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};

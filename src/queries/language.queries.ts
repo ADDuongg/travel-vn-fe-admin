@@ -32,7 +32,7 @@ export const useUpdateLanguage = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ code, data }: { code: string; data: Partial<Language> }) =>
+    mutationFn: ({ code, data }: { code: string; data: FormData }) =>
       updateLanguage(code, data),
     onSuccess: () => {
       queryClient.invalidateQueries({
