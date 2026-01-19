@@ -8,3 +8,9 @@ export enum EnumDisplayItem {
   GRID = 'grid',
   FLEX = 'flex',
 }
+
+export const EnumLanguage = {
+  EN: 'en',
+  VN: 'vn',
+  DEFAULT: 'en',
+};

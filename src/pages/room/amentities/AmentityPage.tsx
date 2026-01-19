@@ -1,5 +1,5 @@
 // pages/amenities/AmenitiesPage.tsx
-import { Button, Space, Table, Popconfirm } from 'antd';
+import { Button, Space, Table, Popconfirm, Switch } from 'antd';
 import { useState } from 'react';
 import {
   useAmenities,
@@ -8,6 +8,7 @@ import {
   useDeleteAmenity,
 } from '@/queries/amenities.queries';
 import { AmenityForm } from './AmenityForm';
+import { EnumLanguage } from '@/constants/enum';
 
 export default function AmenitiesPage() {
   const { data, isLoading } = useAmenities();
@@ -38,7 +39,14 @@ export default function AmenitiesPage() {
         loading={isLoading}
         dataSource={data}
         columns={[
-          { title: 'Name', dataIndex: 'name' },
+          {
+            title: 'Name',
+            dataIndex: 'translations',
+            render: (translations) =>
+              translations?.[EnumLanguage.DEFAULT].name
+                ? translations?.[EnumLanguage.DEFAULT].name
+                : '-',
+          },
           {
             title: 'Icon',
             dataIndex: 'icon',
@@ -56,7 +64,7 @@ export default function AmenitiesPage() {
           {
             title: 'Status',
             dataIndex: 'isActive',
-            render: (v) => (v ? 'Active' : 'Inactive'),
+            render: (v) => <Switch checked={v} disabled />,
           },
           {
             title: 'Action',
@@ -92,8 +100,6 @@ export default function AmenitiesPage() {
         loading={createMutation.isPending || updateMutation.isPending}
         onClose={() => setOpen(false)}
         onSubmit={(values) => {
-          console.log('values', values);
-
           if (editing) {
             updateMutation.mutate({
               id: editing._id,

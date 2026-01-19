@@ -1,5 +1,6 @@
 import type { EnumRole } from '@/constants/enum';
 import type { UIMatch } from 'react-router-dom';
+import type { AmenityTranslation } from './room';
 
 export interface RouteConfig {
   path?: string;
@@ -39,7 +40,7 @@ export type Language = {
 
 export type Amenity = {
   _id: string;
-  name: string;
+  translations: Record<string, AmenityTranslation>;
   icon?: {
     url: string;
     publicId?: string;

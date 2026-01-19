@@ -1,7 +1,7 @@
 import api from '@/lib/axios';
-import type { Room } from '@interface/room';
+import type { Room, RoomListResponse } from '@interface/room';
 
-export const getRooms = (): Promise<Room[]> => {
+export const getRooms = (): Promise<RoomListResponse> => {
   return api.get('/api/v1/rooms');
 };
 

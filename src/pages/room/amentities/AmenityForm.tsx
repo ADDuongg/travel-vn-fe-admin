@@ -1,6 +1,6 @@
 // pages/amenities/AmenityForm.tsx
 import type { Amenity } from '@interface/commons';
-import { Form, Input, Modal, Switch, Upload } from 'antd';
+import { Form, Input, Modal, Space, Switch, Tabs, Upload } from 'antd';
 
 interface Props {
   open: boolean;
@@ -10,6 +10,8 @@ interface Props {
   loading?: boolean;
 }
 
+import { useLanguages } from '@/queries/language.queries';
+
 export function AmenityForm({
   open,
   onClose,
@@ -18,6 +20,7 @@ export function AmenityForm({
   loading,
 }: Props) {
   const [form] = Form.useForm();
+  const { data: languages = [] } = useLanguages();
 
   return (
     <Modal
@@ -34,10 +37,6 @@ export function AmenityForm({
         initialValues={initialValues || { isActive: true }}
         onFinish={onSubmit}
       >
-        <Form.Item label="Name" name="name" rules={[{ required: true }]}>
-          <Input placeholder="Wifi, Pool, AC..." />
-        </Form.Item>
-
         <Form.Item label="Icon" name="icon">
           <Upload
             listType="picture-card"
@@ -51,11 +50,38 @@ export function AmenityForm({
           </Upload>
         </Form.Item>
 
-        {initialValues && (
-          <Form.Item label="Active" name="isActive" valuePropName="checked">
-            <Switch />
-          </Form.Item>
-        )}
+        <Form.Item label="Active" name="isActive" valuePropName="checked">
+          <Switch />
+        </Form.Item>
+
+        <Tabs
+          items={languages.map((lang) => ({
+            key: lang.code,
+            label: (
+              <Space>
+                {lang.flagUrl && <img src={lang.flagUrl} width={18} />}
+                {lang.code}
+              </Space>
+            ),
+            children: (
+              <>
+                <Form.Item
+                  name={['translations', lang.code, 'name']}
+                  label="Amenity Name"
+                >
+                  <Input placeholder="Wifi / Hồ bơi / Swimming Pool" />
+                </Form.Item>
+
+                <Form.Item
+                  name={['translations', lang.code, 'description']}
+                  label="Description"
+                >
+                  <Input.TextArea rows={3} />
+                </Form.Item>
+              </>
+            ),
+          }))}
+        />
       </Form>
     </Modal>
   );

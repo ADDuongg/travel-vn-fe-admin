@@ -1,11 +1,13 @@
 import {
   Button,
   Checkbox,
+  Collapse,
   Divider,
   Form,
   Input,
   InputNumber,
   Radio,
+  Select,
   Space,
   Switch,
   Tabs,
@@ -22,6 +24,30 @@ import RichTextEditor from '@/components/RichTextEditor';
 import { useLanguages } from '@/queries/language.queries';
 import type { Room } from '@interface/room';
 import { useAmenities } from '@/queries/amenities.queries';
+import { EnumLanguage } from '@/constants/enum';
+import { useHotelOptions } from '@/queries/hotel.queries';
+import CustomInput from '@components/CustomInput';
+const capacityValidator = ({ getFieldValue }: any) => ({
+  validator(_: any, value: any) {
+    const capacity = getFieldValue('capacity');
+
+    if (!capacity) return Promise.resolve();
+
+    const { baseAdults, baseChildren, maxAdults, maxChildren } = capacity;
+
+    if (baseAdults > maxAdults) {
+      return Promise.reject(new Error('Base adults cannot exceed max adults'));
+    }
+
+    if (baseChildren > maxChildren) {
+      return Promise.reject(
+        new Error('Base children cannot exceed max children'),
+      );
+    }
+
+    return Promise.resolve();
+  },
+});
 
 type Props = {
   initialValues?: Room;
@@ -41,10 +67,10 @@ export default function RoomForm({
   const [form] = Form.useForm();
   const { data: languages = [] } = useLanguages();
   const { data: amenities = [] } = useAmenities();
+  const { data: hotels = [], isLoading: hotelLoading } = useHotelOptions();
 
   const [fileList, setFileList] = useState<UploadFile[]>([]);
 
-  /* ===== init form ===== */
   useEffect(() => {
     if (initialValues) {
       const parsedTranslations =
@@ -57,6 +83,10 @@ export default function RoomForm({
         amenities: initialValues.amenities?.map((a: any) =>
           typeof a === 'string' ? a : a._id,
         ),
+        bookingConfig: initialValues.bookingConfig || {
+          minNights: 1,
+          allowInstantBooking: true,
+        },
         translations: parsedTranslations,
         basePrice: initialValues.pricing?.basePrice,
         totalRooms: initialValues.inventory?.totalRooms,
@@ -94,12 +124,16 @@ export default function RoomForm({
     formData.append('basePrice', String(values.basePrice));
     formData.append('totalRooms', String(values.totalRooms));
 
+    formData.append('hotelId', values.hotelId);
+
     /* ===== amenities ===== */
     if (Array.isArray(values.amenities)) {
       values.amenities.forEach((id: string) => {
         formData.append('amenities[]', id);
       });
     }
+
+    formData.append('bookingConfig', JSON.stringify(values.bookingConfig));
 
     /* ===== translations ===== */
     formData.append('translations', JSON.stringify(values.translations));
@@ -113,7 +147,6 @@ export default function RoomForm({
         formData.append('gallery', file.originFileObj);
       }
     });
-    console.log('values', values.sale);
 
     onSubmit(formData);
   };
@@ -132,26 +165,83 @@ export default function RoomForm({
       <Form.Item name="isActive" label="Active" valuePropName="checked">
         <Switch />
       </Form.Item>
-
-      {/* ===== CAPACITY ===== */}
       <Form.Item
-        name="maxGuests"
-        label="Max Guests"
+        name="hotelId"
+        label="Hotel"
+        rules={[{ required: true, message: 'Please select a hotel' }]}
+      >
+        <Select
+          placeholder="Select hotel"
+          loading={hotelLoading}
+          options={hotels.map((h) => ({
+            label: h.name,
+            value: h._id,
+          }))}
+        />
+      </Form.Item>
+      <Divider orientation="left">Booking Configuration</Divider>
+
+      <Form.Item
+        name={['bookingConfig', 'allowInstantBooking']}
+        label="Allow Instant Booking"
+        valuePropName="checked"
+        initialValue={true}
+      >
+        <Switch />
+      </Form.Item>
+
+      <Form.Item
+        name={['bookingConfig', 'minNights']}
+        label="Minimum Nights"
         rules={[{ required: true }]}
+        initialValue={1}
       >
         <InputNumber min={1} style={{ width: '100%' }} />
       </Form.Item>
 
-      <Form.Item name="adults" label="Adults" rules={[{ required: true }]}>
+      <Form.Item name={['bookingConfig', 'maxNights']} label="Maximum Nights">
         <InputNumber min={1} style={{ width: '100%' }} />
       </Form.Item>
 
-      <Form.Item name="children" label="Children">
-        <InputNumber min={0} style={{ width: '100%' }} />
-      </Form.Item>
+      {/* ===== CAPACITY ===== */}
+      <Form.Item
+        label="Room Capacity"
+        name="capacity"
+        rules={[capacityValidator]}
+      >
+        <div className="grid grid-cols-2 gap-4">
+          <Form.Item
+            name={['capacity', 'baseAdults']}
+            label="Base Adults (included)"
+            rules={[{ required: true, type: 'number', min: 0 }]}
+          >
+            <InputNumber className="w-full" />
+          </Form.Item>
 
-      <Form.Item name="roomSize" label="Room Size (m²)">
-        <InputNumber min={0} style={{ width: '100%' }} />
+          <Form.Item
+            name={['capacity', 'baseChildren']}
+            label="Base Children (included)"
+            rules={[{ required: true, type: 'number', min: 0 }]}
+          >
+            <InputNumber className="w-full" />
+          </Form.Item>
+
+          <Form.Item
+            name={['capacity', 'maxAdults']}
+            label="Max Adults"
+            rules={[{ required: true, type: 'number', min: 1 }]}
+          >
+            <InputNumber className="w-full" />
+          </Form.Item>
+
+          <Form.Item
+            name={['capacity', 'maxChildren']}
+            label="Max Children"
+            rules={[{ required: true, type: 'number', min: 0 }]}
+          >
+            <InputNumber className="w-full" />
+          </Form.Item>
+        </div>
       </Form.Item>
 
       {/* ===== PRICING ===== */}
@@ -224,6 +314,47 @@ export default function RoomForm({
         }
       </Form.Item>
 
+      {/* ================= CAPACITY ================= */}
+      <Form.Item
+        label="Room Capacity"
+        name="capacity"
+        rules={[capacityValidator]}
+      >
+        <div className="grid grid-cols-2 gap-4">
+          <Form.Item
+            name={['capacity', 'baseAdults']}
+            label="Base Adults (included)"
+            rules={[{ required: true, type: 'number', min: 0 }]}
+          >
+            <InputNumber className="w-full" />
+          </Form.Item>
+
+          <Form.Item
+            name={['capacity', 'baseChildren']}
+            label="Base Children (included)"
+            rules={[{ required: true, type: 'number', min: 0 }]}
+          >
+            <InputNumber className="w-full" />
+          </Form.Item>
+
+          <Form.Item
+            name={['capacity', 'maxAdults']}
+            label="Max Adults"
+            rules={[{ required: true, type: 'number', min: 1 }]}
+          >
+            <InputNumber className="w-full" />
+          </Form.Item>
+
+          <Form.Item
+            name={['capacity', 'maxChildren']}
+            label="Max Children"
+            rules={[{ required: true, type: 'number', min: 0 }]}
+          >
+            <InputNumber className="w-full" />
+          </Form.Item>
+        </div>
+      </Form.Item>
+
       <Form.Item name="amenities" label="Amenities">
         <Checkbox.Group>
           <Space direction="vertical">
@@ -233,7 +364,7 @@ export default function RoomForm({
                   {item.icon?.url && (
                     <img
                       src={item.icon.url}
-                      alt={item.name}
+                      alt={item.translations[EnumLanguage.DEFAULT].name}
                       style={{
                         width: 80,
                         height: 80,
@@ -241,7 +372,7 @@ export default function RoomForm({
                       }}
                     />
                   )}
-                  <span>{item.name}</span>
+                  <span>{item.translations[EnumLanguage.DEFAULT].name}</span>
                 </Space>
               </Checkbox>
             ))}
@@ -262,49 +393,140 @@ export default function RoomForm({
           ),
           children: (
             <>
-              <Form.List name={['translations', lang.code, 'hotelRule']}>
-                {(fields, { add, remove }) => (
-                  <>
-                    {fields.map(({ key, name }) => (
-                      <Space
-                        key={key}
-                        style={{ display: 'flex', marginBottom: 8 }}
-                        align="start"
+              <Collapse
+                defaultActiveKey={[]}
+                items={[
+                  {
+                    key: 'rules',
+                    label: 'Hotel Rules',
+                    children: (
+                      <Form.List
+                        name={['translations', lang.code, 'hotelRule']}
                       >
-                        <Form.Item
-                          name={name}
-                          rules={[
-                            {
-                              required: true,
-                              message: 'Please enter hotel rule',
-                            },
-                          ]}
-                          style={{ flex: 1 }}
-                        >
-                          <Input placeholder="e.g. Smoking not allowed" />
-                        </Form.Item>
+                        {(fields, { add, remove }) => (
+                          <>
+                            {fields.map(({ key, name }) => (
+                              <Space
+                                key={key}
+                                style={{ display: 'flex', marginBottom: 8 }}
+                                align="start"
+                              >
+                                <Form.Item
+                                  name={name}
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: 'Please enter hotel rule',
+                                    },
+                                  ]}
+                                  style={{ flex: 1 }}
+                                >
+                                  <Input placeholder="e.g. Smoking not allowed" />
+                                </Form.Item>
 
-                        <Button
-                          danger
-                          type="text"
-                          icon={<DeleteOutlined />}
-                          onClick={() => remove(name)}
-                        />
-                      </Space>
-                    ))}
+                                <Button
+                                  danger
+                                  type="text"
+                                  icon={<DeleteOutlined />}
+                                  onClick={() => remove(name)}
+                                />
+                              </Space>
+                            ))}
 
-                    <Button
-                      type="dashed"
-                      block
-                      icon={<PlusOutlined />}
-                      onClick={() => add()}
-                      style={{ marginBottom: 8 }}
-                    >
-                      Add rule
-                    </Button>
-                  </>
-                )}
-              </Form.List>
+                            <Button
+                              type="dashed"
+                              block
+                              icon={<PlusOutlined />}
+                              onClick={() => add()}
+                            >
+                              Add rule
+                            </Button>
+                          </>
+                        )}
+                      </Form.List>
+                    ),
+                  },
+                ]}
+              />
+
+              <Divider orientation="left">FAQ</Divider>
+              <Collapse
+                className="mt-4"
+                defaultActiveKey={[]}
+                items={[
+                  {
+                    key: 'faq',
+                    label: 'FAQ',
+                    children: (
+                      <Form.List name={['translations', lang.code, 'faq']}>
+                        {(fields, { add, remove }) => (
+                          <>
+                            {fields.map(({ key, name }) => (
+                              <Space
+                                key={key}
+                                direction="vertical"
+                                style={{
+                                  display: 'flex',
+                                  marginBottom: 16,
+                                  padding: 12,
+                                  border: '1px solid #eee',
+                                  borderRadius: 8,
+                                }}
+                              >
+                                <Form.Item
+                                  name={[name, 'question']}
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: 'Please enter question',
+                                    },
+                                  ]}
+                                >
+                                  <Input placeholder="Question" />
+                                </Form.Item>
+
+                                <Form.Item
+                                  name={[name, 'answer']}
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: 'Please enter answer',
+                                    },
+                                  ]}
+                                >
+                                  <Input.TextArea
+                                    rows={3}
+                                    placeholder="Answer"
+                                  />
+                                </Form.Item>
+
+                                <Button
+                                  danger
+                                  type="text"
+                                  icon={<DeleteOutlined />}
+                                  onClick={() => remove(name)}
+                                >
+                                  Remove FAQ
+                                </Button>
+                              </Space>
+                            ))}
+
+                            <Button
+                              type="dashed"
+                              block
+                              icon={<PlusOutlined />}
+                              onClick={() => add()}
+                            >
+                              Add FAQ
+                            </Button>
+                          </>
+                        )}
+                      </Form.List>
+                    ),
+                  },
+                ]}
+              />
+
               <Form.Item
                 name={['translations', lang.code, 'name']}
                 label="Name"

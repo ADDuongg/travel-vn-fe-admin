@@ -14,10 +14,9 @@ const { Title } = Typography;
 
 export default function RoomPage() {
   const navigate = useNavigate();
-  const { data = [], isLoading } = useRooms();
+  const { data, isLoading } = useRooms();
   const deleteMutation = useDeleteRoom();
-  console.log('data', data);
-  const tableData = data.map(({ children, ...rest }) => ({
+  const tableData = data?.items?.map(({ children, ...rest }) => ({
     ...rest,
     childrenCount: children,
   }));

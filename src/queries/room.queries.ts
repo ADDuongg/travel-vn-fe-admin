@@ -6,6 +6,7 @@ import {
   getRooms,
   updateRoom,
 } from '@/services/room.service';
+import type { RoomListResponse } from '@interface/room';
 
 export const ROOM_KEYS = {
   all: ['rooms'] as const,
@@ -13,7 +14,7 @@ export const ROOM_KEYS = {
 };
 
 export const useRooms = () =>
-  useQuery({
+  useQuery<RoomListResponse>({
     queryKey: ROOM_KEYS.all,
     queryFn: getRooms,
   });

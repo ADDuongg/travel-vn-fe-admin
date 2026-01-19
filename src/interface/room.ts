@@ -9,6 +9,20 @@ export type RoomTranslation = {
   description: string;
   shortDescription?: string;
   hotelRule?: string[];
+  faq: {
+    question: string;
+    answer: string;
+  }[];
+};
+
+export type AmenityTranslation = {
+  name: string;
+  description?: string;
+};
+
+export type RoomAmenitity = {
+  name: string;
+  description: string;
 };
 
 export type RoomSale = {
@@ -44,10 +58,18 @@ export interface Room {
   /* ===== translations ===== */
   translations: Record<string, RoomTranslation>;
 
+  /* ===== booking ===== */
+  bookingConfig: {
+    minNights: number;
+    maxNights?: number;
+    allowInstantBooking: boolean;
+  };
+
   /* ===== amenities ===== */
   amenities?: {
-    code: string;
-    icon?: string;
+    translations: Record<string, AmenityTranslation>;
+    isActive: boolean;
+    icon?: File | null;
   }[];
 
   /* ===== sale ===== */
@@ -60,4 +82,14 @@ export interface Room {
   /* ===== system ===== */
   createdAt: string;
   updatedAt: string;
+}
+
+export interface RoomListResponse {
+  items: Room[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
