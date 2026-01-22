@@ -9,6 +9,9 @@ export const ROUTES = {
     EDIT: (id: string | number = ':id') => `/dashboard/room/${id}/edit`,
     AMENITIES: '/dashboard/room/amenities',
   },
+  BOOKING: {
+    INDEX: '/dashboard/bookings',
+  },
   ACCOUNT: '/dashboard/account',
 
   ROLE_PERMISSION: '/dashboard/role-permission',
@@ -24,6 +27,7 @@ export const ROUTE_KEYS = {
   ROOM: 'ROOM_LIST',
   ROOM_CREATE: 'ROOM_CREATE',
   ROOM_AMENITIES: 'ROOM_AMENITIES',
+  BOOKING: 'BOOKING_LIST',
   ACCOUNT: 'ACCOUNT',
   ROLE_PERMISSION: 'ROLE_PERMISSION',
   SYSTEM: 'SYSTEM',

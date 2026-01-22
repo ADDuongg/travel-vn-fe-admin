@@ -80,6 +80,7 @@ export default function RoomForm({
 
       form.setFieldsValue({
         ...initialValues,
+        roomType: initialValues.roomType,
         amenities: initialValues.amenities?.map((a: any) =>
           typeof a === 'string' ? a : a._id,
         ),
@@ -110,16 +111,18 @@ export default function RoomForm({
   const handleSubmit = async () => {
     const values = await form.validateFields();
     const formData = new FormData();
+    console.log('values', values);
 
     /* ===== primitive fields ===== */
     formData.append('code', values.code);
     formData.append('slug', values.slug);
+    formData.append('roomType', values.roomType);
     formData.append('isActive', String(values.isActive));
 
-    formData.append('maxGuests', String(values.maxGuests));
-    formData.append('adults', String(values.adults));
-    formData.append('children', String(values.children || 0));
-    formData.append('roomSize', String(values.roomSize || ''));
+    // formData.append('maxGuests', String(values.maxGuests));
+    // formData.append('adults', String(values.adults));
+    // formData.append('children', String(values.children || 0));
+    // formData.append('roomSize', String(values.roomSize || ''));
 
     formData.append('basePrice', String(values.basePrice));
     formData.append('totalRooms', String(values.totalRooms));
@@ -137,6 +140,9 @@ export default function RoomForm({
 
     /* ===== translations ===== */
     formData.append('translations', JSON.stringify(values.translations));
+
+    /* ===== capacity ===== */
+    formData.append('capacity', JSON.stringify(values.capacity));
 
     /* ===== sale ===== */
     formData.append('sale', JSON.stringify(values.sale));
@@ -160,6 +166,14 @@ export default function RoomForm({
 
       <Form.Item name="slug" label="Slug" rules={[{ required: true }]}>
         <Input />
+      </Form.Item>
+
+      <Form.Item
+        name="roomType"
+        label="Room Type"
+        rules={[{ required: true, message: 'Please enter room type' }]}
+      >
+        <Input placeholder="e.g., Master, Deluxe, Standard" />
       </Form.Item>
 
       <Form.Item name="isActive" label="Active" valuePropName="checked">
@@ -204,18 +218,14 @@ export default function RoomForm({
       </Form.Item>
 
       {/* ===== CAPACITY ===== */}
-      <Form.Item
-        label="Room Capacity"
-        name="capacity"
-        rules={[capacityValidator]}
-      >
+      <Form.Item label="Room Capacity" rules={[capacityValidator]}>
         <div className="grid grid-cols-2 gap-4">
           <Form.Item
             name={['capacity', 'baseAdults']}
             label="Base Adults (included)"
             rules={[{ required: true, type: 'number', min: 0 }]}
           >
-            <InputNumber className="w-full" />
+            <InputNumber className="w-full" style={{ width: '100%' }} />
           </Form.Item>
 
           <Form.Item
@@ -223,7 +233,7 @@ export default function RoomForm({
             label="Base Children (included)"
             rules={[{ required: true, type: 'number', min: 0 }]}
           >
-            <InputNumber className="w-full" />
+            <InputNumber className="w-full" style={{ width: '100%' }} />
           </Form.Item>
 
           <Form.Item
@@ -231,7 +241,7 @@ export default function RoomForm({
             label="Max Adults"
             rules={[{ required: true, type: 'number', min: 1 }]}
           >
-            <InputNumber className="w-full" />
+            <InputNumber className="w-full" style={{ width: '100%' }} />
           </Form.Item>
 
           <Form.Item
@@ -239,7 +249,15 @@ export default function RoomForm({
             label="Max Children"
             rules={[{ required: true, type: 'number', min: 0 }]}
           >
-            <InputNumber className="w-full" />
+            <InputNumber className="w-full" style={{ width: '100%' }} />
+          </Form.Item>
+
+          <Form.Item
+            name={['capacity', 'roomSize']}
+            label="Room Size"
+            rules={[{ required: true, type: 'number', min: 0 }]}
+          >
+            <InputNumber className="w-full" style={{ width: '100%' }} />
           </Form.Item>
         </div>
       </Form.Item>
@@ -312,47 +330,6 @@ export default function RoomForm({
             </>
           ) : null
         }
-      </Form.Item>
-
-      {/* ================= CAPACITY ================= */}
-      <Form.Item
-        label="Room Capacity"
-        name="capacity"
-        rules={[capacityValidator]}
-      >
-        <div className="grid grid-cols-2 gap-4">
-          <Form.Item
-            name={['capacity', 'baseAdults']}
-            label="Base Adults (included)"
-            rules={[{ required: true, type: 'number', min: 0 }]}
-          >
-            <InputNumber className="w-full" />
-          </Form.Item>
-
-          <Form.Item
-            name={['capacity', 'baseChildren']}
-            label="Base Children (included)"
-            rules={[{ required: true, type: 'number', min: 0 }]}
-          >
-            <InputNumber className="w-full" />
-          </Form.Item>
-
-          <Form.Item
-            name={['capacity', 'maxAdults']}
-            label="Max Adults"
-            rules={[{ required: true, type: 'number', min: 1 }]}
-          >
-            <InputNumber className="w-full" />
-          </Form.Item>
-
-          <Form.Item
-            name={['capacity', 'maxChildren']}
-            label="Max Children"
-            rules={[{ required: true, type: 'number', min: 0 }]}
-          >
-            <InputNumber className="w-full" />
-          </Form.Item>
-        </div>
       </Form.Item>
 
       <Form.Item name="amenities" label="Amenities">

@@ -13,6 +13,8 @@ import SystemPage from '@pages/system/SystemPage';
 import RoomUpdatePage from '@pages/room/RoomUpdatePage';
 import AmenitiesPage from '@pages/room/amentities/AmentityPage';
 import AdminReviewPage from '@pages/review/ReviewPage';
+import BookingPage from '@pages/booking/Booking';
+import BookingDetailPage from '@pages/booking/BookingDetail';
 
 export const routes = [
   {
@@ -82,6 +84,18 @@ export const routes = [
         path: 'reviews',
         element: <AdminReviewPage />,
         handle: { breadcrumb: 'Reviews' },
+      },
+
+      // ===== BOOKINGS =====
+      {
+        path: 'bookings',
+        element: <BookingPage />,
+        handle: { breadcrumb: 'Bookings' },
+      },
+      {
+        path: 'bookings/:id',
+        element: <BookingDetailPage />,
+        handle: { breadcrumb: 'Booking Detail' },
       },
     ],
   },

@@ -36,6 +36,7 @@ export interface Room {
 
   code: string;
   slug: string;
+  roomType: string; // e.g., "Master", "Deluxe"
   isActive: boolean;
 
   /* ===== capacity ===== */

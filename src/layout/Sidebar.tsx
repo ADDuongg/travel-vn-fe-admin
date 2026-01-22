@@ -50,6 +50,7 @@ const KEY_TO_PATH: Record<string, string> = {
   [ROUTE_KEYS.ROOM as string]: '',
   [ROUTE_KEYS.ROOM]: ROUTES.ROOM.INDEX,
   [ROUTE_KEYS.ROOM_AMENITIES]: ROUTES.ROOM.AMENITIES,
+  [ROUTE_KEYS.BOOKING]: ROUTES.BOOKING.INDEX,
   [ROUTE_KEYS.ADMIN_REVIEWS]: ROUTES.ADMIN_REVIEWS,
   [ROUTE_KEYS.ACCOUNT]: ROUTES.ACCOUNT,
   [ROUTE_KEYS.SYSTEM]: ROUTES.SYSTEM.INDEX,
@@ -61,6 +62,7 @@ const items: MenuItem[] = [
     getItem('Room List', ROUTE_KEYS.ROOM, <PieChartOutlined />),
     getItem('Amenities', ROUTE_KEYS.ROOM_AMENITIES, <PieChartOutlined />),
   ]),
+  getItem('Bookings', ROUTE_KEYS.BOOKING, <PieChartOutlined />),
   getItem('Reviews', ROUTE_KEYS.ADMIN_REVIEWS, <PieChartOutlined />),
   getItem('System', ROUTE_KEYS.SYSTEM, <PieChartOutlined />),
 ];
