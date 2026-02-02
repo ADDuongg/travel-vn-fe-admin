@@ -3,6 +3,8 @@ import api from '@/lib/axios';
 import type { Amenity } from '@interface/commons';
 
 export type AmenityPayload = {
+  /** Unique code for filtering (e.g. wifi, air_condition, pool) */
+  code?: string;
   translations: {
     [langCode: string]: {
       name: string;
@@ -17,6 +19,10 @@ export const getAmenities = () => api.get<Amenity[]>('/api/v1/amenities');
 
 export const createAmenity = (data: AmenityPayload) => {
   const form = new FormData();
+
+  if (data.code) {
+    form.append('code', data.code);
+  }
 
   form.append('translations', JSON.stringify(data.translations));
 
@@ -35,6 +41,10 @@ export const createAmenity = (data: AmenityPayload) => {
 
 export const updateAmenity = (id: string, data: AmenityPayload) => {
   const form = new FormData();
+
+  if (data.code !== undefined) {
+    form.append('code', data.code);
+  }
 
   if (data.translations) {
     form.append('translations', JSON.stringify(data.translations));

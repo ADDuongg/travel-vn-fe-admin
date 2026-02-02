@@ -37,6 +37,20 @@ export function AmenityForm({
         initialValues={initialValues || { isActive: true }}
         onFinish={onSubmit}
       >
+        <Form.Item
+          label="Code"
+          name="code"
+          tooltip="Unique code for filtering (e.g. wifi, air_condition, pool). Lowercase, underscore allowed."
+          rules={[
+            {
+              pattern: /^[a-z][a-z0-9_]*$/,
+              message: 'Lowercase letters, numbers, underscores only, starting with a letter',
+            },
+          ]}
+        >
+          <Input placeholder="wifi, air_condition, pool, parking..." />
+        </Form.Item>
+
         <Form.Item label="Icon" name="icon">
           <Upload
             listType="picture-card"

@@ -40,6 +40,8 @@ export type Language = {
 
 export type Amenity = {
   _id: string;
+  /** Unique code for filtering (e.g. wifi, air_condition, pool) */
+  code?: string;
   translations: Record<string, AmenityTranslation>;
   icon?: {
     url: string;
