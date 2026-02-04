@@ -2,6 +2,11 @@ export const ROUTES = {
   ROOT: '/',
   DASHBOARD: '/dashboard',
 
+  HOTEL: {
+    INDEX: '/dashboard/hotel',
+    CREATE: '/dashboard/hotel/create',
+    EDIT: (id: string | number = ':id') => `/dashboard/hotel/${id}/edit`,
+  },
   ROOM: {
     INDEX: '/dashboard/room',
     DETAIL: (id: string | number = ':id') => `/dashboard/room/${id}`,
@@ -24,6 +29,7 @@ export const ROUTES = {
 
 export const ROUTE_KEYS = {
   DASHBOARD: 'DASHBOARD',
+  HOTEL: 'HOTEL_LIST',
   ROOM: 'ROOM_LIST',
   ROOM_CREATE: 'ROOM_CREATE',
   ROOM_AMENITIES: 'ROOM_AMENITIES',

@@ -83,7 +83,7 @@ export function AmenityForm({
                   name={['translations', lang.code, 'name']}
                   label="Amenity Name"
                 >
-                  <Input placeholder="Wifi / Hồ bơi / Swimming Pool" />
+                  <Input placeholder="Wifi / Pool / Swimming Pool" />
                 </Form.Item>
 
                 <Form.Item

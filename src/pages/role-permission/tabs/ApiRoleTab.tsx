@@ -8,9 +8,8 @@ import {
   Space,
   Spin,
   Typography,
-  Tag,
 } from 'antd';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRoles } from '@/queries/role.queries';
 import { useApiPermissions } from '@/queries/api-permission.queries';
 import { useApiRoles, useReplaceApiRoles } from '@/queries/api-role.queries';
@@ -28,11 +27,6 @@ export default function ApiRoleTab() {
     useApiRoles(roleCode);
 
   const replaceMutation = useReplaceApiRoles();
-
-  const checkedApiCodes = useMemo(
-    () => apiRoles.map((r) => r.apiCode),
-    [apiRoles],
-  );
 
   const [checked, setChecked] = useState<string[]>([]);
 

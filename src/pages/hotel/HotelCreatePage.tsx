@@ -1,21 +1,21 @@
 import { Card, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import { useCreateRoom } from '@/queries/room.queries';
-import RoomForm from './RoomForm';
+import { useCreateHotel } from '@/queries/hotel.queries';
+import HotelForm from './HotelForm';
 
-export default function RoomCreatePage() {
+export default function HotelCreatePage() {
   const navigate = useNavigate();
-  const createMutation = useCreateRoom();
+  const createMutation = useCreateHotel();
 
   const onSubmit = async (formData: FormData) => {
     await createMutation.mutateAsync(formData);
-    message.success('Room created');
-    navigate('/dashboard/room');
+    message.success('Hotel created');
+    navigate('/dashboard/hotel');
   };
 
   return (
-    <Card>
-      <RoomForm
+    <Card title="Add Hotel">
+      <HotelForm
         submitText="Create"
         loading={createMutation.isPending}
         onSubmit={onSubmit}

@@ -15,11 +15,11 @@ const systemSections: {
   items: SystemItem[];
 }[] = [
   {
-    title: 'Quản lý thành phần chung',
+    title: 'General management',
     items: [
       {
         key: 'language',
-        title: 'Ngôn ngữ',
+        title: 'Languages',
         icon: 'N',
         path: '/dashboard/system/languages',
       },

@@ -1,4 +1,4 @@
-// main.tsx (hoặc index.tsx)
+// main.tsx (or index.tsx)
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';

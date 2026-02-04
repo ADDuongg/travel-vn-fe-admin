@@ -26,9 +26,9 @@ import type { Room } from '@interface/room';
 import { useAmenities } from '@/queries/amenities.queries';
 import { EnumLanguage } from '@/constants/enum';
 import { useHotelOptions } from '@/queries/hotel.queries';
-import CustomInput from '@components/CustomInput';
+
 const capacityValidator = ({ getFieldValue }: any) => ({
-  validator(_: any, value: any) {
+  validator(_: any, _value: any) {
     const capacity = getFieldValue('capacity');
 
     if (!capacity) return Promise.resolve();
@@ -67,7 +67,7 @@ export default function RoomForm({
   const [form] = Form.useForm();
   const { data: languages = [] } = useLanguages();
   const { data: amenities = [] } = useAmenities();
-  const { data: hotels = [], isLoading: hotelLoading } = useHotelOptions();
+  const { data: hotels = [], isLoading: hotelLoading } = useHotelOptions(undefined);
 
   const [fileList, setFileList] = useState<UploadFile[]>([]);
 
@@ -188,7 +188,10 @@ export default function RoomForm({
           placeholder="Select hotel"
           loading={hotelLoading}
           options={hotels.map((h) => ({
-            label: h.name,
+            label: (h as { translations?: Record<string, { name?: string }> }).translations?.vi?.name
+              || (h as { translations?: Record<string, { name?: string }> }).translations?.en?.name
+              || (h as { slug?: string }).slug
+              || h._id,
             value: h._id,
           }))}
         />

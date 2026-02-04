@@ -43,9 +43,9 @@ const transformRoutes = (
       return node;
     }
 
-    // NonIndexRouteObject: CÓ path, CÓ thể có children
+    // NonIndexRouteObject: has path, may have children
     const node: NonIndexRouteObject = {
-      path, // nhớ không để undefined với route non-index
+      path, // do not leave undefined for non-index route
       element: wrap(element, rolesAllowed, userRole),
       handle,
       children: children ? transformRoutes(children, userRole) : undefined,

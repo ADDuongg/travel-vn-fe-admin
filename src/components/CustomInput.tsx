@@ -38,18 +38,18 @@ export interface AntdFormInputProps {
   labelPosition?: 'vertical' | 'horizontal';
   options?: Option[];
   placeholder?: string;
-  // render tùy biến khi type = 'custom-input'
+  // custom render when type = 'custom-input'
   render?: (field: any) => React.ReactNode;
 
-  // chuyển đổi giá trị date -> string (nếu bạn muốn lưu ISO)
+  // convert date value -> string (e.g. for ISO storage)
   dateToValue?: (d: Dayjs | null) => any;
   dateFromValue?: (raw: any) => Dayjs | null;
 
-  // chuyển đổi giá trị range -> tuple
+  // convert range value -> tuple
   rangeToValue?: (d: [Dayjs | null, Dayjs | null] | null) => any;
   rangeFromValue?: (raw: any) => [Dayjs | null, Dayjs | null] | null;
 
-  // các props khác sẽ được truyền xuống component antd
+  // other props passed to antd component
   [key: string]: any;
 }
 
@@ -62,7 +62,7 @@ const AntdFormInput: React.FC<AntdFormInputProps> = ({
   placeholder,
   render,
 
-  // mặc định: giữ nguyên kiểu Dayjs, không convert
+  // default: keep Dayjs type, no conversion
   dateToValue = (d) => d,
   dateFromValue = (raw) => raw ?? null,
   rangeToValue = (d) => d,
@@ -92,7 +92,7 @@ const AntdFormInput: React.FC<AntdFormInputProps> = ({
             onChange={(e) => field.onChange(e.target.checked)}
             {...rest}
           >
-            {label /* checkbox hiển thị label bên phải */}
+            {label /* checkbox shows label on the right */}
           </Checkbox>
         );
 
@@ -212,7 +212,7 @@ const AntdFormInput: React.FC<AntdFormInputProps> = ({
       }}
       className={rest.className}
     >
-      {/* Với checkbox, label nằm trong chính component */}
+      {/* For checkbox, label is inside the component */}
       {type !== 'checkbox' && label && (
         <Text style={{ minWidth: isHorizontal ? 140 : undefined }}>
           {label}

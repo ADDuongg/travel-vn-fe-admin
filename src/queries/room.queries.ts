@@ -7,16 +7,18 @@ import {
   updateRoom,
 } from '@/services/room.service';
 import type { RoomListResponse } from '@interface/room';
+import type { GetRoomsParams } from '@/services/room.service';
 
 export const ROOM_KEYS = {
   all: ['rooms'] as const,
+  list: (params?: GetRoomsParams) => ['rooms', params] as const,
   detail: (id: string) => ['rooms', id] as const,
 };
 
-export const useRooms = () =>
+export const useRooms = (params?: GetRoomsParams) =>
   useQuery<RoomListResponse>({
-    queryKey: ROOM_KEYS.all,
-    queryFn: getRooms,
+    queryKey: ROOM_KEYS.list(params),
+    queryFn: () => getRooms(params),
   });
 
 export const useRoom = (id?: string) =>

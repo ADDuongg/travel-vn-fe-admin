@@ -1,11 +1,13 @@
 // routes.tsx
-import React from 'react';
 import { Navigate } from 'react-router-dom';
 import DashboardLayout from '@/layout/DashboardLayout';
 import Dashboard from '@pages/dashboard/Dashboard';
 import Account from '@pages/account/Account';
 import { ROUTES } from './constants/route.constant';
 import RolePermissionPage from '@pages/role-permission/RolePermissionPage';
+import HotelPage from '@pages/hotel/Hotel';
+import HotelCreatePage from '@pages/hotel/HotelCreatePage';
+import HotelUpdatePage from '@pages/hotel/HotelUpdatePage';
 import RoomPage from '@pages/room/Room';
 import RoomCreatePage from '@pages/room/RoomCreatePage';
 import SystemLanguagePage from '@pages/system/SystemLanguagePage';
@@ -31,6 +33,22 @@ export const routes = [
         element: <Dashboard />,
       },
 
+      // ===== HOTEL =====
+      {
+        path: ROUTES.HOTEL.INDEX,
+        element: <HotelPage />,
+        handle: { breadcrumb: 'Hotel' },
+      },
+      {
+        path: ROUTES.HOTEL.CREATE,
+        element: <HotelCreatePage />,
+        handle: { breadcrumb: 'Create Hotel' },
+      },
+      {
+        path: 'hotel/:id/edit',
+        element: <HotelUpdatePage />,
+        handle: { breadcrumb: 'Edit Hotel' },
+      },
       // ===== ROOM =====
       {
         path: ROUTES.ROOM.INDEX,
@@ -57,12 +75,12 @@ export const routes = [
       {
         path: ROUTES.SYSTEM.INDEX,
         element: <SystemPage />,
-        handle: { breadcrumb: 'Quản lý chung' },
+        handle: { breadcrumb: 'System' },
       },
       {
         path: ROUTES.SYSTEM.LANGUAGES,
         element: <SystemLanguagePage />,
-        handle: { breadcrumb: 'Ngôn ngữ' },
+        handle: { breadcrumb: 'Languages' },
       },
 
       // ===== ROLE & PERMISSION =====

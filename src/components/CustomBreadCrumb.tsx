@@ -1,6 +1,6 @@
 import type { BreadcrumbHandle } from '@interface/commons';
 import { Breadcrumb, type BreadcrumbProps } from 'antd';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { Link, useMatches, type UIMatch } from 'react-router-dom';
 
 function hasBreadcrumb(handle: unknown): handle is BreadcrumbHandle {

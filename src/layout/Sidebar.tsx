@@ -47,6 +47,7 @@ const siderStyle: React.CSSProperties = {
 
 const KEY_TO_PATH: Record<string, string> = {
   [ROUTE_KEYS.DASHBOARD]: ROUTES.DASHBOARD,
+  [ROUTE_KEYS.HOTEL]: ROUTES.HOTEL.INDEX,
   [ROUTE_KEYS.ROOM as string]: '',
   [ROUTE_KEYS.ROOM]: ROUTES.ROOM.INDEX,
   [ROUTE_KEYS.ROOM_AMENITIES]: ROUTES.ROOM.AMENITIES,
@@ -58,6 +59,7 @@ const KEY_TO_PATH: Record<string, string> = {
 
 const items: MenuItem[] = [
   getItem('Dashboard', ROUTE_KEYS.DASHBOARD, <PieChartOutlined />),
+  getItem('Hotels', ROUTE_KEYS.HOTEL, <PieChartOutlined />),
   getItem('Room', ROUTE_KEYS.ROOM, <PieChartOutlined />, [
     getItem('Room List', ROUTE_KEYS.ROOM, <PieChartOutlined />),
     getItem('Amenities', ROUTE_KEYS.ROOM_AMENITIES, <PieChartOutlined />),
@@ -166,8 +168,8 @@ export default function Sidebar({
             if (path) navigate(path);
           }}
           items={[
-            getItem('Tài khoản', ROUTE_KEYS.ACCOUNT, <InfoCircleFilled />),
-            getItem('Đăng xuất', 'logout', <LogoutOutlined />),
+            getItem('Account', ROUTE_KEYS.ACCOUNT, <InfoCircleFilled />),
+            getItem('Log out', 'logout', <LogoutOutlined />),
           ]}
         />
 

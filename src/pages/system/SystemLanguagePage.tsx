@@ -11,7 +11,6 @@ import {
   Typography,
   Avatar,
   Upload,
-  message,
 } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import { useState } from 'react';
@@ -88,9 +87,9 @@ export default function SystemLanguagePage() {
   return (
     <Card>
       <Space style={{ width: '100%', justifyContent: 'space-between' }}>
-        <Title level={5}>Ngôn ngữ</Title>
+        <Title level={5}>Languages</Title>
         <Button type="primary" onClick={openCreate}>
-          Thêm ngôn ngữ
+          Add language
         </Button>
       </Space>
 
@@ -157,10 +156,10 @@ export default function SystemLanguagePage() {
               beforeUpload={(f) => {
                 setFile(f);
                 setPreviewUrl(URL.createObjectURL(f));
-                return false; // ❗ không upload ngay
+                return false; // do not upload immediately
               }}
             >
-              <Button icon={<UploadOutlined />}>Chọn ảnh</Button>
+              <Button icon={<UploadOutlined />}>Select image</Button>
             </Upload>
 
             {previewUrl && (

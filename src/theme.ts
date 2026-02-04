@@ -5,12 +5,12 @@ import { theme } from 'antd';
 const { defaultAlgorithm, darkAlgorithm } = theme;
 
 export const lightTheme: ThemeConfig = {
-  cssVar: true, // bật CSS variables (khuyên dùng)
+  cssVar: true, // enable CSS variables
   algorithm: defaultAlgorithm,
   token: {
     colorPrimary: '#1677ff',
     borderRadius: 8,
-    // tuỳ ý: fontFamily, motion=false, breakpoints (screenSM, screenMD...)
+    // optional: fontFamily, motion=false, breakpoints (screenSM, screenMD...)
   },
   components: {
     Button: { controlHeight: 40, borderRadius: 10 },

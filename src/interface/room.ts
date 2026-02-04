@@ -66,6 +66,18 @@ export interface Room {
     allowInstantBooking: boolean;
   };
 
+  /* ===== hotel (populated) ===== */
+  hotelId?:
+    | string
+    | {
+        _id: string;
+        slug: string;
+        translations?: Record<string, { name?: string }>;
+        provinceId?:
+          | string
+          | { _id: string; name?: { vi?: string; en?: string }; code?: string; slug?: string };
+      };
+
   /* ===== amenities ===== */
   amenities?: {
     translations: Record<string, AmenityTranslation>;

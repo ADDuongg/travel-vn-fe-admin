@@ -1,4 +1,4 @@
-// bất kỳ component nào cần đọc/đổi theme
+// any component that needs to read/change theme
 import { Radio } from 'antd';
 import { useThemeMode } from '@/providers/antd-theme/context';
 
