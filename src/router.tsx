@@ -8,6 +8,9 @@ import RolePermissionPage from '@pages/role-permission/RolePermissionPage';
 import HotelPage from '@pages/hotel/Hotel';
 import HotelCreatePage from '@pages/hotel/HotelCreatePage';
 import HotelUpdatePage from '@pages/hotel/HotelUpdatePage';
+import TourPage from '@pages/tour/Tour';
+import TourCreatePage from '@pages/tour/TourCreatePage';
+import TourUpdatePage from '@pages/tour/TourUpdatePage';
 import RoomPage from '@pages/room/Room';
 import RoomCreatePage from '@pages/room/RoomCreatePage';
 import SystemLanguagePage from '@pages/system/SystemLanguagePage';
@@ -31,6 +34,23 @@ export const routes = [
       {
         index: true,
         element: <Dashboard />,
+      },
+
+      // ===== TOUR =====
+      {
+        path: ROUTES.TOUR.INDEX,
+        element: <TourPage />,
+        handle: { breadcrumb: 'Tour' },
+      },
+      {
+        path: ROUTES.TOUR.CREATE,
+        element: <TourCreatePage />,
+        handle: { breadcrumb: 'Create Tour' },
+      },
+      {
+        path: 'tour/:id/edit',
+        element: <TourUpdatePage />,
+        handle: { breadcrumb: 'Edit Tour' },
       },
 
       // ===== HOTEL =====

@@ -47,6 +47,7 @@ const siderStyle: React.CSSProperties = {
 
 const KEY_TO_PATH: Record<string, string> = {
   [ROUTE_KEYS.DASHBOARD]: ROUTES.DASHBOARD,
+  [ROUTE_KEYS.TOUR]: ROUTES.TOUR.INDEX,
   [ROUTE_KEYS.HOTEL]: ROUTES.HOTEL.INDEX,
   [ROUTE_KEYS.ROOM as string]: '',
   [ROUTE_KEYS.ROOM]: ROUTES.ROOM.INDEX,
@@ -59,6 +60,7 @@ const KEY_TO_PATH: Record<string, string> = {
 
 const items: MenuItem[] = [
   getItem('Dashboard', ROUTE_KEYS.DASHBOARD, <PieChartOutlined />),
+  getItem('Tours', ROUTE_KEYS.TOUR, <PieChartOutlined />),
   getItem('Hotels', ROUTE_KEYS.HOTEL, <PieChartOutlined />),
   getItem('Room', ROUTE_KEYS.ROOM, <PieChartOutlined />, [
     getItem('Room List', ROUTE_KEYS.ROOM, <PieChartOutlined />),
