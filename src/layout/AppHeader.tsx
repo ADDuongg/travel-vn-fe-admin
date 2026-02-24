@@ -17,6 +17,8 @@ import {
   Typography,
 } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { useLogout } from '@/queries/auth.queries';
 
 const { Text } = Typography;
 
@@ -29,6 +31,9 @@ export default function AppHeader({
 }) {
   const { token } = theme.useToken();
   const navigate = useNavigate();
+  const authUser = useAuthStore((s) => s.authUser);
+  const { logout, isPending: isLoggingOut } = useLogout();
+
   const userMenu = {
     items: [
       {
@@ -44,6 +49,8 @@ export default function AppHeader({
       {
         key: 'logout',
         label: 'Logout',
+        onClick: () => logout(),
+        disabled: isLoggingOut,
       },
     ],
   };
@@ -88,7 +95,7 @@ export default function AppHeader({
           <Space style={{ cursor: 'pointer' }}>
             <Avatar size="small" icon={<UserOutlined />} />
             <Text ellipsis style={{ display: 'inline-block', maxWidth: 160 }}>
-              duong.nguyen
+              {authUser?.username ?? '—'}
             </Text>
           </Space>
         </Dropdown>

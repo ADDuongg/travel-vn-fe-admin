@@ -11,25 +11,28 @@ import { routes } from './router';
 import ProtectedRoute from './components/ProtectedRoute';
 import type { EnumRole } from './constants/enum';
 import type { RouteConfig } from '@interface/commons';
+import { useInitAuth } from '@/hooks/useInitAuth';
+import { useAuthStore } from '@/stores/useAuthStore';
 
-localStorage.setItem('userRole', 'admin');
-
-const useUserRole = (): EnumRole | undefined =>
-  localStorage.getItem('userRole') as EnumRole | undefined;
+const useUserRoles = (): string[] | undefined => {
+  const authUser = useAuthStore((s) => s.authUser as any);
+  if (!Array.isArray(authUser?.roles)) return undefined;
+  return authUser.roles.map((r: string) => r.toLowerCase());
+};
 
 const wrap = (
   element: React.ReactElement,
   rolesAllowed: EnumRole[] | undefined,
-  userRole: EnumRole | undefined,
+  userRoles: string[] | undefined,
 ) => (
-  <ProtectedRoute rolesAllowed={rolesAllowed} userRole={userRole}>
+  <ProtectedRoute rolesAllowed={rolesAllowed} userRoles={userRoles}>
     {element}
   </ProtectedRoute>
 );
 
 const transformRoutes = (
   configs: RouteConfig[],
-  userRole: EnumRole | undefined,
+  userRoles: string[] | undefined,
 ): RouteObject[] => {
   return configs.map<RouteObject>((cfg) => {
     const { index, path, element, rolesAllowed, children, handle } = cfg;
@@ -37,7 +40,7 @@ const transformRoutes = (
     if (index) {
       const node: IndexRouteObject = {
         index: true,
-        element: wrap(element, rolesAllowed, userRole),
+        element: wrap(element, rolesAllowed, userRoles),
         handle,
       };
       return node;
@@ -46,20 +49,21 @@ const transformRoutes = (
     // NonIndexRouteObject: has path, may have children
     const node: NonIndexRouteObject = {
       path, // do not leave undefined for non-index route
-      element: wrap(element, rolesAllowed, userRole),
+      element: wrap(element, rolesAllowed, userRoles),
       handle,
-      children: children ? transformRoutes(children, userRole) : undefined,
+      children: children ? transformRoutes(children, userRoles) : undefined,
     };
     return node;
   });
 };
 
 const AppRouter = () => {
-  const userRole = useUserRole();
+  useInitAuth();
+  const userRoles = useUserRoles();
 
   const routeObjects = React.useMemo(
-    () => transformRoutes(routes, userRole),
-    [userRole],
+    () => transformRoutes(routes, userRoles),
+    [userRoles],
   );
 
   const router = React.useMemo(

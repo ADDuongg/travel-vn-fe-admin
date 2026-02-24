@@ -23,6 +23,8 @@ import AmenitiesPage from '@pages/room/amentities/AmentityPage';
 import AdminReviewPage from '@pages/review/ReviewPage';
 import BookingPage from '@pages/booking/Booking';
 import BookingDetailPage from '@pages/booking/BookingDetail';
+import LoginPage from '@pages/auth/LoginPage';
+import { EnumRole } from '@/constants/enum';
 
 export const routes = [
   {
@@ -30,8 +32,13 @@ export const routes = [
     element: <Navigate to={ROUTES.DASHBOARD} replace />,
   },
   {
+    path: ROUTES.LOGIN,
+    element: <LoginPage />,
+  },
+  {
     path: ROUTES.DASHBOARD,
     element: <DashboardLayout />,
+    rolesAllowed: [EnumRole.ADMIN, EnumRole.USER],
     handle: { breadcrumb: 'Dashboard' },
     children: [
       {

@@ -5,6 +5,7 @@ import type {
   AxiosResponse,
   InternalAxiosRequestConfig,
 } from 'axios';
+import { authUtils } from '@/lib/auth-token';
 
 declare module 'axios' {
   interface AxiosRequestConfig {
@@ -16,14 +17,15 @@ class AxiosClient {
   private client: AxiosInstance;
 
   constructor(baseURL: string = import.meta.env.VITE_API_BASE_URL || '') {
-    this.client = axios.create({ baseURL, timeout: 10000 });
+    this.client = axios.create({
+      baseURL,
+      timeout: 10000,
+      withCredentials: true,
+    });
 
     this.client.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
-        const token =
-          typeof window !== 'undefined'
-            ? localStorage.getItem('access_token')
-            : null;
+        const token = authUtils.getAccessToken();
         if (token) {
           config.headers = config.headers ?? {};
           config.headers.Authorization = `Bearer ${token}`;

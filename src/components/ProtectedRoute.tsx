@@ -4,24 +4,29 @@ import { Navigate, useLocation } from 'react-router-dom';
 
 interface ProtectedRouteProps {
   rolesAllowed?: string[];
-  userRole?: string;
+  userRoles?: string[];
   children: React.ReactElement;
   fallbackPath?: string;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   rolesAllowed,
-  userRole,
+  userRoles,
   children,
   fallbackPath = '/login',
 }) => {
   const location = useLocation();
 
+  // Route public khi không cấu hình rolesAllowed
   if (!rolesAllowed || rolesAllowed.length === 0) {
     return children;
   }
 
-  if (!userRole || !rolesAllowed.includes(userRole)) {
+  const hasRole =
+    Array.isArray(userRoles) &&
+    userRoles.some((role) => rolesAllowed.includes(role));
+
+  if (!hasRole) {
     return <Navigate to={fallbackPath} state={{ from: location }} replace />;
   }
 
