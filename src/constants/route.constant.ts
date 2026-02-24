@@ -6,6 +6,12 @@ export const ROUTES = {
     INDEX: '/dashboard/tour',
     CREATE: '/dashboard/tour/create',
     EDIT: (id: string | number = ':id') => `/dashboard/tour/${id}/edit`,
+    INVENTORY: '/dashboard/tour/inventory',
+    REVIEWS: '/dashboard/reviews?entityType=TOUR',
+  },
+  TOUR_BOOKING: {
+    INDEX: '/dashboard/tour-bookings',
+    DETAIL: (id: string | number = ':id') => `/dashboard/tour-bookings/${id}`,
   },
   HOTEL: {
     INDEX: '/dashboard/hotel',
@@ -35,6 +41,8 @@ export const ROUTES = {
 export const ROUTE_KEYS = {
   DASHBOARD: 'DASHBOARD',
   TOUR: 'TOUR_LIST',
+  TOUR_INVENTORY: 'TOUR_INVENTORY',
+  TOUR_BOOKING: 'TOUR_BOOKING_LIST',
   HOTEL: 'HOTEL_LIST',
   ROOM: 'ROOM_LIST',
   ROOM_CREATE: 'ROOM_CREATE',
@@ -44,4 +52,5 @@ export const ROUTE_KEYS = {
   ROLE_PERMISSION: 'ROLE_PERMISSION',
   SYSTEM: 'SYSTEM',
   ADMIN_REVIEWS: 'ADMIN_REVIEWS',
+  TOUR_REVIEWS: 'TOUR_REVIEWS',
 } as const;

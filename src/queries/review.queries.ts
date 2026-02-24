@@ -9,7 +9,10 @@ import {
   approveReview,
   deleteReview,
 } from '@/services/review.service';
-import type { ReviewEntityType } from '@/services/review.service';
+import type {
+  GetAdminReviewsParams,
+  ReviewEntityType,
+} from '@/services/review.service';
 
 /* ================= QUERY KEY ================= */
 
@@ -17,12 +20,7 @@ export const ADMIN_REVIEW_QUERY_KEY = ['admin-reviews'];
 
 /* ================= LIST ================= */
 
-export const useAdminReviews = (params: {
-  entityType?: ReviewEntityType;
-  isApproved?: boolean;
-  page: number;
-  limit: number;
-}) =>
+export const useAdminReviews = (params: GetAdminReviewsParams) =>
   useQuery({
     queryKey: [...ADMIN_REVIEW_QUERY_KEY, params],
     queryFn: () => getAdminReviews(params),

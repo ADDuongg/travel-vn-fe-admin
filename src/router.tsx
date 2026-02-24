@@ -11,6 +11,9 @@ import HotelUpdatePage from '@pages/hotel/HotelUpdatePage';
 import TourPage from '@pages/tour/Tour';
 import TourCreatePage from '@pages/tour/TourCreatePage';
 import TourUpdatePage from '@pages/tour/TourUpdatePage';
+import TourInventoryPage from '@pages/tour/TourInventoryPage';
+import TourBookingListPage from '@pages/tour/TourBookingListPage';
+import TourBookingDetailPage from '@pages/tour/TourBookingDetailPage';
 import RoomPage from '@pages/room/Room';
 import RoomCreatePage from '@pages/room/RoomCreatePage';
 import SystemLanguagePage from '@pages/system/SystemLanguagePage';
@@ -51,6 +54,21 @@ export const routes = [
         path: 'tour/:id/edit',
         element: <TourUpdatePage />,
         handle: { breadcrumb: 'Edit Tour' },
+      },
+      {
+        path: ROUTES.TOUR.INVENTORY,
+        element: <TourInventoryPage />,
+        handle: { breadcrumb: 'Tour Inventory' },
+      },
+      {
+        path: ROUTES.TOUR_BOOKING.INDEX,
+        element: <TourBookingListPage />,
+        handle: { breadcrumb: 'Tour Bookings' },
+      },
+      {
+        path: 'tour-bookings/:id',
+        element: <TourBookingDetailPage />,
+        handle: { breadcrumb: 'Tour Booking Detail' },
       },
 
       // ===== HOTEL =====

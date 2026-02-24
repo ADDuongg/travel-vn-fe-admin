@@ -8,7 +8,8 @@ import {
   Typography,
   Select,
 } from 'antd';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   useAdminReviews,
   useApproveReview,
@@ -18,13 +19,29 @@ import type { ReviewEntityType } from '@/services/review.service';
 
 const { Title } = Typography;
 
+const ENTITY_OPTIONS: { label: string; value: ReviewEntityType }[] = [
+  { label: 'Room', value: 'ROOM' },
+  { label: 'Hotel', value: 'HOTEL' },
+  { label: 'Tour', value: 'TOUR' },
+  { label: 'Blog', value: 'BLOG' },
+];
+
 export default function AdminReviewPage() {
+  const [searchParams] = useSearchParams();
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [entityType, setEntityType] = useState<ReviewEntityType | undefined>(
-    undefined,
+    () =>
+      (searchParams.get('entityType') as ReviewEntityType) || undefined,
   );
   const [isApproved, setIsApproved] = useState<boolean | undefined>(false);
+
+  useEffect(() => {
+    const q = searchParams.get('entityType') as ReviewEntityType | null;
+    if (q && ['ROOM', 'HOTEL', 'TOUR', 'BLOG'].includes(q)) {
+      setEntityType(q);
+    }
+  }, [searchParams]);
 
   const { data, isLoading } = useAdminReviews({
     page,
@@ -51,12 +68,7 @@ export default function AdminReviewPage() {
             style={{ width: 140 }}
             value={entityType}
             onChange={setEntityType}
-            options={[
-              { label: 'Room', value: 'ROOM' },
-              { label: 'Hotel', value: 'HOTEL' },
-              { label: 'Tour', value: 'TOUR' },
-              { label: 'Blog', value: 'BLOG' },
-            ]}
+            options={ENTITY_OPTIONS}
           />
 
           <Select
@@ -122,6 +134,12 @@ export default function AdminReviewPage() {
               ) : (
                 <Tag color="orange">Pending</Tag>
               ),
+          },
+          {
+            title: 'Created',
+            dataIndex: 'createdAt',
+            render: (v: string) =>
+              v ? new Date(v).toLocaleString() : '-',
           },
           {
             title: 'Actions',

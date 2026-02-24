@@ -26,12 +26,15 @@ export type AdminReviewListResponse = {
   };
 };
 
-export const getAdminReviews = (params: {
+export type GetAdminReviewsParams = {
   entityType?: ReviewEntityType;
+  entityId?: string;
   isApproved?: boolean;
   page: number;
   limit: number;
-}) =>
+};
+
+export const getAdminReviews = (params: GetAdminReviewsParams) =>
   api.get<AdminReviewListResponse>('/api/v1/reviews/admin', {
     params,
   });

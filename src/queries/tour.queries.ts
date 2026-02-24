@@ -5,6 +5,7 @@ import {
   deleteTour,
   getFeaturedTours,
   getTour,
+  getTourAvailability,
   getTourBySlug,
   getTourOptions,
   getTours,
@@ -18,6 +19,8 @@ export const TOUR_KEYS = {
   slug: (slug: string) => ['tours', 'slug', slug] as const,
   options: (params?: { destinationId?: string }) => ['tours', 'options', params] as const,
   featured: (params?: { limit?: number }) => ['tours', 'featured', params] as const,
+  availability: (tourId: string, month?: string) =>
+    ['tours', tourId, 'availability', month] as const,
 };
 
 export const useTours = (params?: TourQueryParams) =>
@@ -57,7 +60,7 @@ export const useFeaturedTours = (params?: { limit?: number }) =>
 export const useCreateTour = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: createTour,
+    mutationFn: (data: TourUpsertPayload | FormData) => createTour(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: TOUR_KEYS.all });
     },
@@ -67,8 +70,13 @@ export const useCreateTour = () => {
 export const useUpdateTour = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<TourUpsertPayload> }) =>
-      updateTour(id, data),
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Partial<TourUpsertPayload> | FormData;
+    }) => updateTour(id, data),
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: TOUR_KEYS.all });
       qc.invalidateQueries({ queryKey: TOUR_KEYS.detail(id) });
@@ -85,3 +93,11 @@ export const useDeleteTour = () => {
     },
   });
 };
+
+/** Phase 2: Availability by month */
+export const useTourAvailability = (tourId?: string, month?: string) =>
+  useQuery({
+    queryKey: tourId ? TOUR_KEYS.availability(tourId, month) : [],
+    queryFn: () => getTourAvailability(tourId!, month),
+    enabled: !!tourId,
+  });

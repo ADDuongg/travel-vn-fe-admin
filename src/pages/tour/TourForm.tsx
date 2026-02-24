@@ -1,6 +1,7 @@
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
-import { Button, Collapse, Form, Input, InputNumber, Select, Space, Switch, Tabs } from 'antd';
-import { useEffect } from 'react';
+import { DeleteOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
+import { Button, Collapse, Form, Input, InputNumber, Select, Space, Switch, Tabs, Upload } from 'antd';
+import { useEffect, useState } from 'react';
+import type { UploadFile } from 'antd/es/upload/interface';
 import RichTextEditor from '@/components/RichTextEditor';
 import { EnumLanguage } from '@/constants/enum';
 import { useAmenities } from '@/queries/amenities.queries';
@@ -8,11 +9,13 @@ import { useLanguages } from '@/queries/language.queries';
 import { useProvinces } from '@/queries/province.queries';
 import type { Tour, TourUpsertPayload } from '@/interface/tour';
 
+const GALLERY_MAX_FILES = 10;
+
 type Props = {
   initialValues?: Tour;
   loading?: boolean;
   submitText: string;
-  onSubmit: (payload: TourUpsertPayload) => void;
+  onSubmit: (payload: TourUpsertPayload | FormData) => void;
   onCancel: () => void;
 };
 
@@ -28,6 +31,7 @@ export default function TourForm({
   onCancel,
 }: Props) {
   const [form] = Form.useForm();
+  const [galleryFileList, setGalleryFileList] = useState<UploadFile[]>([]);
   const { data: provinces = [] } = useProvinces();
   const { data: amenities = [] } = useAmenities();
   const { data: languages = [] } = useLanguages();
@@ -66,6 +70,16 @@ export default function TourForm({
       sale: initialValues.sale || {},
       difficulty: initialValues.difficulty,
     });
+    if (initialValues.gallery?.length) {
+      setGalleryFileList(
+        initialValues.gallery.map((img, index) => ({
+          uid: `${index}`,
+          name: img.url?.split('/').pop() || `image-${index}`,
+          status: 'done' as const,
+          url: img.url,
+        })),
+      );
+    }
   }, [initialValues, form]);
 
   const handleSubmit = async () => {
@@ -104,7 +118,7 @@ export default function TourForm({
       },
       contact: values.contact || {},
       thumbnail: values.thumbnail?.url ? values.thumbnail : undefined,
-      gallery: Array.isArray(values.gallery) ? values.gallery.filter((g: any) => g?.url) : [],
+      gallery: initialValues?.gallery ?? [], // JSON submit: giữ gallery cũ; FormData submit: dùng file
       amenities: Array.isArray(values.amenities) ? values.amenities : [],
       transportTypes: Array.isArray(values.transportTypes) ? values.transportTypes : [],
       bookingConfig: {
@@ -127,7 +141,35 @@ export default function TourForm({
       difficulty: values.difficulty,
     };
 
-    onSubmit(payload);
+    const galleryFiles = galleryFileList
+      .filter((f) => f.originFileObj)
+      .map((f) => f.originFileObj as File);
+
+    if (galleryFiles.length > 0) {
+      const formData = new FormData();
+      formData.append('slug', payload.slug);
+      formData.append('code', payload.code);
+      formData.append('isActive', String(payload.isActive));
+      formData.append('tourType', payload.tourType);
+      formData.append('duration', JSON.stringify(payload.duration));
+      formData.append('destinations', JSON.stringify(payload.destinations));
+      formData.append('departureProvinceId', payload.departureProvinceId ?? '');
+      formData.append('translations', JSON.stringify(payload.translations ?? {}));
+      formData.append('itinerary', JSON.stringify(payload.itinerary ?? []));
+      formData.append('capacity', JSON.stringify(payload.capacity ?? {}));
+      formData.append('pricing', JSON.stringify(payload.pricing ?? {}));
+      formData.append('contact', JSON.stringify(payload.contact ?? {}));
+      formData.append('bookingConfig', JSON.stringify(payload.bookingConfig ?? {}));
+      formData.append('amenities', JSON.stringify(payload.amenities ?? []));
+      formData.append('transportTypes', JSON.stringify(payload.transportTypes ?? []));
+      formData.append('sale', JSON.stringify(payload.sale ?? { isActive: false }));
+      if (payload.difficulty) formData.append('difficulty', payload.difficulty);
+      if (payload.schedule) formData.append('schedule', JSON.stringify(payload.schedule));
+      galleryFiles.forEach((file) => formData.append('gallery', file));
+      onSubmit(formData);
+    } else {
+      onSubmit(payload);
+    }
   };
 
   return (
@@ -365,45 +407,22 @@ export default function TourForm({
         </Space>
       </Form.Item>
 
-      <Form.Item label="Media">
-        <Space direction="vertical" style={{ width: '100%' }}>
-          <Form.Item name={['thumbnail', 'url']} label="Thumbnail URL">
-            <Input placeholder="https://..." />
-          </Form.Item>
-          <Form.List name="gallery">
-            {(fields, { add, remove }) => (
-              <>
-                <div style={{ marginBottom: 8 }}>Gallery</div>
-                {fields.map(({ key, name }) => (
-                  <Space
-                    key={key}
-                    style={{ display: 'flex', marginBottom: 8 }}
-                    align="baseline"
-                  >
-                    <Form.Item name={[name, 'url']} rules={[{ required: true }]} style={{ flex: 1 }}>
-                      <Input placeholder="https://..." />
-                    </Form.Item>
-                    <Form.Item name={[name, 'alt']} style={{ width: 220 }}>
-                      <Input placeholder="alt text" />
-                    </Form.Item>
-                    <Form.Item name={[name, 'order']} style={{ width: 120 }}>
-                      <InputNumber min={1} placeholder="order" style={{ width: '100%' }} />
-                    </Form.Item>
-                    <Button
-                      type="text"
-                      danger
-                      icon={<DeleteOutlined />}
-                      onClick={() => remove(name)}
-                    />
-                  </Space>
-                ))}
-                <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
-                  Add image
-                </Button>
-              </>
-            )}
-          </Form.List>
-        </Space>
+      <Form.Item label="Gallery (ảnh đầu = thumbnail, tối đa 10)">
+        <Upload
+          listType="picture-card"
+          maxCount={GALLERY_MAX_FILES}
+          fileList={galleryFileList}
+          beforeUpload={() => false}
+          onChange={({ fileList }) => setGalleryFileList(fileList)}
+          accept="image/*"
+        >
+          {galleryFileList.length < GALLERY_MAX_FILES && (
+            <div>
+              <UploadOutlined />
+              <div style={{ marginTop: 8 }}>Upload</div>
+            </div>
+          )}
+        </Upload>
       </Form.Item>
 
       <Form.List name="itinerary">
