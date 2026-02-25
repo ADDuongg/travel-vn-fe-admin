@@ -15,6 +15,7 @@ import {
   confirmTourBooking,
   cancelTourBooking,
   recordTourBookingPayment,
+  assignTourBookingGuide,
 } from '@/services/tour-booking.service';
 
 export const TOUR_BOOKING_KEYS = {
@@ -69,6 +70,18 @@ export const useRecordTourBookingPayment = () => {
       ...body
     }: { id: string } & TourBookingPaymentPayload) =>
       recordTourBookingPayment(id, body),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: TOUR_BOOKING_KEYS.all });
+      qc.invalidateQueries({ queryKey: TOUR_BOOKING_KEYS.detail(data._id) });
+    },
+  });
+};
+
+export const useAssignTourBookingGuide = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, guideId }: { id: string; guideId: string }) =>
+      assignTourBookingGuide(id, guideId),
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: TOUR_BOOKING_KEYS.all });
       qc.invalidateQueries({ queryKey: TOUR_BOOKING_KEYS.detail(data._id) });

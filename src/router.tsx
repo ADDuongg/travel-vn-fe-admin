@@ -24,6 +24,7 @@ import AdminReviewPage from '@pages/review/ReviewPage';
 import BookingPage from '@pages/booking/Booking';
 import BookingDetailPage from '@pages/booking/BookingDetail';
 import LoginPage from '@pages/auth/LoginPage';
+import TourGuidePage from '@pages/tour-guide/TourGuidePage';
 import { EnumRole } from '@/constants/enum';
 
 export const routes = [
@@ -76,6 +77,13 @@ export const routes = [
         path: 'tour-bookings/:id',
         element: <TourBookingDetailPage />,
         handle: { breadcrumb: 'Tour Booking Detail' },
+      },
+
+      // ===== TOUR GUIDE =====
+      {
+        path: ROUTES.TOUR_GUIDE.INDEX,
+        element: <TourGuidePage />,
+        handle: { breadcrumb: 'Tour Guides' },
       },
 
       // ===== HOTEL =====

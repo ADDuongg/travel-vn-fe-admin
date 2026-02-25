@@ -20,7 +20,9 @@ import {
   useConfirmTourBooking,
   useCancelTourBooking,
   useRecordTourBookingPayment,
+  useAssignTourBookingGuide,
 } from '@/queries/tour-booking.queries';
+import { useTourGuides } from '@/queries/tour-guide.queries';
 import type { TourBooking } from '@/interface/tour-booking';
 
 const { Title } = Typography;
@@ -44,16 +46,33 @@ export default function TourBookingDetailPage() {
   const navigate = useNavigate();
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentForm] = Form.useForm();
+  const [selectedGuideId, setSelectedGuideId] = useState<string | undefined>();
 
   const { data: booking, isLoading } = useTourBooking(id);
+  const { data: guideList } = useTourGuides({
+    page: 1,
+    limit: 100,
+    isVerified: true,
+    isAvailable: true,
+  });
   const confirmMutation = useConfirmTourBooking();
   const cancelMutation = useCancelTourBooking();
   const paymentMutation = useRecordTourBookingPayment();
+  const assignGuideMutation = useAssignTourBookingGuide();
 
   const canConfirm = booking?.status === 'PENDING';
   const canCancel = booking && !['CANCELLED', 'COMPLETED'].includes(booking.status);
   const canRecordPayment =
     booking && ['PENDING', 'CONFIRMED'].includes(booking.status) && (booking.paidAmount ?? 0) < (booking.totalAmount ?? 0);
+
+  const handleAssignGuide = async () => {
+    if (!id || !selectedGuideId) {
+      message.error('Chọn hướng dẫn viên trước khi gán.');
+      return;
+    }
+    await assignGuideMutation.mutateAsync({ id, guideId: selectedGuideId });
+    message.success('Đã gán hướng dẫn viên cho đơn.');
+  };
 
   const handleConfirm = async () => {
     if (!id) return;
@@ -169,6 +188,44 @@ export default function TourBookingDetailPage() {
           <Descriptions.Item label="Lý do hủy">{booking.cancelReason}</Descriptions.Item>
         )}
       </Descriptions>
+
+      <Card
+        size="small"
+        style={{ marginTop: 16 }}
+        title="Hướng dẫn viên"
+      >
+        <Space align="center">
+          <Select
+            showSearch
+            allowClear
+            placeholder="Chọn hướng dẫn viên"
+            style={{ minWidth: 260 }}
+            value={selectedGuideId}
+            onChange={setSelectedGuideId}
+            options={(guideList?.items ?? []).map((g) => ({
+              label: g.user?.fullName || g.user?.username || '—',
+              value: g._id,
+            }))}
+            filterOption={(input, option) =>
+              (option?.label as string)
+                ?.toLowerCase()
+                .includes(input.toLowerCase())
+            }
+          />
+          <Button
+            type="primary"
+            onClick={handleAssignGuide}
+            loading={assignGuideMutation.isPending}
+          >
+            Gán HDV
+          </Button>
+          {booking?.guideId && (
+            <span style={{ marginLeft: 12, fontSize: 12 }}>
+              HDV hiện tại: {String(booking.guideId)}
+            </span>
+          )}
+        </Space>
+      </Card>
 
       <Modal
         title="Ghi nhận thanh toán"

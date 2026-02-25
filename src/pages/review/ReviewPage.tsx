@@ -24,6 +24,7 @@ const ENTITY_OPTIONS: { label: string; value: ReviewEntityType }[] = [
   { label: 'Hotel', value: 'HOTEL' },
   { label: 'Tour', value: 'TOUR' },
   { label: 'Blog', value: 'BLOG' },
+  { label: 'Guide', value: 'GUIDE' },
 ];
 
 export default function AdminReviewPage() {
@@ -38,7 +39,7 @@ export default function AdminReviewPage() {
 
   useEffect(() => {
     const q = searchParams.get('entityType') as ReviewEntityType | null;
-    if (q && ['ROOM', 'HOTEL', 'TOUR', 'BLOG'].includes(q)) {
+    if (q && ['ROOM', 'HOTEL', 'TOUR', 'BLOG', 'GUIDE'].includes(q)) {
       setEntityType(q);
     }
   }, [searchParams]);

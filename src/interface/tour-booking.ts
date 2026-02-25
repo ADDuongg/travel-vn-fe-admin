@@ -78,6 +78,7 @@ export interface TourBooking {
   bookingCode: string;
   tourId: string | TourBookingTourInfo;
   tourInventoryId?: string | TourBookingInventoryInfo;
+  guideId?: string;
   guest: TourBookingGuest;
   adults: number;
   children: number;

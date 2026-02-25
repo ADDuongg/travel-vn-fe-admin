@@ -17,7 +17,7 @@ import {
   type MenuProps,
 } from 'antd';
 import React from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import styles from './sidebar.module.css';
 import { ROUTE_KEYS, ROUTES } from '@/constants/route.constant';
 
@@ -51,6 +51,7 @@ const KEY_TO_PATH: Record<string, string> = {
   [ROUTE_KEYS.TOUR_INVENTORY]: ROUTES.TOUR.INVENTORY,
   [ROUTE_KEYS.TOUR_BOOKING]: ROUTES.TOUR_BOOKING.INDEX,
   [ROUTE_KEYS.TOUR_REVIEWS]: ROUTES.TOUR.REVIEWS,
+  [ROUTE_KEYS.TOUR_GUIDE]: ROUTES.TOUR_GUIDE.INDEX,
   [ROUTE_KEYS.HOTEL]: ROUTES.HOTEL.INDEX,
   [ROUTE_KEYS.ROOM as string]: '',
   [ROUTE_KEYS.ROOM]: ROUTES.ROOM.INDEX,
@@ -68,6 +69,7 @@ const items: MenuItem[] = [
     getItem('Tour Inventory', ROUTE_KEYS.TOUR_INVENTORY, <PieChartOutlined />),
     getItem('Tour Bookings', ROUTE_KEYS.TOUR_BOOKING, <PieChartOutlined />),
     getItem('Tour Reviews', ROUTE_KEYS.TOUR_REVIEWS, <PieChartOutlined />),
+    getItem('Tour Guides', ROUTE_KEYS.TOUR_GUIDE, <PieChartOutlined />),
   ]),
   getItem('Hotels', ROUTE_KEYS.HOTEL, <PieChartOutlined />),
   getItem('Room', ROUTE_KEYS.ROOM, <PieChartOutlined />, [
@@ -90,8 +92,6 @@ export default function Sidebar({
   const { token } = theme.useToken();
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
-
   const selectedKeys = React.useMemo(() => {
     const found = Object.entries(KEY_TO_PATH).find(
       ([, path]) => location.pathname === path,

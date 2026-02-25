@@ -48,3 +48,13 @@ export const recordTourBookingPayment = (
     body
   );
 };
+
+export const assignTourBookingGuide = (
+  id: string,
+  guideId: string
+): Promise<TourBooking> => {
+  return api.patch<TourBooking, { guideId: string }>(
+    `/api/v1/tour-bookings/${id}/assign-guide`,
+    { guideId }
+  );
+};
