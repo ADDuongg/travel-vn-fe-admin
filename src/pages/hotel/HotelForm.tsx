@@ -12,7 +12,7 @@ import {
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { useEffect } from 'react';
 import RichTextEditor from '@/components/RichTextEditor';
-import { useProvinces } from '@/queries/province.queries';
+import { useProvinceDropdown } from '@/queries/province.queries';
 import { useAmenities } from '@/queries/amenities.queries';
 import { useLanguages } from '@/queries/language.queries';
 import { EnumLanguage } from '@/constants/enum';
@@ -38,7 +38,7 @@ export default function HotelForm({
   onCancel,
 }: Props) {
   const [form] = Form.useForm();
-  const { data: provinces = [] } = useProvinces();
+  const { data: provinces = [] } = useProvinceDropdown();
   const { data: amenities = [] } = useAmenities();
   const { data: languages = [] } = useLanguages();
 

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Button, Card, Input, Select, Space, Switch, Table, Typography, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import { useProvinces } from '@/queries/province.queries';
+import { useProvinceDropdown } from '@/queries/province.queries';
 import { useDeleteTour, useTours } from '@/queries/tour.queries';
 import type { Tour } from '@/interface/tour';
 
@@ -20,7 +20,7 @@ function getProvinceName(prov: any) {
 
 export default function TourPage() {
   const navigate = useNavigate();
-  const { data: provinces = [] } = useProvinces();
+  const { data: provinces = [] } = useProvinceDropdown();
   const deleteMutation = useDeleteTour();
 
   const [search, setSearch] = useState<string>('');

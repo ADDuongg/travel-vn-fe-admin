@@ -1,6 +1,7 @@
 // ProtectedRoute.tsx
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 interface ProtectedRouteProps {
   rolesAllowed?: string[];
@@ -16,6 +17,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   fallbackPath = '/login',
 }) => {
   const location = useLocation();
+  const status = useAuthStore((s) => s.status);
+
+  // Đang kiểm tra session → chưa quyết định redirect
+  if (status === 'checking') {
+    return null;
+  }
 
   // Route public khi không cấu hình rolesAllowed
   if (!rolesAllowed || rolesAllowed.length === 0) {

@@ -6,7 +6,7 @@ import RichTextEditor from '@/components/RichTextEditor';
 import { EnumLanguage } from '@/constants/enum';
 import { useAmenities } from '@/queries/amenities.queries';
 import { useLanguages } from '@/queries/language.queries';
-import { useProvinces } from '@/queries/province.queries';
+import { useProvinceDropdown } from '@/queries/province.queries';
 import type { Tour, TourUpsertPayload } from '@/interface/tour';
 
 const GALLERY_MAX_FILES = 10;
@@ -32,7 +32,7 @@ export default function TourForm({
 }: Props) {
   const [form] = Form.useForm();
   const [galleryFileList, setGalleryFileList] = useState<UploadFile[]>([]);
-  const { data: provinces = [] } = useProvinces();
+  const { data: provinces = [] } = useProvinceDropdown();
   const { data: amenities = [] } = useAmenities();
   const { data: languages = [] } = useLanguages();
 
@@ -153,7 +153,10 @@ export default function TourForm({
       formData.append('tourType', payload.tourType);
       formData.append('duration', JSON.stringify(payload.duration));
       formData.append('destinations', JSON.stringify(payload.destinations));
-      formData.append('departureProvinceId', payload.departureProvinceId ?? '');
+      formData.append(
+        'departureProvinceId',
+        payload.departureProvinceId != null ? String(payload.departureProvinceId) : '',
+      );
       formData.append('translations', JSON.stringify(payload.translations ?? {}));
       formData.append('itinerary', JSON.stringify(payload.itinerary ?? []));
       formData.append('capacity', JSON.stringify(payload.capacity ?? {}));

@@ -12,7 +12,7 @@ import {
 } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useRooms, useDeleteRoom } from '@/queries/room.queries';
-import { useProvinces } from '@/queries/province.queries';
+import { useProvinceDropdown } from '@/queries/province.queries';
 import { useHotelOptions } from '@/queries/hotel.queries';
 import api from '@/lib/axios';
 
@@ -53,7 +53,7 @@ export default function RoomPage() {
   const navigate = useNavigate();
   const [provinceId, setProvinceId] = useState<string | undefined>();
   const [hotelIds, setHotelIds] = useState<string[] | undefined>();
-  const { data: provinces = [] } = useProvinces();
+  const { data: provinces = [] } = useProvinceDropdown();
   const { data: hotelOptions = [] } = useHotelOptions({ provinceId });
   const { data, isLoading } = useRooms({
     provinceId,

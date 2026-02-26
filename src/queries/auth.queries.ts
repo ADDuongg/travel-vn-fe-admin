@@ -107,5 +107,6 @@ export function useRefresh() {
   });
   return {
     refresh: mutation.mutate,
+    refreshAsync: mutation.mutateAsync,
   };
 }

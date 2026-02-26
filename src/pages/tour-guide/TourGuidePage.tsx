@@ -19,7 +19,7 @@ import {
 } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import type { UploadFile } from 'antd/es/upload/interface';
-import { useProvinces } from '@/queries/province.queries';
+import { useProvinceDropdown } from '@/queries/province.queries';
 import { useUsers } from '@/queries/user.queries';
 import { useLanguages } from '@/queries/language.queries';
 import {
@@ -84,7 +84,7 @@ function getGuideName(guide: TourGuide) {
 }
 
 export default function TourGuidePage() {
-  const { data: provinces = [] } = useProvinces();
+  const { data: provinces = [] } = useProvinceDropdown();
   const { data: users = [] } = useUsers();
   const { data: languages = [] } = useLanguages();
   const navigate = useNavigate();

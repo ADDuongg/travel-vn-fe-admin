@@ -52,6 +52,7 @@ const KEY_TO_PATH: Record<string, string> = {
   [ROUTE_KEYS.TOUR_BOOKING]: ROUTES.TOUR_BOOKING.INDEX,
   [ROUTE_KEYS.TOUR_REVIEWS]: ROUTES.TOUR.REVIEWS,
   [ROUTE_KEYS.TOUR_GUIDE]: ROUTES.TOUR_GUIDE.INDEX,
+  [ROUTE_KEYS.PROVINCE]: ROUTES.PROVINCE.INDEX,
   [ROUTE_KEYS.HOTEL]: ROUTES.HOTEL.INDEX,
   [ROUTE_KEYS.ROOM as string]: '',
   [ROUTE_KEYS.ROOM]: ROUTES.ROOM.INDEX,
@@ -71,6 +72,7 @@ const items: MenuItem[] = [
     getItem('Tour Reviews', ROUTE_KEYS.TOUR_REVIEWS, <PieChartOutlined />),
     getItem('Tour Guides', ROUTE_KEYS.TOUR_GUIDE, <PieChartOutlined />),
   ]),
+  getItem('Provinces', ROUTE_KEYS.PROVINCE, <PieChartOutlined />),
   getItem('Hotels', ROUTE_KEYS.HOTEL, <PieChartOutlined />),
   getItem('Room', ROUTE_KEYS.ROOM, <PieChartOutlined />, [
     getItem('Room List', ROUTE_KEYS.ROOM, <PieChartOutlined />),

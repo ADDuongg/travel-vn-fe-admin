@@ -10,7 +10,7 @@ import {
 } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useHotels } from '@/queries/hotel.queries';
-import { useProvinces } from '@/queries/province.queries';
+import { useProvinceDropdown } from '@/queries/province.queries';
 
 const { Title } = Typography;
 
@@ -27,7 +27,7 @@ function getProvinceName(prov: { name?: { vi?: string; en?: string } } | string)
 export default function HotelPage() {
   const navigate = useNavigate();
   const [provinceId, setProvinceId] = useState<string | undefined>();
-  const { data: provinces = [] } = useProvinces();
+  const { data: provinces = [] } = useProvinceDropdown();
   const { data: hotels = [], isLoading } = useHotels({ provinceId });
 
   return (

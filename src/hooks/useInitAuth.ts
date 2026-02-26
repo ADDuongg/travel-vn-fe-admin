@@ -7,20 +7,17 @@ import { useAuthStore } from '@/stores/useAuthStore';
  */
 export function useInitAuth() {
   const clearUser = useAuthStore((s) => s.clearUser);
-  const setStatus = useAuthStore((s) => s.setStatus);
-  const { refresh } = useRefresh();
+  const { refreshAsync } = useRefresh();
 
   useEffect(() => {
     const init = async () => {
       try {
-        refresh();
+        await refreshAsync();
       } catch {
         clearUser();
-      } finally {
-        setStatus('unauthenticated');
       }
     };
-    init();
+    void init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 }
