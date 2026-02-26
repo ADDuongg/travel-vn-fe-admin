@@ -1,9 +1,11 @@
 import type { Province } from './province';
 
 export type TourGuideTranslation = {
-  bio: string;
+  bio?: string;
   shortBio?: string;
   specialties?: string;
+  /** Mảng chuỗi chuyên môn theo ngôn ngữ (cùng thứ tự giữa các lang) */
+  specialtyItems?: string[];
 };
 
 export type TourGuideGalleryItem = {
@@ -39,6 +41,12 @@ export interface TourGuide {
     average: number;
     total: number;
   };
+  /** Tỷ lệ phản hồi 0–100 */
+  responseRate?: number;
+  /** Số chuyến đi hoàn tất */
+  completedTripsCount?: number;
+  /** Tỷ lệ khách quay lại 0–100 */
+  returningCustomerRate?: number;
   isAvailable: boolean;
   isActive: boolean;
   isVerified: boolean;
@@ -57,6 +65,8 @@ export interface TourGuideQueryParams {
   language?: string;
   isVerified?: boolean;
   isAvailable?: boolean;
+  /** Filter theo trạng thái active (guide còn hoạt động / đã soft-delete) */
+  isActive?: boolean;
   minRating?: number;
   search?: string;
   sort?: 'rating' | 'experience' | 'newest';
@@ -81,6 +91,12 @@ export type TourGuideUpsertPayload = {
   licenseNumber?: string;
   yearsOfExperience?: number;
   gallery?: TourGuideGalleryItem[];
+  /** Tỷ lệ phản hồi 0–100 */
+  responseRate?: number;
+  /** Số chuyến đi hoàn tất */
+  completedTripsCount?: number;
+  /** Tỷ lệ khách quay lại 0–100 */
+  returningCustomerRate?: number;
   isAvailable?: boolean;
   dailyRate?: number;
   currency?: string;

@@ -11,6 +11,7 @@ import {
   getTourGuideById,
   getTourGuides,
   toggleTourGuideAvailability,
+  updateTourGuide,
   verifyTourGuide,
 } from '@/services/tour-guide.service';
 

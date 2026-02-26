@@ -8,11 +8,13 @@ import {
   Switch,
   Table,
   Typography,
+  message,
 } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useRooms, useDeleteRoom } from '@/queries/room.queries';
 import { useProvinces } from '@/queries/province.queries';
 import { useHotelOptions } from '@/queries/hotel.queries';
+import api from '@/lib/axios';
 
 const { Title } = Typography;
 
@@ -34,6 +36,19 @@ function getProvinceName(room: { hotelId?: unknown }) {
     || '-';
 }
 
+function formatDateYMD(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function addDays(date: Date, days: number) {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
 export default function RoomPage() {
   const navigate = useNavigate();
   const [provinceId, setProvinceId] = useState<string | undefined>();
@@ -49,6 +64,29 @@ export default function RoomPage() {
     ...rest,
     childrenCount: children,
   }));
+  const [generatingRoomId, setGeneratingRoomId] = useState<string | null>(null);
+
+  const handleGenerateInventory = async (roomId: string) => {
+    const today = new Date();
+    const from = formatDateYMD(today);
+    const to = formatDateYMD(addDays(today, 365));
+
+    setGeneratingRoomId(roomId);
+    try {
+      await api.post(
+        `/api/v1/room-inventories/ensure/${roomId}`,
+        undefined,
+        {
+          params: { from, to },
+        },
+      );
+      message.success('Generate room inventory success');
+    } catch (error: any) {
+      message.error(error?.message || 'Generate room inventory failed');
+    } finally {
+      setGeneratingRoomId(null);
+    }
+  };
 
   return (
     <Card>
@@ -126,6 +164,14 @@ export default function RoomPage() {
                   onClick={() => navigate(`/dashboard/room/${room._id}/edit`)}
                 >
                   Edit
+                </Button>
+                <Button
+                  size="small"
+                  loading={generatingRoomId === room._id}
+                  disabled={generatingRoomId === room._id}
+                  onClick={() => handleGenerateInventory(room._id)}
+                >
+                  Gen inventory
                 </Button>
                 <Popconfirm
                   title="Delete this room?"

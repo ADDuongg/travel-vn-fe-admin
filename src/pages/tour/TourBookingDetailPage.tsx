@@ -53,6 +53,7 @@ export default function TourBookingDetailPage() {
     page: 1,
     limit: 100,
     isVerified: true,
+    isActive: true,
     isAvailable: true,
   });
   const confirmMutation = useConfirmTourBooking();
