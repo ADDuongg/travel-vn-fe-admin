@@ -30,6 +30,7 @@ import type {
   ProvinceQueryParams,
   ProvinceRegion,
   ProvinceTranslation,
+  ProvinceGalleryItem,
   ProvinceWard,
 } from '@/interface/province';
 
@@ -43,6 +44,9 @@ type ProvinceFormValues = {
   isActive?: boolean;
   displayOrder?: number;
   region?: ProvinceRegion;
+  gallery?: ProvinceGalleryItem[];
+  thumbnailFile?: File | null;
+  galleryFiles?: File[];
 };
 
 export default function ProvincePage() {
@@ -155,6 +159,17 @@ export default function ProvincePage() {
       }
       if (values.region) {
         formData.append('region', values.region);
+      }
+      if (values.gallery && values.gallery.length > 0) {
+        formData.append('gallery', JSON.stringify(values.gallery));
+      }
+      if (values.thumbnailFile) {
+        formData.append('thumbnail', values.thumbnailFile);
+      }
+      if (values.galleryFiles && values.galleryFiles.length > 0) {
+        values.galleryFiles.forEach((file) => {
+          formData.append('gallery', file);
+        });
       }
 
       await updateMetadataMutation.mutateAsync({

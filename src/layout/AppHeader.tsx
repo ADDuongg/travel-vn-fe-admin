@@ -1,21 +1,9 @@
 import { ROUTES } from '@/constants/route.constant';
-import {
-  BellOutlined,
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
+import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined } from '@ant-design/icons';
 import CustomBreadCrumb from '@components/CustomBreadCrumb';
 import ThemeModeDropdown from '@components/ThemeModeDropdown';
-import {
-  Avatar,
-  Badge,
-  Button,
-  Dropdown,
-  Space,
-  theme,
-  Typography,
-} from 'antd';
+import NotificationDropdown from '@components/NotificationDropdown';
+import { Avatar, Button, Dropdown, Space, theme, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useLogout } from '@/queries/auth.queries';
@@ -83,13 +71,7 @@ export default function AppHeader({
       >
         <ThemeModeDropdown />
 
-        {/* <Text type="secondary">
-          Mode: <b>{resolvedMode}</b>
-        </Text> */}
-
-        <Badge dot>
-          <Button type="text" icon={<BellOutlined />} />
-        </Badge>
+        <NotificationDropdown />
 
         <Dropdown menu={userMenu} trigger={['click']}>
           <Space style={{ cursor: 'pointer' }}>
