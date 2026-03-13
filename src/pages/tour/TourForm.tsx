@@ -1,5 +1,20 @@
-import { DeleteOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
-import { Button, Collapse, Form, Input, InputNumber, Select, Space, Switch, Tabs, Upload } from 'antd';
+import {
+  DeleteOutlined,
+  PlusOutlined,
+  UploadOutlined,
+} from '@ant-design/icons';
+import {
+  Button,
+  Collapse,
+  Form,
+  Input,
+  InputNumber,
+  Select,
+  Space,
+  Switch,
+  Tabs,
+  Upload,
+} from 'antd';
 import { useEffect, useState } from 'react';
 import type { UploadFile } from 'antd/es/upload/interface';
 import RichTextEditor from '@/components/RichTextEditor';
@@ -15,11 +30,14 @@ type Props = {
   initialValues?: Tour;
   loading?: boolean;
   submitText: string;
-  onSubmit: (payload: TourUpsertPayload | FormData) => void;
+  onSubmit: (payload: FormData) => void;
   onCancel: () => void;
 };
 
-function getProvinceLabel(p: { name?: { vi?: string; en?: string }; code?: string }) {
+function getProvinceLabel(p: {
+  name?: { vi?: string; en?: string };
+  code?: string;
+}) {
   return p?.name?.vi || p?.name?.en || p?.code || '-';
 }
 
@@ -35,6 +53,7 @@ export default function TourForm({
   const { data: provinces = [] } = useProvinceDropdown();
   const { data: amenities = [] } = useAmenities();
   const { data: languages = [] } = useLanguages();
+  console.log('provinces', provinces);
 
   useEffect(() => {
     if (!initialValues) return;
@@ -52,7 +71,8 @@ export default function TourForm({
       duration: initialValues.duration,
       departureProvinceId,
       destinations: (initialValues.destinations || []).map((d) => ({
-        provinceId: typeof d.provinceId === 'string' ? d.provinceId : d.provinceId?._id,
+        provinceId:
+          typeof d.provinceId === 'string' ? d.provinceId : d.provinceId?._id,
         isMainDestination: !!d.isMainDestination,
       })),
       translations: initialValues.translations || {},
@@ -63,7 +83,9 @@ export default function TourForm({
       thumbnail: initialValues.thumbnail || {},
       gallery: initialValues.gallery || [],
       amenities: Array.isArray(initialValues.amenities)
-        ? (initialValues.amenities as any[]).map((a) => (typeof a === 'string' ? a : a?._id))
+        ? (initialValues.amenities as any[]).map((a) =>
+            typeof a === 'string' ? a : a?._id,
+          )
         : [],
       transportTypes: initialValues.transportTypes || [],
       bookingConfig: initialValues.bookingConfig || {},
@@ -84,6 +106,7 @@ export default function TourForm({
 
   const handleSubmit = async () => {
     const values = await form.validateFields();
+    console.log('values', values);
 
     const payload: TourUpsertPayload = {
       slug: values.slug,
@@ -120,9 +143,13 @@ export default function TourForm({
       thumbnail: values.thumbnail?.url ? values.thumbnail : undefined,
       gallery: initialValues?.gallery ?? [], // JSON submit: giữ gallery cũ; FormData submit: dùng file
       amenities: Array.isArray(values.amenities) ? values.amenities : [],
-      transportTypes: Array.isArray(values.transportTypes) ? values.transportTypes : [],
+      transportTypes: Array.isArray(values.transportTypes)
+        ? values.transportTypes
+        : [],
       bookingConfig: {
-        advanceBookingDays: Number(values.bookingConfig?.advanceBookingDays || 0),
+        advanceBookingDays: Number(
+          values.bookingConfig?.advanceBookingDays || 0,
+        ),
         allowInstantBooking: !!values.bookingConfig?.allowInstantBooking,
         requireDeposit: !!values.bookingConfig?.requireDeposit,
         depositPercent: Number(values.bookingConfig?.depositPercent || 0),
@@ -144,64 +171,50 @@ export default function TourForm({
     const galleryFiles = galleryFileList
       .filter((f) => f.originFileObj)
       .map((f) => f.originFileObj as File);
+    console.log('payload', payload);
 
-    if (galleryFiles.length > 0) {
-      const formData = new FormData();
-      formData.append('slug', payload.slug);
-      formData.append('code', payload.code);
-      formData.append('isActive', String(payload.isActive));
-      formData.append('tourType', payload.tourType);
-      formData.append('duration', JSON.stringify(payload.duration));
-      formData.append('destinations', JSON.stringify(payload.destinations));
-      formData.append(
-        'departureProvinceId',
-        payload.departureProvinceId != null ? String(payload.departureProvinceId) : '',
-      );
-      formData.append('translations', JSON.stringify(payload.translations ?? {}));
-      formData.append('itinerary', JSON.stringify(payload.itinerary ?? []));
-      formData.append('capacity', JSON.stringify(payload.capacity ?? {}));
-      formData.append('pricing', JSON.stringify(payload.pricing ?? {}));
-      formData.append('contact', JSON.stringify(payload.contact ?? {}));
-      formData.append('bookingConfig', JSON.stringify(payload.bookingConfig ?? {}));
-      formData.append('amenities', JSON.stringify(payload.amenities ?? []));
-      formData.append('transportTypes', JSON.stringify(payload.transportTypes ?? []));
-      formData.append('sale', JSON.stringify(payload.sale ?? { isActive: false }));
-      if (payload.difficulty) formData.append('difficulty', payload.difficulty);
-      if (payload.schedule) formData.append('schedule', JSON.stringify(payload.schedule));
-      galleryFiles.forEach((file) => formData.append('gallery', file));
-      onSubmit(formData);
-    } else {
-      onSubmit(payload);
-    }
+    const formData = new FormData();
+    formData.append('slug', payload.slug);
+    formData.append('code', payload.code);
+    formData.append('isActive', String(payload.isActive));
+    formData.append('tourType', payload.tourType);
+    formData.append('duration', JSON.stringify(payload.duration));
+    formData.append('destinations', JSON.stringify(payload.destinations));
+    formData.append(
+      'departureProvinceId',
+      payload.departureProvinceId != null
+        ? String(payload.departureProvinceId)
+        : '',
+    );
+    formData.append('translations', JSON.stringify(payload.translations ?? {}));
+    formData.append('itinerary', JSON.stringify(payload.itinerary ?? []));
+    formData.append('capacity', JSON.stringify(payload.capacity ?? {}));
+    formData.append('pricing', JSON.stringify(payload.pricing ?? {}));
+    formData.append('contact', JSON.stringify(payload.contact ?? {}));
+    formData.append(
+      'bookingConfig',
+      JSON.stringify(payload.bookingConfig ?? {}),
+    );
+    formData.append('amenities', JSON.stringify(payload.amenities ?? []));
+    formData.append(
+      'transportTypes',
+      JSON.stringify(payload.transportTypes ?? []),
+    );
+    formData.append(
+      'sale',
+      JSON.stringify(payload.sale ?? { isActive: false }),
+    );
+    if (payload.difficulty) formData.append('difficulty', payload.difficulty);
+    if (payload.schedule)
+      formData.append('schedule', JSON.stringify(payload.schedule));
+    galleryFiles.forEach((file) => formData.append('gallery', file));
+
+    onSubmit(formData);
   };
+  console.log('form values', form.getFieldsValue());
 
   return (
-    <Form
-      form={form}
-      layout="vertical"
-      initialValues={{
-        isActive: true,
-        tourType: 'DOMESTIC',
-        duration: { days: 1, nights: 0 },
-        destinations: [],
-        translations: {},
-        itinerary: [],
-        capacity: { minGuests: 1, maxGuests: 40, privateAvailable: false },
-        pricing: { basePrice: 0, currency: 'VND' },
-        bookingConfig: {
-          advanceBookingDays: 2,
-          allowInstantBooking: true,
-          requireDeposit: true,
-          depositPercent: 30,
-        },
-        transportTypes: [],
-        amenities: [],
-        contact: {},
-        thumbnail: {},
-        gallery: [],
-        sale: { isActive: false, type: 'PERCENT', value: 10 },
-      }}
-    >
+    <Form form={form} layout="vertical">
       <Space style={{ width: '100%' }} size={16} wrap align="start">
         <Form.Item name="slug" label="Slug" rules={[{ required: true }]}>
           <Input placeholder="sapa-3-ngay-2-dem" style={{ width: 320 }} />
@@ -215,7 +228,11 @@ export default function TourForm({
       </Space>
 
       <Space style={{ width: '100%' }} size={16} wrap align="start">
-        <Form.Item name="tourType" label="Tour Type" rules={[{ required: true }]}>
+        <Form.Item
+          name="tourType"
+          label="Tour Type"
+          rules={[{ required: true }]}
+        >
           <Select
             style={{ width: 220 }}
             options={[
@@ -226,10 +243,18 @@ export default function TourForm({
           />
         </Form.Item>
 
-        <Form.Item name={['duration', 'days']} label="Days" rules={[{ required: true }]}>
+        <Form.Item
+          name={['duration', 'days']}
+          label="Days"
+          rules={[{ required: true }]}
+        >
           <InputNumber min={1} style={{ width: 120 }} />
         </Form.Item>
-        <Form.Item name={['duration', 'nights']} label="Nights" rules={[{ required: true }]}>
+        <Form.Item
+          name={['duration', 'nights']}
+          label="Nights"
+          rules={[{ required: true }]}
+        >
           <InputNumber min={0} style={{ width: 120 }} />
         </Form.Item>
 
@@ -254,7 +279,10 @@ export default function TourForm({
       >
         <Select
           placeholder="Select departure province"
-          options={provinces.map((p) => ({ label: getProvinceLabel(p), value: p._id }))}
+          options={provinces.map((p) => ({
+            label: getProvinceLabel(p),
+            value: p._id,
+          }))}
         />
       </Form.Item>
 
@@ -281,7 +309,10 @@ export default function TourForm({
                     }))}
                   />
                 </Form.Item>
-                <Form.Item name={[name, 'isMainDestination']} valuePropName="checked">
+                <Form.Item
+                  name={[name, 'isMainDestination']}
+                  valuePropName="checked"
+                >
                   <Switch checkedChildren="Main" unCheckedChildren="Extra" />
                 </Form.Item>
                 <Button
@@ -292,7 +323,12 @@ export default function TourForm({
                 />
               </Space>
             ))}
-            <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
+            <Button
+              type="dashed"
+              onClick={() => add()}
+              block
+              icon={<PlusOutlined />}
+            >
               Add destination
             </Button>
           </>
@@ -314,7 +350,11 @@ export default function TourForm({
         >
           <InputNumber min={1} style={{ width: 140 }} />
         </Form.Item>
-        <Form.Item name={['capacity', 'privateAvailable']} label="Private" valuePropName="checked">
+        <Form.Item
+          name={['capacity', 'privateAvailable']}
+          label="Private"
+          valuePropName="checked"
+        >
           <Switch />
         </Form.Item>
       </Space>
@@ -333,7 +373,10 @@ export default function TourForm({
         <Form.Item name={['pricing', 'infantPrice']} label="Infant Price (VND)">
           <InputNumber min={0} style={{ width: 200 }} />
         </Form.Item>
-        <Form.Item name={['pricing', 'singleSupplement']} label="Single Supplement (VND)">
+        <Form.Item
+          name={['pricing', 'singleSupplement']}
+          label="Single Supplement (VND)"
+        >
           <InputNumber min={0} style={{ width: 220 }} />
         </Form.Item>
       </Space>
@@ -435,9 +478,15 @@ export default function TourForm({
             {fields.map(({ key, name }) => (
               <div
                 key={key}
-                style={{ border: '1px solid rgba(0,0,0,0.06)', padding: 12, marginBottom: 12 }}
+                style={{
+                  border: '1px solid rgba(0,0,0,0.06)',
+                  padding: 12,
+                  marginBottom: 12,
+                }}
               >
-                <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+                <Space
+                  style={{ width: '100%', justifyContent: 'space-between' }}
+                >
                   <Space>
                     <Form.Item
                       name={[name, 'dayNumber']}
@@ -447,7 +496,12 @@ export default function TourForm({
                       <InputNumber min={1} />
                     </Form.Item>
                   </Space>
-                  <Button danger type="text" icon={<DeleteOutlined />} onClick={() => remove(name)}>
+                  <Button
+                    danger
+                    type="text"
+                    icon={<DeleteOutlined />}
+                    onClick={() => remove(name)}
+                  >
                     Remove day
                   </Button>
                 </Space>
@@ -466,16 +520,32 @@ export default function TourForm({
                           <Input placeholder="Day title" />
                         </Form.Item>
                         <Form.Item
-                          name={[name, 'translations', lang.code, 'description']}
+                          name={[
+                            name,
+                            'translations',
+                            lang.code,
+                            'description',
+                          ]}
                           label="Description"
                           rules={[{ required: true }]}
                         >
                           <RichTextEditor />
                         </Form.Item>
-                        <Form.Item name={[name, 'translations', lang.code, 'accommodation']} label="Accommodation">
+                        <Form.Item
+                          name={[
+                            name,
+                            'translations',
+                            lang.code,
+                            'accommodation',
+                          ]}
+                          label="Accommodation"
+                        >
                           <Input placeholder="Hotel/Resort..." />
                         </Form.Item>
-                        <Form.Item name={[name, 'translations', lang.code, 'meals']} label="Meals">
+                        <Form.Item
+                          name={[name, 'translations', lang.code, 'meals']}
+                          label="Meals"
+                        >
                           <Select mode="tags" placeholder="e.g. Trưa, Tối" />
                         </Form.Item>
                       </>
@@ -484,7 +554,12 @@ export default function TourForm({
                 />
               </div>
             ))}
-            <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
+            <Button
+              type="dashed"
+              onClick={() => add()}
+              block
+              icon={<PlusOutlined />}
+            >
               Add itinerary day
             </Button>
           </>
@@ -506,28 +581,49 @@ export default function TourForm({
                   <Input placeholder="Tour name" />
                 </Form.Item>
 
-                <Form.Item name={['translations', lang.code, 'shortDescription']} label="Short description">
+                <Form.Item
+                  name={['translations', lang.code, 'shortDescription']}
+                  label="Short description"
+                >
                   <Input.TextArea rows={2} />
                 </Form.Item>
 
-                <Form.Item name={['translations', lang.code, 'description']} label="Description">
+                <Form.Item
+                  name={['translations', lang.code, 'description']}
+                  label="Description"
+                >
                   <RichTextEditor />
                 </Form.Item>
 
-                <Form.Item name={['translations', lang.code, 'highlights']} label="Highlights">
+                <Form.Item
+                  name={['translations', lang.code, 'highlights']}
+                  label="Highlights"
+                >
                   <Select mode="tags" placeholder="Add highlights" />
                 </Form.Item>
-                <Form.Item name={['translations', lang.code, 'inclusions']} label="Inclusions">
+                <Form.Item
+                  name={['translations', lang.code, 'inclusions']}
+                  label="Inclusions"
+                >
                   <Select mode="tags" placeholder="Add inclusions" />
                 </Form.Item>
-                <Form.Item name={['translations', lang.code, 'exclusions']} label="Exclusions">
+                <Form.Item
+                  name={['translations', lang.code, 'exclusions']}
+                  label="Exclusions"
+                >
                   <Select mode="tags" placeholder="Add exclusions" />
                 </Form.Item>
-                <Form.Item name={['translations', lang.code, 'notes']} label="Notes">
+                <Form.Item
+                  name={['translations', lang.code, 'notes']}
+                  label="Notes"
+                >
                   <Select mode="tags" placeholder="Add notes" />
                 </Form.Item>
 
-                <Form.Item name={['translations', lang.code, 'cancellationPolicy']} label="Cancellation policy">
+                <Form.Item
+                  name={['translations', lang.code, 'cancellationPolicy']}
+                  label="Cancellation policy"
+                >
                   <Input.TextArea rows={3} />
                 </Form.Item>
 
@@ -538,17 +634,36 @@ export default function TourForm({
                       label: 'SEO',
                       children: (
                         <>
-                          <Form.Item name={['translations', lang.code, 'seo', 'title']} label="Title">
+                          <Form.Item
+                            name={['translations', lang.code, 'seo', 'title']}
+                            label="Title"
+                          >
                             <Input />
                           </Form.Item>
                           <Form.Item
-                            name={['translations', lang.code, 'seo', 'description']}
+                            name={[
+                              'translations',
+                              lang.code,
+                              'seo',
+                              'description',
+                            ]}
                             label="Description"
                           >
                             <Input.TextArea rows={2} />
                           </Form.Item>
-                          <Form.Item name={['translations', lang.code, 'seo', 'keywords']} label="Keywords">
-                            <Select mode="tags" placeholder="keyword1, keyword2" />
+                          <Form.Item
+                            name={[
+                              'translations',
+                              lang.code,
+                              'seo',
+                              'keywords',
+                            ]}
+                            label="Keywords"
+                          >
+                            <Select
+                              mode="tags"
+                              placeholder="keyword1, keyword2"
+                            />
                           </Form.Item>
                         </>
                       ),
@@ -563,7 +678,11 @@ export default function TourForm({
 
       <Form.Item label="Sale">
         <Space style={{ width: '100%' }} size={16} wrap align="start">
-          <Form.Item name={['sale', 'isActive']} label="Active" valuePropName="checked">
+          <Form.Item
+            name={['sale', 'isActive']}
+            label="Active"
+            valuePropName="checked"
+          >
             <Switch />
           </Form.Item>
           <Form.Item name={['sale', 'type']} label="Type">
@@ -579,10 +698,16 @@ export default function TourForm({
             <InputNumber min={0} style={{ width: 160 }} />
           </Form.Item>
           <Form.Item name={['sale', 'startDate']} label="Start date (ISO)">
-            <Input placeholder="2025-02-01T00:00:00.000Z" style={{ width: 260 }} />
+            <Input
+              placeholder="2025-02-01T00:00:00.000Z"
+              style={{ width: 260 }}
+            />
           </Form.Item>
           <Form.Item name={['sale', 'endDate']} label="End date (ISO)">
-            <Input placeholder="2025-02-28T23:59:59.000Z" style={{ width: 260 }} />
+            <Input
+              placeholder="2025-02-28T23:59:59.000Z"
+              style={{ width: 260 }}
+            />
           </Form.Item>
         </Space>
       </Form.Item>

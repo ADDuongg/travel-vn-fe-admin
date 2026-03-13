@@ -8,6 +8,7 @@ import type { AdminTourBookingParams } from '@/services/tour-booking.service';
 import type {
   TourBookingCancelPayload,
   TourBookingPaymentPayload,
+  TourBookingListResponse,
 } from '@/interface/tour-booking';
 import {
   getAdminTourBookings,
@@ -25,11 +26,28 @@ export const TOUR_BOOKING_KEYS = {
   detail: (id: string) => ['tour-bookings', id] as const,
 };
 
+const defaultPagination: TourBookingListResponse['pagination'] = {
+  page: 1,
+  limit: 20,
+  total: 0,
+  totalPages: 0,
+};
+
 export const useAdminTourBookings = (params?: AdminTourBookingParams) =>
-  useQuery({
+  useQuery<TourBookingListResponse>({
     queryKey: TOUR_BOOKING_KEYS.adminList(params),
     queryFn: () => getAdminTourBookings(params),
     placeholderData: keepPreviousData,
+    select: (raw) => {
+      const items = Array.isArray(raw?.items) ? raw.items : [];
+      return {
+        items,
+        pagination: raw?.pagination ?? {
+          ...defaultPagination,
+          total: items.length,
+        },
+      };
+    },
   });
 
 export const useTourBooking = (id?: string) =>
@@ -65,10 +83,7 @@ export const useCancelTourBooking = () => {
 export const useRecordTourBookingPayment = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      id,
-      ...body
-    }: { id: string } & TourBookingPaymentPayload) =>
+    mutationFn: ({ id, ...body }: { id: string } & TourBookingPaymentPayload) =>
       recordTourBookingPayment(id, body),
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: TOUR_BOOKING_KEYS.all });

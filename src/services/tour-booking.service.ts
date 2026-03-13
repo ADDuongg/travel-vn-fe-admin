@@ -14,7 +14,7 @@ export type AdminTourBookingParams = {
 };
 
 export const getAdminTourBookings = (
-  params?: AdminTourBookingParams
+  params?: AdminTourBookingParams,
 ): Promise<TourBookingListResponse> => {
   return api.get<TourBookingListResponse>('/api/v1/tour-bookings/admin', {
     params,
@@ -31,30 +31,30 @@ export const confirmTourBooking = (id: string): Promise<TourBooking> => {
 
 export const cancelTourBooking = (
   id: string,
-  body?: TourBookingCancelPayload
+  body?: TourBookingCancelPayload,
 ): Promise<TourBooking> => {
   return api.patch<TourBooking, TourBookingCancelPayload>(
     `/api/v1/tour-bookings/${id}/cancel`,
-    body ?? {}
+    body ?? {},
   );
 };
 
 export const recordTourBookingPayment = (
   id: string,
-  body: TourBookingPaymentPayload
+  body: TourBookingPaymentPayload,
 ): Promise<TourBooking> => {
   return api.post<TourBooking, TourBookingPaymentPayload>(
     `/api/v1/tour-bookings/${id}/payment`,
-    body
+    body,
   );
 };
 
 export const assignTourBookingGuide = (
   id: string,
-  guideId: string
+  guideId: string,
 ): Promise<TourBooking> => {
   return api.patch<TourBooking, { guideId: string }>(
     `/api/v1/tour-bookings/${id}/assign-guide`,
-    { guideId }
+    { guideId },
   );
 };

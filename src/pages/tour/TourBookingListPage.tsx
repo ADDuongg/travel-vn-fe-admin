@@ -1,12 +1,4 @@
-import {
-  Button,
-  Card,
-  Select,
-  Space,
-  Table,
-  Tag,
-  Typography,
-} from 'antd';
+import { Button, Card, Select, Space, Table, Tag, Typography } from 'antd';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminTourBookings } from '@/queries/tour-booking.queries';
@@ -16,8 +8,11 @@ const { Title } = Typography;
 
 function getTourName(tourId: TourBooking['tourId']): string {
   if (!tourId || typeof tourId === 'string') return '—';
-  const t = (tourId as { translations?: Record<string, { name?: string }> }).translations;
-  return t?.vi?.name || t?.en?.name || (tourId as { code?: string }).code || '—';
+  const t = (tourId as { translations?: Record<string, { name?: string }> })
+    .translations;
+  return (
+    t?.vi?.name || t?.en?.name || (tourId as { code?: string }).code || '—'
+  );
 }
 
 const statusColor: Record<string, string> = {
@@ -32,15 +27,24 @@ export default function TourBookingListPage() {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
-  const [status, setStatus] = useState<TourBookingStatus | undefined>(undefined);
+  const [status, setStatus] = useState<TourBookingStatus | undefined>(
+    undefined,
+  );
 
   const { data, isLoading } = useAdminTourBookings({ page, limit, status });
-  const items = data?.items ?? [];
+  const items = Array.isArray(data?.items) ? data.items : [];
   const pagination = data?.pagination;
+  console.log('items', items);
 
   return (
     <Card>
-      <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 16 }}>
+      <Space
+        style={{
+          width: '100%',
+          justifyContent: 'space-between',
+          marginBottom: 16,
+        }}
+      >
         <Title level={5} style={{ margin: 0 }}>
           Đơn tour
         </Title>
@@ -62,6 +66,9 @@ export default function TourBookingListPage() {
 
       <Table<TourBooking>
         rowKey="_id"
+        expandable={{
+          childrenColumnName: 'antdChildren',
+        }}
         loading={isLoading}
         dataSource={items}
         pagination={{
@@ -110,7 +117,9 @@ export default function TourBookingListPage() {
           {
             title: 'Trạng thái',
             dataIndex: 'status',
-            render: (s: string) => <Tag color={statusColor[s] || 'default'}>{s}</Tag>,
+            render: (s: string) => (
+              <Tag color={statusColor[s] || 'default'}>{s}</Tag>
+            ),
           },
           {
             title: 'Ngày tạo',

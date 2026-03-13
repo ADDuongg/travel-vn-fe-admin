@@ -1,14 +1,13 @@
 import { Card, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useCreateTour } from '@/queries/tour.queries';
-import type { TourUpsertPayload } from '@/interface/tour';
 import TourForm from './TourForm';
 
 export default function TourCreatePage() {
   const navigate = useNavigate();
   const createMutation = useCreateTour();
 
-  const onSubmit = async (payload: TourUpsertPayload) => {
+  const onSubmit = async (payload: FormData) => {
     await createMutation.mutateAsync(payload);
     message.success('Tour created');
     navigate('/dashboard/tour');

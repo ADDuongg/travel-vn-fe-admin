@@ -38,4 +38,3 @@ export interface UnreadNotificationCount {
 export interface MarkAllReadResponse {
   modifiedCount: number;
 }
-

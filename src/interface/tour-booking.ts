@@ -4,7 +4,7 @@
 
 export type TourAvailabilityStatus =
   | 'AVAILABLE'
-  | 'LIMITED'  // ≤20% slots
+  | 'LIMITED' // ≤20% slots
   | 'FULL'
   | 'CANCELLED';
 

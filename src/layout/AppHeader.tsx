@@ -1,5 +1,9 @@
 import { ROUTES } from '@/constants/route.constant';
-import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined } from '@ant-design/icons';
+import {
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
 import CustomBreadCrumb from '@components/CustomBreadCrumb';
 import ThemeModeDropdown from '@components/ThemeModeDropdown';
 import NotificationDropdown from '@components/NotificationDropdown';

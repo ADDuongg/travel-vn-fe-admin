@@ -19,6 +19,7 @@ import {
   useUnreadNotificationCount,
 } from '@/queries/notification.queries';
 import type { Notification } from '@/interface/notification';
+import { formatTourNotification } from '@/constants/notification-tour';
 
 const { Text } = Typography;
 
@@ -164,61 +165,74 @@ export default function NotificationDropdown() {
             {!loading && items.length > 0 && (
               <List
                 dataSource={items}
-                renderItem={(item) => (
-                  <List.Item
-                    key={item._id}
-                    style={{
-                      cursor: 'pointer',
-                      borderRadius: 6,
-                      marginBottom: 4,
-                      paddingInline: 8,
-                      backgroundColor: item.isRead
-                        ? 'transparent'
-                        : token.colorPrimaryBg,
-                    }}
-                    onClick={() => handleItemClick(item)}
-                  >
-                    <List.Item.Meta
-                      title={
-                        <Space
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                          }}
-                        >
-                          <Text strong ellipsis style={{ maxWidth: 220 }}>
-                            {item.title}
-                          </Text>
-                          {!item.isRead && (
-                            <Badge
-                              color="blue"
-                              style={{ marginLeft: 8 }}
-                              status="processing"
-                            />
-                          )}
-                        </Space>
-                      }
-                      description={
-                        <Space
-                          direction="vertical"
-                          size={4}
-                          style={{ width: '100%' }}
-                        >
-                          <Text
-                            type="secondary"
-                            ellipsis={{ tooltip: item.message }}
-                            style={{ fontSize: 12 }}
+                renderItem={(item) => {
+                  const titleText = formatTourNotification(
+                    item.title,
+                    item.metadata,
+                    item.title,
+                  );
+                  const messageText = formatTourNotification(
+                    item.message,
+                    item.metadata,
+                    item.message,
+                  );
+
+                  return (
+                    <List.Item
+                      key={item._id}
+                      style={{
+                        cursor: 'pointer',
+                        borderRadius: 6,
+                        marginBottom: 4,
+                        paddingInline: 8,
+                        backgroundColor: item.isRead
+                          ? 'transparent'
+                          : token.colorPrimaryBg,
+                      }}
+                      onClick={() => handleItemClick(item)}
+                    >
+                      <List.Item.Meta
+                        title={
+                          <Space
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                            }}
                           >
-                            {item.message}
-                          </Text>
-                          <Text type="secondary" style={{ fontSize: 11 }}>
-                            {formatDateTime(item.createdAt)}
-                          </Text>
-                        </Space>
-                      }
-                    />
-                  </List.Item>
-                )}
+                            <Text strong ellipsis style={{ maxWidth: 220 }}>
+                              {titleText}
+                            </Text>
+                            {!item.isRead && (
+                              <Badge
+                                color="blue"
+                                style={{ marginLeft: 8 }}
+                                status="processing"
+                              />
+                            )}
+                          </Space>
+                        }
+                        description={
+                          <Space
+                            direction="vertical"
+                            size={4}
+                            style={{ width: '100%' }}
+                          >
+                            <Text
+                              type="secondary"
+                              ellipsis={{ tooltip: messageText }}
+                              style={{ fontSize: 12 }}
+                            >
+                              {messageText}
+                            </Text>
+                            <Text type="secondary" style={{ fontSize: 11 }}>
+                              {formatDateTime(item.createdAt)}
+                            </Text>
+                          </Space>
+                        }
+                      />
+                    </List.Item>
+                  );
+                }}
               />
             )}
           </div>
@@ -240,4 +254,5 @@ export default function NotificationDropdown() {
     </Dropdown>
   );
 }
+
 
