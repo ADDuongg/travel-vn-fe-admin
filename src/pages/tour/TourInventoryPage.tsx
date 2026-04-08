@@ -145,20 +145,24 @@ export default function TourInventoryPage() {
         dataSource={availability}
         pagination={false}
         size="small"
+        scroll={{ x: 700 }}
         columns={[
           {
             title: 'Ngày khởi hành',
             dataIndex: 'departureDate',
+            width: 160,
             render: (d: string) => d?.slice(0, 10),
           },
           {
             title: 'Còn trống',
             dataIndex: 'availableSlots',
+            width: 160,
             render: (v: number, r) => `${v} / ${r.totalSlots}`,
           },
           {
             title: 'Trạng thái',
             dataIndex: 'status',
+            width: 140,
             render: (s: string) => (
               <span style={{ color: statusColor[s] || undefined }}>{s}</span>
             ),
@@ -166,6 +170,7 @@ export default function TourInventoryPage() {
           {
             title: 'Giá đặc biệt',
             dataIndex: 'specialPrice',
+            width: 200,
             render: (v: number | null, r) =>
               v != null
                 ? `${Number(v).toLocaleString()} ${r.currency || 'VND'}`

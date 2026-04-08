@@ -1,5 +1,15 @@
 import { useMemo, useState } from 'react';
-import { Button, Card, Input, Select, Space, Switch, Table, Typography, message } from 'antd';
+import {
+  Button,
+  Card,
+  Input,
+  Select,
+  Space,
+  Switch,
+  Table,
+  Typography,
+  message,
+} from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useProvinceDropdown } from '@/queries/province.queries';
 import { useDeleteTour, useTours } from '@/queries/tour.queries';
@@ -116,35 +126,62 @@ export default function TourPage() {
         </Button>
       </Space>
 
-      <Table
+      <Table<Tour>
         rowKey="_id"
         loading={isLoading}
         dataSource={items}
+        size="small"
+        scroll={{ x: 900 }}
         columns={[
           {
             title: 'Name',
             key: 'name',
+            width: 260,
+            ellipsis: true,
             render: (_, row) => getTourName(row),
           },
-          { title: 'Code', dataIndex: 'code' },
-          { title: 'Slug', dataIndex: 'slug' },
-          { title: 'Type', dataIndex: 'tourType' },
+          {
+            title: 'Code',
+            dataIndex: 'code',
+            width: 120,
+          },
+          {
+            title: 'Slug',
+            dataIndex: 'slug',
+            width: 180,
+            ellipsis: true,
+          },
+          {
+            title: 'Type',
+            dataIndex: 'tourType',
+            width: 120,
+          },
           {
             title: 'Departure',
             key: 'departureProvinceId',
-            render: (_, row) => getProvinceName((row as any).departureProvinceId),
+            width: 200,
+            ellipsis: true,
+            render: (_, row) =>
+              getProvinceName((row as any).departureProvinceId),
           },
           {
             title: 'Active',
             dataIndex: 'isActive',
-            render: (v: boolean) => <Switch checked={v} disabled size="small" />,
+            width: 90,
+            render: (v: boolean) => (
+              <Switch checked={v} disabled size="small" />
+            ),
           },
           {
             title: 'Actions',
             key: 'actions',
+            width: 150,
             render: (_, row) => (
               <Space>
-                <Button size="small" onClick={() => navigate(`/dashboard/tour/${row._id}/edit`)}>
+                <Button
+                  size="small"
+                  onClick={() => navigate(`/dashboard/tour/${row._id}/edit`)}
+                >
                   Edit
                 </Button>
                 <Button

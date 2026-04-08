@@ -377,6 +377,7 @@ export default function TourGuidePage() {
     <Card>
       <Space
         style={{ width: '100%', justifyContent: 'space-between', marginBottom: 16 }}
+        wrap
       >
         <Space wrap>
           <Title level={5} style={{ margin: 0 }}>
@@ -460,10 +461,14 @@ export default function TourGuidePage() {
         rowKey="_id"
         loading={isLoading}
         dataSource={items}
+        size="small"
+        scroll={{ x: 1000 }}
         columns={[
           {
             title: 'Hướng dẫn viên',
             key: 'name',
+            width: 260,
+            ellipsis: true,
             render: (_, row) => (
               <div>
                 <div>{getGuideName(row)}</div>
@@ -478,6 +483,7 @@ export default function TourGuidePage() {
           {
             title: 'Ngôn ngữ',
             dataIndex: 'languages',
+            width: 200,
             render: (langs: string[]) =>
               (langs || []).map((l) => (
                 <Tag key={l} color="blue">
@@ -488,6 +494,7 @@ export default function TourGuidePage() {
           {
             title: 'Rating',
             key: 'rating',
+            width: 160,
             render: (_, row) =>
               row.ratingSummary
                 ? `${row.ratingSummary.average.toFixed(1)} (${row.ratingSummary.total})`
@@ -496,6 +503,7 @@ export default function TourGuidePage() {
           {
             title: 'Verified',
             dataIndex: 'isVerified',
+            width: 120,
             render: (v: boolean) => (
               <Tag color={v ? 'green' : 'default'}>{v ? 'Verified' : 'Pending'}</Tag>
             ),
@@ -503,6 +511,7 @@ export default function TourGuidePage() {
           {
             title: 'Available',
             dataIndex: 'isAvailable',
+            width: 120,
             render: (v: boolean, row) => (
               <Switch
                 checked={v}
@@ -518,23 +527,23 @@ export default function TourGuidePage() {
           {
             title: 'Giá / ngày',
             dataIndex: 'dailyRate',
+            width: 160,
             render: (v: number, row) =>
               v != null ? `${v.toLocaleString()} ${row.currency ?? 'VND'}` : '—',
           },
           {
             title: 'Actions',
             key: 'actions',
+            width: 260,
             render: (_, row) => (
-              <Space>
+              <Space wrap>
                 <Button size="small" onClick={() => handleOpenEdit(row)}>
                   Sửa
                 </Button>
                 <Button
                   size="small"
                   onClick={() =>
-                    navigate(
-                      `${ROUTES.ADMIN_REVIEWS}?entityType=GUIDE`,
-                    )
+                    navigate(`${ROUTES.ADMIN_REVIEWS}?entityType=GUIDE`)
                   }
                 >
                   Reviews

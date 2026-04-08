@@ -71,6 +71,8 @@ export default function TourBookingListPage() {
         }}
         loading={isLoading}
         dataSource={items}
+        size="small"
+        scroll={{ x: 1000 }}
         pagination={{
           current: pagination?.page ?? page,
           pageSize: pagination?.limit ?? limit,
@@ -81,12 +83,15 @@ export default function TourBookingListPage() {
           {
             title: 'Mã đặt',
             dataIndex: 'bookingCode',
+            width: 140,
             render: (code: string, row: TourBooking) => (
               <Button
                 type="link"
                 size="small"
                 style={{ padding: 0 }}
-                onClick={() => navigate(`/dashboard/tour-bookings/${row._id}`)}
+                onClick={() =>
+                  navigate(`/dashboard/tour-bookings/${row._id}`)
+                }
               >
                 {code}
               </Button>
@@ -95,28 +100,35 @@ export default function TourBookingListPage() {
           {
             title: 'Tour',
             key: 'tour',
+            width: 230,
+            ellipsis: true,
             render: (_: unknown, row: TourBooking) => getTourName(row.tourId),
           },
           {
             title: 'Ngày khởi hành',
             dataIndex: 'departureDate',
+            width: 140,
             render: (d: string) => (d ? String(d).slice(0, 10) : '—'),
           },
           {
             title: 'Khách',
             key: 'guest',
+            width: 220,
+            ellipsis: true,
             render: (_: unknown, row: TourBooking) =>
               row.guest?.fullName || row.guest?.email || '—',
           },
           {
             title: 'Tổng tiền',
             dataIndex: 'totalAmount',
+            width: 140,
             render: (v: number, row: TourBooking) =>
               `${(v ?? 0).toLocaleString()} ${row.currency || 'VND'}`,
           },
           {
             title: 'Trạng thái',
             dataIndex: 'status',
+            width: 120,
             render: (s: string) => (
               <Tag color={statusColor[s] || 'default'}>{s}</Tag>
             ),
@@ -124,6 +136,7 @@ export default function TourBookingListPage() {
           {
             title: 'Ngày tạo',
             dataIndex: 'createdAt',
+            width: 140,
             render: (d: string) => (d ? String(d).slice(0, 10) : '—'),
           },
         ]}
