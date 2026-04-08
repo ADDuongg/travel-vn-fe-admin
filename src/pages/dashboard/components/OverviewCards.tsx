@@ -15,14 +15,19 @@ import {
   DollarOutlined,
   UserAddOutlined,
 } from '@ant-design/icons';
-import { useAdminDashboardOverview } from '@/queries/dashboard.queries';
-import type { DashboardRange } from '@/services/dashboard.service';
+import type {
+  AdminDashboardOverview,
+  DashboardRange,
+} from '@/services/dashboard.service';
 
 const { Text } = Typography;
 const { useBreakpoint } = Grid;
 
 type OverviewCardsProps = {
   range: DashboardRange;
+  overview?: AdminDashboardOverview;
+  isLoading?: boolean;
+  isError?: boolean;
 };
 
 const RANGE_LABEL: Record<DashboardRange, string> = {
@@ -32,8 +37,12 @@ const RANGE_LABEL: Record<DashboardRange, string> = {
   custom: 'Tùy chọn',
 };
 
-export default function OverviewCards({ range }: OverviewCardsProps) {
-  const { data, isLoading, isError } = useAdminDashboardOverview({ range });
+export default function OverviewCards({
+  range,
+  overview,
+  isLoading,
+  isError,
+}: OverviewCardsProps): JSX.Element {
   const screens = useBreakpoint();
 
   const cardPadding = screens.md ? '20px 24px' : '14px 16px';
@@ -55,7 +64,7 @@ export default function OverviewCards({ range }: OverviewCardsProps) {
     );
   }
 
-  if (isError || !data) {
+  if (isError || !overview) {
     return (
       <Alert
         type="error"
@@ -66,7 +75,7 @@ export default function OverviewCards({ range }: OverviewCardsProps) {
 
   const fmt = (v: number | undefined) => (v ?? 0).toLocaleString('vi-VN');
 
-  const { bookings, revenue, users } = data;
+  const { bookings, revenue, users } = overview;
   const rangeLabel = RANGE_LABEL[range];
 
   return (

@@ -1,0 +1,76 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 12px;
+  align-items: start;
+}
+
+.mainCard {
+  border-radius: 12px !important;
+}
+
+.mainCard :global(.ant-card-body) {
+  padding-top: 12px;
+}
+
+.filtersCard {
+  position: sticky;
+  top: 12px;
+  border-radius: 12px !important;
+}
+
+.filtersTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.titleWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.filtersForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Note: do not customize zebra/hover here.
+   Keep AntD Table styling defaults to avoid fixed-column background artifacts. */
+
+@media (max-width: 1024px) {
+  .content {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    align-items: flex-start;
+  }
+}
+

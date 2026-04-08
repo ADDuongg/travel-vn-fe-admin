@@ -1,6 +1,9 @@
 import {
   Button,
   Card,
+  Drawer,
+  Empty,
+  Grid,
   Popconfirm,
   Space,
   Table,
@@ -10,14 +13,17 @@ import {
 } from 'antd';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { FilterOutlined, ReloadOutlined } from '@ant-design/icons';
 import {
   useAdminReviews,
   useApproveReview,
   useDeleteReview,
 } from '@/queries/review.queries';
 import type { ReviewEntityType } from '@/services/review.service';
+import tableStyles from '@/styles/promax-table.module.css';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
+const { useBreakpoint } = Grid;
 
 const ENTITY_OPTIONS: { label: string; value: ReviewEntityType }[] = [
   { label: 'Room', value: 'ROOM' },
@@ -28,6 +34,7 @@ const ENTITY_OPTIONS: { label: string; value: ReviewEntityType }[] = [
 ];
 
 export default function AdminReviewPage() {
+  const screens = useBreakpoint();
   const [searchParams] = useSearchParams();
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
@@ -44,7 +51,7 @@ export default function AdminReviewPage() {
     }
   }, [searchParams]);
 
-  const { data, isLoading } = useAdminReviews({
+  const { data, isLoading, refetch, isFetching } = useAdminReviews({
     page,
     limit,
     entityType,
@@ -53,82 +60,122 @@ export default function AdminReviewPage() {
 
   const approveMutation = useApproveReview();
   const deleteMutation = useDeleteReview();
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const filters = (
+    <div className={tableStyles.filtersForm}>
+      <Select
+        placeholder="Entity"
+        allowClear
+        value={entityType}
+        onChange={(v) => {
+          setPage(1);
+          setEntityType(v);
+        }}
+        options={ENTITY_OPTIONS as any}
+      />
+      <Select
+        placeholder="Status"
+        allowClear
+        value={
+          isApproved === undefined ? undefined : isApproved ? 'approved' : 'pending'
+        }
+        onChange={(v) => {
+          setPage(1);
+          setIsApproved(v === undefined ? undefined : v === 'approved');
+        }}
+        options={[
+          { label: 'Pending', value: 'pending' },
+          { label: 'Approved', value: 'approved' },
+        ]}
+      />
+    </div>
+  );
 
   return (
-    <Card>
-      <Space
-        style={{ width: '100%', justifyContent: 'space-between' }}
-        align="center"
-      >
-        <Title level={5}>Reviews</Title>
+    <div className={tableStyles.page} style={{ maxWidth: 1200, margin: '0 auto' }}>
+      <Card className={tableStyles.mainCard}>
+          <div className={tableStyles.header}>
+            <div className={tableStyles.titleWrap}>
+              <Title level={screens.sm ? 4 : 5} style={{ margin: 0 }}>
+                Reviews
+              </Title>
+              <Text type="secondary" style={{ fontSize: screens.sm ? 13 : 12 }}>
+                Duyệt / quản lý review cho Tour và các entity khác.
+              </Text>
+            </div>
 
-        <Space>
-          <Select
-            placeholder="Entity"
-            allowClear
-            style={{ width: 140 }}
-            value={entityType}
-            onChange={setEntityType}
-            options={ENTITY_OPTIONS}
-          />
+            <div className={tableStyles.toolbar}>
+              {!screens.md && (
+                <Button icon={<FilterOutlined />} onClick={() => setFiltersOpen(true)}>
+                  Bộ lọc
+                </Button>
+              )}
+              <Button icon={<ReloadOutlined />} onClick={() => refetch()} loading={isFetching}>
+                Làm mới
+              </Button>
+            </div>
+          </div>
 
-          <Select
-            placeholder="Status"
-            allowClear
-            style={{ width: 140 }}
-            value={
-              isApproved === undefined
-                ? undefined
-                : isApproved
-                ? 'approved'
-                : 'pending'
-            }
-            onChange={(v) =>
-              setIsApproved(v === undefined ? undefined : v === 'approved')
-            }
-            options={[
-              { label: 'Pending', value: 'pending' },
-              { label: 'Approved', value: 'approved' },
-            ]}
-          />
-        </Space>
-      </Space>
+          {screens.md ? (
+            <div style={{ marginTop: 12 }}>{filters}</div>
+          ) : (
+            <Drawer
+              title="Bộ lọc"
+              open={filtersOpen}
+              onClose={() => setFiltersOpen(false)}
+              placement="right"
+              width={360}
+            >
+              {filters}
+            </Drawer>
+          )}
 
-      <Table
-        rowKey="_id"
-        loading={isLoading}
-        style={{ marginTop: 16 }}
-        dataSource={data?.data}
-        pagination={{
-          current: page,
-          pageSize: limit,
-          total: data?.pagination.total,
-          onChange: setPage,
-        }}
-        columns={[
+          <Table
+            rowKey="_id"
+            loading={isLoading}
+            style={{ marginTop: 12 }}
+            dataSource={data?.data}
+            locale={{
+              emptyText: <Empty description="Không có review phù hợp với điều kiện lọc." />,
+            }}
+            pagination={{
+              current: page,
+              pageSize: limit,
+              total: data?.pagination.total,
+              onChange: setPage,
+            }}
+            scroll={{ x: 900 }}
+            size={screens.md ? 'middle' : 'small'}
+            columns={[
           {
             title: 'Entity',
             dataIndex: 'entityType',
+            width: 120,
             render: (v) => <Tag>{v}</Tag>,
           },
           {
             title: 'Rating',
             dataIndex: 'rating',
+            width: 100,
             render: (v) => (v ? `⭐ ${v}` : '-'),
           },
           {
             title: 'Comment',
             dataIndex: 'comment',
             ellipsis: true,
+            width: 320,
           },
           {
             title: 'User',
+            width: 180,
             render: (_, r) =>
               r.userId?.email || r.userId?.username || 'Anonymous',
           },
           {
             title: 'Status',
             dataIndex: 'isApproved',
+            width: 120,
             render: (v) =>
               v ? (
                 <Tag color="green">Approved</Tag>
@@ -139,11 +186,13 @@ export default function AdminReviewPage() {
           {
             title: 'Created',
             dataIndex: 'createdAt',
+            width: 180,
             render: (v: string) =>
               v ? new Date(v).toLocaleString() : '-',
           },
           {
             title: 'Actions',
+            width: 180,
             render: (_, r) => (
               <Space>
                 {!r.isApproved && (
@@ -167,8 +216,9 @@ export default function AdminReviewPage() {
               </Space>
             ),
           },
-        ]}
-      />
-    </Card>
+            ]}
+          />
+      </Card>
+    </div>
   );
 }

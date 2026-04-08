@@ -1,4 +1,18 @@
 /* Baseline reset an toàn cho app React + AntD */
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --color-primary: #1e40af;
+  --color-secondary: #3b82f6;
+  --color-cta: #f59e0b;
+  --color-background: #f8fafc;
+  --color-text: #0f172a;
+
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 6px 16px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 12px 28px rgba(15, 23, 42, 0.12);
+}
+
 html,
 body,
 #root {
@@ -10,6 +24,11 @@ html,
 body {
   margin: 0;
   padding: 0;
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family: 'Fira Sans', ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, 'Apple Color Emoji',
+    'Segoe UI Emoji';
 }
 
 *,
@@ -28,6 +47,11 @@ body {
 /* AntD Layout thường muốn full height */
 .ant-layout {
   min-height: 100vh;
+}
+
+/* Make cards feel crisp on light background */
+[data-theme='light'] .ant-card {
+  box-shadow: var(--shadow-sm);
 }
 
 .jodit-container.jodit-dark .jodit-toolbar__box {

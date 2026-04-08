@@ -3,6 +3,9 @@ import {
   Button,
   Card,
   Collapse,
+  Drawer,
+  Empty,
+  Grid,
   Input,
   InputNumber,
   Modal,
@@ -17,7 +20,12 @@ import {
   message,
   Upload,
 } from 'antd';
-import { UploadOutlined } from '@ant-design/icons';
+import {
+  FilterOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+  UploadOutlined,
+} from '@ant-design/icons';
 import type { UploadFile } from 'antd/es/upload/interface';
 import { useProvinceDropdown } from '@/queries/province.queries';
 import { useUsers } from '@/queries/user.queries';
@@ -33,8 +41,10 @@ import {
 import type { TourGuide, TourGuideQueryParams } from '@/interface/tour-guide';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/constants/route.constant';
+import tableStyles from '@/styles/promax-table.module.css';
 
 const { Title, Text } = Typography;
+const { useBreakpoint } = Grid;
 
 const LANGUAGE_OPTIONS = [
   { label: 'Tiếng Việt', value: 'vi' },
@@ -55,7 +65,12 @@ type CreateGuideFormValues = {
   userId: string;
   translations: Record<
     string,
-    { bio?: string; shortBio?: string; specialties?: string; specialtyItems?: string[] }
+    {
+      bio?: string;
+      shortBio?: string;
+      specialties?: string;
+      specialtyItems?: string[];
+    }
   >;
   languages: string[];
   specializedProvinces: string[];
@@ -75,12 +90,7 @@ function getGuideName(guide: TourGuide) {
   const vi = guide.translations?.vi;
   const firstSpecialty =
     vi?.specialtyItems?.[0] ?? vi?.specialties ?? vi?.shortBio;
-  return (
-    guide.user?.fullName ??
-    guide.user?.username ??
-    firstSpecialty ??
-    '—'
-  );
+  return guide.user?.fullName ?? guide.user?.username ?? firstSpecialty ?? '—';
 }
 
 export default function TourGuidePage() {
@@ -88,6 +98,7 @@ export default function TourGuidePage() {
   const { data: users = [] } = useUsers();
   const { data: languages = [] } = useLanguages();
   const navigate = useNavigate();
+  const screens = useBreakpoint();
 
   const [search, setSearch] = useState('');
   const [provinceId, setProvinceId] = useState<string | undefined>();
@@ -96,36 +107,53 @@ export default function TourGuidePage() {
   const [isAvailable, setIsAvailable] = useState<string | undefined>();
   const [isActive, setIsActive] = useState<string | undefined>();
   const [minRating, setMinRating] = useState<number | undefined>();
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingGuide, setEditingGuide] = useState<TourGuide | null>(null);
   const [createCvFileList, setCreateCvFileList] = useState<UploadFile[]>([]);
-  const [createGalleryFileList, setCreateGalleryFileList] = useState<UploadFile[]>([]);
+  const [createGalleryFileList, setCreateGalleryFileList] = useState<
+    UploadFile[]
+  >([]);
   const [editCvFileList, setEditCvFileList] = useState<UploadFile[]>([]);
-  const [editGalleryFileList, setEditGalleryFileList] = useState<UploadFile[]>([]);
+  const [editGalleryFileList, setEditGalleryFileList] = useState<UploadFile[]>(
+    [],
+  );
   const [createForm] = Form.useForm<CreateGuideFormValues>();
   const [editForm] = Form.useForm<CreateGuideFormValues>();
 
   const params: TourGuideQueryParams = useMemo(
     () => ({
-      page: 1,
-      limit: 50,
+      page,
+      limit,
       search: search || undefined,
       provinceId,
       language,
-      isVerified:
-        isVerified === undefined ? undefined : isVerified === 'true',
+      isVerified: isVerified === undefined ? undefined : isVerified === 'true',
       isAvailable:
         isAvailable === undefined ? undefined : isAvailable === 'true',
       isActive: isActive === undefined ? undefined : isActive === 'true',
       minRating,
       sort: 'newest',
     }),
-    [search, provinceId, language, isVerified, isAvailable, isActive, minRating],
+    [
+      page,
+      limit,
+      search,
+      provinceId,
+      language,
+      isVerified,
+      isAvailable,
+      isActive,
+      minRating,
+    ],
   );
 
-  const { data, isLoading } = useTourGuides(params);
+  const { data, isLoading, refetch, isFetching } = useTourGuides(params);
   const items = Array.isArray(data?.items) ? data.items : [];
+  const pagination = data?.pagination;
 
   const createMutation = useCreateTourGuide();
   const updateMutation = useUpdateTourGuide();
@@ -142,9 +170,11 @@ export default function TourGuidePage() {
 
   const handleOpenEdit = (guide: TourGuide) => {
     setEditingGuide(guide);
-    const provinceIds = (guide.specializedProvinces || []).map((p) =>
-      typeof p === 'string' ? p : (p as { _id?: string })._id ?? '',
-    ).filter(Boolean);
+    const provinceIds = (guide.specializedProvinces || [])
+      .map((p) =>
+        typeof p === 'string' ? p : ((p as { _id?: string })._id ?? ''),
+      )
+      .filter(Boolean);
     editForm.setFieldsValue({
       userId: guide.userId,
       translations: guide.translations || {},
@@ -165,22 +195,21 @@ export default function TourGuidePage() {
     if (guide.cv?.url) {
       cvList.push({
         uid: guide.cv.publicId || 'cv',
-        name:
-          guide.cv.filename ||
-          guide.cv.url.split('/').pop() ||
-          'cv',
+        name: guide.cv.filename || guide.cv.url.split('/').pop() || 'cv',
         status: 'done',
         url: guide.cv.url,
       });
     }
     setEditCvFileList(cvList);
 
-    const galleryList: UploadFile[] = (guide.gallery || []).map((img, index) => ({
-      uid: img.publicId || `${index}`,
-      name: img.alt || img.url.split('/').pop() || `image-${index}`,
-      status: 'done',
-      url: img.url,
-    }));
+    const galleryList: UploadFile[] = (guide.gallery || []).map(
+      (img, index) => ({
+        uid: img.publicId || `${index}`,
+        name: img.alt || img.url.split('/').pop() || `image-${index}`,
+        status: 'done',
+        url: img.url,
+      }),
+    );
     setEditGalleryFileList(galleryList);
     setEditModalOpen(true);
   };
@@ -197,17 +226,36 @@ export default function TourGuidePage() {
     if (!editingGuide) return;
     try {
       const values = await editForm.validateFields();
-      const translations: Record<string, { bio?: string; shortBio?: string; specialties?: string; specialtyItems?: string[] }> = {};
+      const translations: Record<
+        string,
+        {
+          bio?: string;
+          shortBio?: string;
+          specialties?: string;
+          specialtyItems?: string[];
+        }
+      > = {};
       Object.entries(values.translations || {}).forEach(([langCode, t]) => {
         if (!t || typeof t !== 'object') return;
-        const item = t as { bio?: string; shortBio?: string; specialties?: string; specialtyItems?: string[] };
-        const hasContent = item.bio || item.shortBio || item.specialties || (item.specialtyItems?.length ?? 0) > 0;
+        const item = t as {
+          bio?: string;
+          shortBio?: string;
+          specialties?: string;
+          specialtyItems?: string[];
+        };
+        const hasContent =
+          item.bio ||
+          item.shortBio ||
+          item.specialties ||
+          (item.specialtyItems?.length ?? 0) > 0;
         if (hasContent) {
           translations[langCode] = {
             ...(item.bio && { bio: item.bio }),
             ...(item.shortBio && { shortBio: item.shortBio }),
             ...(item.specialties && { specialties: item.specialties }),
-            ...(item.specialtyItems?.length ? { specialtyItems: item.specialtyItems.filter(Boolean) } : {}),
+            ...(item.specialtyItems?.length
+              ? { specialtyItems: item.specialtyItems.filter(Boolean) }
+              : {}),
           };
         }
       });
@@ -226,20 +274,28 @@ export default function TourGuidePage() {
         contactMethods: values.contactMethods ?? [],
         isAvailable: values.isAvailable ?? true,
       };
-      const cvFile = editCvFileList.find((f) => f.originFileObj)?.originFileObj as File | undefined;
+      const cvFile = editCvFileList.find((f) => f.originFileObj)
+        ?.originFileObj as File | undefined;
       const galleryFiles = editGalleryFileList
         .filter((f) => f.originFileObj)
         .map((f) => f.originFileObj as File);
 
       const formData = new FormData();
-      formData.append('translations', JSON.stringify(payload.translations ?? {}));
+      formData.append(
+        'translations',
+        JSON.stringify(payload.translations ?? {}),
+      );
       formData.append('languages', JSON.stringify(payload.languages ?? []));
       formData.append(
         'specializedProvinces',
         JSON.stringify(payload.specializedProvinces ?? []),
       );
-      formData.append('certifications', JSON.stringify(payload.certifications ?? []));
-      if (payload.licenseNumber) formData.append('licenseNumber', payload.licenseNumber);
+      formData.append(
+        'certifications',
+        JSON.stringify(payload.certifications ?? []),
+      );
+      if (payload.licenseNumber)
+        formData.append('licenseNumber', payload.licenseNumber);
       if (payload.yearsOfExperience != null) {
         formData.append('yearsOfExperience', String(payload.yearsOfExperience));
       }
@@ -247,10 +303,16 @@ export default function TourGuidePage() {
         formData.append('responseRate', String(payload.responseRate));
       }
       if (payload.completedTripsCount != null) {
-        formData.append('completedTripsCount', String(payload.completedTripsCount));
+        formData.append(
+          'completedTripsCount',
+          String(payload.completedTripsCount),
+        );
       }
       if (payload.returningCustomerRate != null) {
-        formData.append('returningCustomerRate', String(payload.returningCustomerRate));
+        formData.append(
+          'returningCustomerRate',
+          String(payload.returningCustomerRate),
+        );
       }
       if (payload.dailyRate != null) {
         formData.append('dailyRate', String(payload.dailyRate));
@@ -258,7 +320,10 @@ export default function TourGuidePage() {
       if (payload.currency) {
         formData.append('currency', payload.currency);
       }
-      formData.append('contactMethods', JSON.stringify(payload.contactMethods ?? []));
+      formData.append(
+        'contactMethods',
+        JSON.stringify(payload.contactMethods ?? []),
+      );
       formData.append('isAvailable', String(payload.isAvailable ?? true));
 
       if (cvFile) {
@@ -266,7 +331,10 @@ export default function TourGuidePage() {
       }
       galleryFiles.forEach((file) => formData.append('gallery', file));
 
-      await updateMutation.mutateAsync({ id: editingGuide._id, payload: formData });
+      await updateMutation.mutateAsync({
+        id: editingGuide._id,
+        payload: formData,
+      });
       message.success('Đã cập nhật hồ sơ hướng dẫn viên');
       handleCloseEdit();
     } catch {
@@ -291,17 +359,36 @@ export default function TourGuidePage() {
   const handleCreate = async () => {
     try {
       const values = await createForm.validateFields();
-      const translations: Record<string, { bio?: string; shortBio?: string; specialties?: string; specialtyItems?: string[] }> = {};
+      const translations: Record<
+        string,
+        {
+          bio?: string;
+          shortBio?: string;
+          specialties?: string;
+          specialtyItems?: string[];
+        }
+      > = {};
       Object.entries(values.translations || {}).forEach(([langCode, t]) => {
         if (!t || typeof t !== 'object') return;
-        const item = t as { bio?: string; shortBio?: string; specialties?: string; specialtyItems?: string[] };
-        const hasContent = item.bio || item.shortBio || item.specialties || (item.specialtyItems?.length ?? 0) > 0;
+        const item = t as {
+          bio?: string;
+          shortBio?: string;
+          specialties?: string;
+          specialtyItems?: string[];
+        };
+        const hasContent =
+          item.bio ||
+          item.shortBio ||
+          item.specialties ||
+          (item.specialtyItems?.length ?? 0) > 0;
         if (hasContent) {
           translations[langCode] = {
             ...(item.bio && { bio: item.bio }),
             ...(item.shortBio && { shortBio: item.shortBio }),
             ...(item.specialties && { specialties: item.specialties }),
-            ...(item.specialtyItems?.length ? { specialtyItems: item.specialtyItems.filter(Boolean) } : {}),
+            ...(item.specialtyItems?.length
+              ? { specialtyItems: item.specialtyItems.filter(Boolean) }
+              : {}),
           };
         }
       });
@@ -321,21 +408,29 @@ export default function TourGuidePage() {
         contactMethods: values.contactMethods ?? [],
         isAvailable: values.isAvailable ?? true,
       };
-      const cvFile = createCvFileList.find((f) => f.originFileObj)?.originFileObj as File | undefined;
+      const cvFile = createCvFileList.find((f) => f.originFileObj)
+        ?.originFileObj as File | undefined;
       const galleryFiles = createGalleryFileList
         .filter((f) => f.originFileObj)
         .map((f) => f.originFileObj as File);
 
       const formData = new FormData();
       formData.append('userId', payload.userId);
-      formData.append('translations', JSON.stringify(payload.translations ?? {}));
+      formData.append(
+        'translations',
+        JSON.stringify(payload.translations ?? {}),
+      );
       formData.append('languages', JSON.stringify(payload.languages ?? []));
       formData.append(
         'specializedProvinces',
         JSON.stringify(payload.specializedProvinces ?? []),
       );
-      formData.append('certifications', JSON.stringify(payload.certifications ?? []));
-      if (payload.licenseNumber) formData.append('licenseNumber', payload.licenseNumber);
+      formData.append(
+        'certifications',
+        JSON.stringify(payload.certifications ?? []),
+      );
+      if (payload.licenseNumber)
+        formData.append('licenseNumber', payload.licenseNumber);
       if (payload.yearsOfExperience != null) {
         formData.append('yearsOfExperience', String(payload.yearsOfExperience));
       }
@@ -343,10 +438,16 @@ export default function TourGuidePage() {
         formData.append('responseRate', String(payload.responseRate));
       }
       if (payload.completedTripsCount != null) {
-        formData.append('completedTripsCount', String(payload.completedTripsCount));
+        formData.append(
+          'completedTripsCount',
+          String(payload.completedTripsCount),
+        );
       }
       if (payload.returningCustomerRate != null) {
-        formData.append('returningCustomerRate', String(payload.returningCustomerRate));
+        formData.append(
+          'returningCustomerRate',
+          String(payload.returningCustomerRate),
+        );
       }
       if (payload.dailyRate != null) {
         formData.append('dailyRate', String(payload.dailyRate));
@@ -354,7 +455,10 @@ export default function TourGuidePage() {
       if (payload.currency) {
         formData.append('currency', payload.currency);
       }
-      formData.append('contactMethods', JSON.stringify(payload.contactMethods ?? []));
+      formData.append(
+        'contactMethods',
+        JSON.stringify(payload.contactMethods ?? []),
+      );
       formData.append('isAvailable', String(payload.isAvailable ?? true));
 
       if (cvFile) {
@@ -373,209 +477,297 @@ export default function TourGuidePage() {
     }
   };
 
-  return (
-    <Card>
-      <Space
-        style={{ width: '100%', justifyContent: 'space-between', marginBottom: 16 }}
-        wrap
-      >
-        <Space wrap>
-          <Title level={5} style={{ margin: 0 }}>
-            Hướng dẫn viên
-          </Title>
-          <Input
-            allowClear
-            placeholder="Tìm theo tên / username"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{ width: 240 }}
-          />
-          <Select
-            allowClear
-            placeholder="Tỉnh chuyên dẫn"
-            style={{ width: 200 }}
-            value={provinceId}
-            onChange={setProvinceId}
-            options={provinces.map((p) => ({
-              label: p.name?.vi || p.name?.en || p.code,
-              value: p._id,
-            }))}
-          />
-          <Select
-            allowClear
-            placeholder="Ngôn ngữ"
-            style={{ width: 140 }}
-            value={language}
-            onChange={setLanguage}
-            options={LANGUAGE_OPTIONS}
-          />
-          <Select
-            allowClear
-            placeholder="Verified?"
-            style={{ width: 140 }}
-            value={isVerified}
-            onChange={setIsVerified}
-            options={[
-              { label: 'Đã verify', value: 'true' },
-              { label: 'Chưa verify', value: 'false' },
-            ]}
-          />
-          <Select
-            allowClear
-            placeholder="Available?"
-            style={{ width: 140 }}
-            value={isAvailable}
-            onChange={setIsAvailable}
-            options={[
-              { label: 'Có thể nhận tour', value: 'true' },
-              { label: 'Tạm ngưng', value: 'false' },
-            ]}
-          />
-          <Select
-            allowClear
-            placeholder="Active?"
-            style={{ width: 120 }}
-            value={isActive}
-            onChange={setIsActive}
-            options={[
-              { label: 'Đang hoạt động', value: 'true' },
-              { label: 'Đã vô hiệu', value: 'false' },
-            ]}
-          />
-          <InputNumber
-            min={0}
-            max={5}
-            step={0.5}
-            placeholder="Min rating"
-            value={minRating}
-            onChange={(v) => setMinRating(v ?? undefined)}
-          />
-        </Space>
-
-        <Button type="primary" onClick={handleOpenCreate}>
-          Tạo hồ sơ HDV
-        </Button>
-      </Space>
-
-      <Table<TourGuide>
-        rowKey="_id"
-        loading={isLoading}
-        dataSource={items}
-        size="small"
-        scroll={{ x: 1000 }}
-        columns={[
-          {
-            title: 'Hướng dẫn viên',
-            key: 'name',
-            width: 260,
-            ellipsis: true,
-            render: (_, row) => (
-              <div>
-                <div>{getGuideName(row)}</div>
-                {row.user?.username && (
-                  <Text type="secondary" style={{ fontSize: 12 }}>
-                    @{row.user.username}
-                  </Text>
-                )}
-              </div>
-            ),
-          },
-          {
-            title: 'Ngôn ngữ',
-            dataIndex: 'languages',
-            width: 200,
-            render: (langs: string[]) =>
-              (langs || []).map((l) => (
-                <Tag key={l} color="blue">
-                  {l.toUpperCase()}
-                </Tag>
-              )),
-          },
-          {
-            title: 'Rating',
-            key: 'rating',
-            width: 160,
-            render: (_, row) =>
-              row.ratingSummary
-                ? `${row.ratingSummary.average.toFixed(1)} (${row.ratingSummary.total})`
-                : '—',
-          },
-          {
-            title: 'Verified',
-            dataIndex: 'isVerified',
-            width: 120,
-            render: (v: boolean) => (
-              <Tag color={v ? 'green' : 'default'}>{v ? 'Verified' : 'Pending'}</Tag>
-            ),
-          },
-          {
-            title: 'Available',
-            dataIndex: 'isAvailable',
-            width: 120,
-            render: (v: boolean, row) => (
-              <Switch
-                checked={v}
-                size="small"
-                loading={toggleAvailabilityMutation.isPending}
-                onChange={async () => {
-                  await toggleAvailabilityMutation.mutateAsync(row._id);
-                  message.success('Đã cập nhật trạng thái nhận tour');
-                }}
-              />
-            ),
-          },
-          {
-            title: 'Giá / ngày',
-            dataIndex: 'dailyRate',
-            width: 160,
-            render: (v: number, row) =>
-              v != null ? `${v.toLocaleString()} ${row.currency ?? 'VND'}` : '—',
-          },
-          {
-            title: 'Actions',
-            key: 'actions',
-            width: 260,
-            render: (_, row) => (
-              <Space wrap>
-                <Button size="small" onClick={() => handleOpenEdit(row)}>
-                  Sửa
-                </Button>
-                <Button
-                  size="small"
-                  onClick={() =>
-                    navigate(`${ROUTES.ADMIN_REVIEWS}?entityType=GUIDE`)
-                  }
-                >
-                  Reviews
-                </Button>
-                <Button
-                  size="small"
-                  onClick={async () => {
-                    await verifyMutation.mutateAsync({
-                      id: row._id,
-                      isVerified: !row.isVerified,
-                    });
-                    message.success(
-                      !row.isVerified ? 'Đã verify hướng dẫn viên' : 'Đã bỏ verify',
-                    );
-                  }}
-                  loading={verifyMutation.isPending}
-                >
-                  {row.isVerified ? 'Unverify' : 'Verify'}
-                </Button>
-                <Button
-                  size="small"
-                  danger
-                  loading={deleteMutation.isPending}
-                  onClick={() => handleDelete(row)}
-                >
-                  Xoá / Vô hiệu
-                </Button>
-              </Space>
-            ),
-          },
+  const filters = (
+    <div className={tableStyles.filtersForm}>
+      <Input
+        allowClear
+        placeholder="Tìm theo tên / username"
+        value={search}
+        onChange={(e) => {
+          setPage(1);
+          setSearch(e.target.value);
+        }}
+      />
+      <Select
+        allowClear
+        placeholder="Tỉnh chuyên dẫn"
+        value={provinceId}
+        onChange={(v) => {
+          setPage(1);
+          setProvinceId(v);
+        }}
+        options={provinces.map((p) => ({
+          label: p.name?.vi || p.name?.en || p.code,
+          value: p._id,
+        }))}
+      />
+      <Select
+        allowClear
+        placeholder="Ngôn ngữ"
+        value={language}
+        onChange={(v) => {
+          setPage(1);
+          setLanguage(v);
+        }}
+        options={LANGUAGE_OPTIONS}
+      />
+      <Select
+        allowClear
+        placeholder="Verified?"
+        value={isVerified}
+        onChange={(v) => {
+          setPage(1);
+          setIsVerified(v);
+        }}
+        options={[
+          { label: 'Đã verify', value: 'true' },
+          { label: 'Chưa verify', value: 'false' },
         ]}
       />
+      <Select
+        allowClear
+        placeholder="Available?"
+        value={isAvailable}
+        onChange={(v) => {
+          setPage(1);
+          setIsAvailable(v);
+        }}
+        options={[
+          { label: 'Có thể nhận tour', value: 'true' },
+          { label: 'Tạm ngưng', value: 'false' },
+        ]}
+      />
+      <Select
+        allowClear
+        placeholder="Active?"
+        value={isActive}
+        onChange={(v) => {
+          setPage(1);
+          setIsActive(v);
+        }}
+        options={[
+          { label: 'Đang hoạt động', value: 'true' },
+          { label: 'Đã vô hiệu', value: 'false' },
+        ]}
+      />
+      <InputNumber
+        min={0}
+        max={5}
+        step={0.5}
+        placeholder="Min rating"
+        value={minRating}
+        onChange={(v) => {
+          setPage(1);
+          setMinRating(v ?? undefined);
+        }}
+        style={{ width: '100%' }}
+      />
+    </div>
+  );
+
+  return (
+    <div
+      className={tableStyles.page}
+      style={{ maxWidth: 1200, margin: '0 auto' }}
+    >
+      <Card className={tableStyles.mainCard}>
+        <div className={tableStyles.header}>
+          <div className={tableStyles.titleWrap}>
+            <Title level={screens.sm ? 4 : 5} style={{ margin: 0 }}>
+              Hướng dẫn viên
+            </Title>
+            <Text type="secondary" style={{ fontSize: screens.sm ? 13 : 12 }}>
+              Quản lý hồ sơ HDV, trạng thái xác minh và khả năng nhận tour.
+            </Text>
+          </div>
+
+          <div className={tableStyles.toolbar}>
+            {!screens.md && (
+              <Button
+                icon={<FilterOutlined />}
+                onClick={() => setFiltersOpen(true)}
+              >
+                Bộ lọc
+              </Button>
+            )}
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={() => refetch()}
+              loading={isFetching}
+            >
+              Làm mới
+            </Button>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={handleOpenCreate}
+            >
+              Tạo hồ sơ HDV
+            </Button>
+          </div>
+        </div>
+
+        {screens.md ? (
+          <div style={{ marginTop: 12 }}>{filters}</div>
+        ) : (
+          <Drawer
+            title="Bộ lọc"
+            open={filtersOpen}
+            onClose={() => setFiltersOpen(false)}
+            placement="right"
+            width={360}
+          >
+            {filters}
+          </Drawer>
+        )}
+
+        <Table<TourGuide>
+          rowKey="_id"
+          loading={isLoading}
+          dataSource={items}
+          size={screens.md ? 'middle' : 'small'}
+          scroll={{ x: 1000 }}
+          locale={{
+            emptyText: <Empty description="Không có hướng dẫn viên phù hợp." />,
+          }}
+          pagination={{
+            current: pagination?.page ?? page,
+            pageSize: pagination?.limit ?? limit,
+            total: pagination?.total ?? 0,
+            showSizeChanger: true,
+            pageSizeOptions: [10, 20, 50, 100],
+            onChange: (p, ps) => {
+              setPage(p);
+              if (ps) setLimit(ps);
+            },
+          }}
+          columns={[
+            {
+              title: 'Hướng dẫn viên',
+              key: 'name',
+              width: 260,
+              ellipsis: true,
+              responsive: ['xs', 'sm', 'md', 'lg', 'xl'],
+              render: (_, row) => (
+                <div>
+                  <div>{getGuideName(row)}</div>
+                  {row.user?.username && (
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      @{row.user.username}
+                    </Text>
+                  )}
+                </div>
+              ),
+            },
+            {
+              title: 'Ngôn ngữ',
+              dataIndex: 'languages',
+              width: 200,
+              responsive: ['sm', 'md', 'lg', 'xl'],
+              render: (langs: string[]) =>
+                (langs || []).map((l) => (
+                  <Tag key={l} color="blue">
+                    {l.toUpperCase()}
+                  </Tag>
+                )),
+            },
+            {
+              title: 'Rating',
+              key: 'rating',
+              width: 160,
+              responsive: ['md', 'lg', 'xl'],
+              render: (_, row) =>
+                row.ratingSummary
+                  ? `${row.ratingSummary.average.toFixed(1)} (${row.ratingSummary.total})`
+                  : '—',
+            },
+            {
+              title: 'Verified',
+              dataIndex: 'isVerified',
+              width: 120,
+              responsive: ['sm', 'md', 'lg', 'xl'],
+              render: (v: boolean) => (
+                <Tag color={v ? 'green' : 'default'}>
+                  {v ? 'Verified' : 'Pending'}
+                </Tag>
+              ),
+            },
+            {
+              title: 'Available',
+              dataIndex: 'isAvailable',
+              width: 120,
+              responsive: ['md', 'lg', 'xl'],
+              render: (v: boolean, row) => (
+                <Switch
+                  checked={v}
+                  size="small"
+                  loading={toggleAvailabilityMutation.isPending}
+                  onChange={async () => {
+                    await toggleAvailabilityMutation.mutateAsync(row._id);
+                    message.success('Đã cập nhật trạng thái nhận tour');
+                  }}
+                />
+              ),
+            },
+            {
+              title: 'Giá / ngày',
+              dataIndex: 'dailyRate',
+              width: 160,
+              responsive: ['lg', 'xl'],
+              render: (v: number, row) =>
+                v != null
+                  ? `${v.toLocaleString()} ${row.currency ?? 'VND'}`
+                  : '—',
+            },
+            {
+              title: 'Actions',
+              key: 'actions',
+              width: 260,
+              fixed: 'right',
+              render: (_, row) => (
+                <Space wrap>
+                  <Button size="small" onClick={() => handleOpenEdit(row)}>
+                    Sửa
+                  </Button>
+                  <Button
+                    size="small"
+                    onClick={() =>
+                      navigate(`${ROUTES.ADMIN_REVIEWS}?entityType=GUIDE`)
+                    }
+                  >
+                    Reviews
+                  </Button>
+                  <Button
+                    size="small"
+                    onClick={async () => {
+                      await verifyMutation.mutateAsync({
+                        id: row._id,
+                        isVerified: !row.isVerified,
+                      });
+                      message.success(
+                        !row.isVerified
+                          ? 'Đã verify hướng dẫn viên'
+                          : 'Đã bỏ verify',
+                      );
+                    }}
+                    loading={verifyMutation.isPending}
+                  >
+                    {row.isVerified ? 'Unverify' : 'Verify'}
+                  </Button>
+                  <Button
+                    size="small"
+                    danger
+                    loading={deleteMutation.isPending}
+                    onClick={() => handleDelete(row)}
+                  >
+                    Xoá / Vô hiệu
+                  </Button>
+                </Space>
+              ),
+            },
+          ]}
+        />
+      </Card>
 
       <Modal
         title="Tạo hồ sơ hướng dẫn viên"
@@ -622,14 +814,22 @@ export default function TourGuidePage() {
                 key: 'translations',
                 label: 'Nội dung đa ngôn ngữ',
                 children: (
-                  <Form.Item label="Nội dung theo ngôn ngữ" style={{ marginBottom: 0 }}>
+                  <Form.Item
+                    label="Nội dung theo ngôn ngữ"
+                    style={{ marginBottom: 0 }}
+                  >
                     <Tabs
                       items={languages.map((lang) => ({
                         key: lang.code,
                         label: (
                           <Space>
                             {lang.flagUrl && (
-                              <img src={lang.flagUrl} alt="" width={18} height={12} />
+                              <img
+                                src={lang.flagUrl}
+                                alt=""
+                                width={18}
+                                height={12}
+                              />
                             )}
                             {lang.code.toUpperCase()}
                           </Space>
@@ -646,13 +846,19 @@ export default function TourGuidePage() {
                                 },
                               ]}
                             >
-                              <Input.TextArea rows={4} placeholder="Mô tả chi tiết" />
+                              <Input.TextArea
+                                rows={4}
+                                placeholder="Mô tả chi tiết"
+                              />
                             </Form.Item>
                             <Form.Item
                               name={['translations', lang.code, 'shortBio']}
                               label="Tóm tắt"
                             >
-                              <Input.TextArea rows={2} placeholder="Mô tả ngắn" />
+                              <Input.TextArea
+                                rows={2}
+                                placeholder="Mô tả ngắn"
+                              />
                             </Form.Item>
                             <Form.Item
                               name={['translations', lang.code, 'specialties']}
@@ -661,7 +867,11 @@ export default function TourGuidePage() {
                               <Input placeholder="Mô tả chung (tuỳ chọn)" />
                             </Form.Item>
                             <Form.Item
-                              name={['translations', lang.code, 'specialtyItems']}
+                              name={[
+                                'translations',
+                                lang.code,
+                                'specialtyItems',
+                              ]}
                               label="Chuyên môn (tags)"
                             >
                               <Select
@@ -685,7 +895,9 @@ export default function TourGuidePage() {
                     <Form.Item
                       name="languages"
                       label="Ngôn ngữ HDV sử dụng"
-                      rules={[{ required: true, message: 'Chọn ít nhất 1 ngôn ngữ' }]}
+                      rules={[
+                        { required: true, message: 'Chọn ít nhất 1 ngôn ngữ' },
+                      ]}
                     >
                       <Select
                         mode="multiple"
@@ -693,7 +905,10 @@ export default function TourGuidePage() {
                         options={LANGUAGE_OPTIONS}
                       />
                     </Form.Item>
-                    <Form.Item name="specializedProvinces" label="Tỉnh chuyên dẫn">
+                    <Form.Item
+                      name="specializedProvinces"
+                      label="Tỉnh chuyên dẫn"
+                    >
                       <Select
                         mode="multiple"
                         placeholder="Chọn tỉnh"
@@ -719,7 +934,11 @@ export default function TourGuidePage() {
                 children: (
                   <>
                     <Space style={{ width: '100%' }} wrap>
-                      <Form.Item name="licenseNumber" label="Số thẻ HDV" style={{ minWidth: 200 }}>
+                      <Form.Item
+                        name="licenseNumber"
+                        label="Số thẻ HDV"
+                        style={{ minWidth: 200 }}
+                      >
                         <Input />
                       </Form.Item>
                       <Form.Item
@@ -736,7 +955,11 @@ export default function TourGuidePage() {
                         label="Tỷ lệ phản hồi (%)"
                         style={{ minWidth: 140 }}
                       >
-                        <InputNumber min={0} max={100} style={{ width: '100%' }} />
+                        <InputNumber
+                          min={0}
+                          max={100}
+                          style={{ width: '100%' }}
+                        />
                       </Form.Item>
                       <Form.Item
                         name="completedTripsCount"
@@ -750,7 +973,11 @@ export default function TourGuidePage() {
                         label="Tỷ lệ khách quay lại (%)"
                         style={{ minWidth: 160 }}
                       >
-                        <InputNumber min={0} max={100} style={{ width: '100%' }} />
+                        <InputNumber
+                          min={0}
+                          max={100}
+                          style={{ width: '100%' }}
+                        />
                       </Form.Item>
                     </Space>
                     <Form.Item label="CV (PDF/DOC)">
@@ -771,7 +998,9 @@ export default function TourGuidePage() {
                         multiple
                         beforeUpload={() => false}
                         fileList={createGalleryFileList}
-                        onChange={({ fileList }) => setCreateGalleryFileList(fileList)}
+                        onChange={({ fileList }) =>
+                          setCreateGalleryFileList(fileList)
+                        }
                       >
                         <Button icon={<UploadOutlined />}>Thêm ảnh</Button>
                       </Upload>
@@ -793,7 +1022,11 @@ export default function TourGuidePage() {
                       >
                         <InputNumber min={0} style={{ width: '100%' }} />
                       </Form.Item>
-                      <Form.Item name="currency" label="Tiền tệ" style={{ minWidth: 120 }}>
+                      <Form.Item
+                        name="currency"
+                        label="Tiền tệ"
+                        style={{ minWidth: 120 }}
+                      >
                         <Select
                           options={[
                             { label: 'VND', value: 'VND' },
@@ -802,7 +1035,10 @@ export default function TourGuidePage() {
                         />
                       </Form.Item>
                     </Space>
-                    <Form.Item name="contactMethods" label="Kênh liên hệ ưu tiên">
+                    <Form.Item
+                      name="contactMethods"
+                      label="Kênh liên hệ ưu tiên"
+                    >
                       <Select
                         mode="multiple"
                         options={CONTACT_METHOD_OPTIONS}
@@ -852,7 +1088,12 @@ export default function TourGuidePage() {
                                 value: editingGuide.userId,
                               },
                             ]
-                          : [{ label: editingGuide?.userId ?? '', value: editingGuide?.userId }]
+                          : [
+                              {
+                                label: editingGuide?.userId ?? '',
+                                value: editingGuide?.userId,
+                              },
+                            ]
                       }
                     />
                   </Form.Item>
@@ -862,14 +1103,22 @@ export default function TourGuidePage() {
                 key: 'translations',
                 label: 'Nội dung đa ngôn ngữ',
                 children: (
-                  <Form.Item label="Nội dung theo ngôn ngữ" style={{ marginBottom: 0 }}>
+                  <Form.Item
+                    label="Nội dung theo ngôn ngữ"
+                    style={{ marginBottom: 0 }}
+                  >
                     <Tabs
                       items={languages.map((lang) => ({
                         key: lang.code,
                         label: (
                           <Space>
                             {lang.flagUrl && (
-                              <img src={lang.flagUrl} alt="" width={18} height={12} />
+                              <img
+                                src={lang.flagUrl}
+                                alt=""
+                                width={18}
+                                height={12}
+                              />
                             )}
                             {lang.code.toUpperCase()}
                           </Space>
@@ -886,13 +1135,19 @@ export default function TourGuidePage() {
                                 },
                               ]}
                             >
-                              <Input.TextArea rows={4} placeholder="Mô tả chi tiết" />
+                              <Input.TextArea
+                                rows={4}
+                                placeholder="Mô tả chi tiết"
+                              />
                             </Form.Item>
                             <Form.Item
                               name={['translations', lang.code, 'shortBio']}
                               label="Tóm tắt"
                             >
-                              <Input.TextArea rows={2} placeholder="Mô tả ngắn" />
+                              <Input.TextArea
+                                rows={2}
+                                placeholder="Mô tả ngắn"
+                              />
                             </Form.Item>
                             <Form.Item
                               name={['translations', lang.code, 'specialties']}
@@ -901,7 +1156,11 @@ export default function TourGuidePage() {
                               <Input placeholder="Mô tả chung (tuỳ chọn)" />
                             </Form.Item>
                             <Form.Item
-                              name={['translations', lang.code, 'specialtyItems']}
+                              name={[
+                                'translations',
+                                lang.code,
+                                'specialtyItems',
+                              ]}
                               label="Chuyên môn (tags)"
                             >
                               <Select
@@ -925,7 +1184,9 @@ export default function TourGuidePage() {
                     <Form.Item
                       name="languages"
                       label="Ngôn ngữ HDV sử dụng"
-                      rules={[{ required: true, message: 'Chọn ít nhất 1 ngôn ngữ' }]}
+                      rules={[
+                        { required: true, message: 'Chọn ít nhất 1 ngôn ngữ' },
+                      ]}
                     >
                       <Select
                         mode="multiple"
@@ -933,7 +1194,10 @@ export default function TourGuidePage() {
                         options={LANGUAGE_OPTIONS}
                       />
                     </Form.Item>
-                    <Form.Item name="specializedProvinces" label="Tỉnh chuyên dẫn">
+                    <Form.Item
+                      name="specializedProvinces"
+                      label="Tỉnh chuyên dẫn"
+                    >
                       <Select
                         mode="multiple"
                         placeholder="Chọn tỉnh"
@@ -959,7 +1223,11 @@ export default function TourGuidePage() {
                 children: (
                   <>
                     <Space style={{ width: '100%' }} wrap>
-                      <Form.Item name="licenseNumber" label="Số thẻ HDV" style={{ minWidth: 200 }}>
+                      <Form.Item
+                        name="licenseNumber"
+                        label="Số thẻ HDV"
+                        style={{ minWidth: 200 }}
+                      >
                         <Input />
                       </Form.Item>
                       <Form.Item
@@ -976,7 +1244,11 @@ export default function TourGuidePage() {
                         label="Tỷ lệ phản hồi (%)"
                         style={{ minWidth: 140 }}
                       >
-                        <InputNumber min={0} max={100} style={{ width: '100%' }} />
+                        <InputNumber
+                          min={0}
+                          max={100}
+                          style={{ width: '100%' }}
+                        />
                       </Form.Item>
                       <Form.Item
                         name="completedTripsCount"
@@ -990,7 +1262,11 @@ export default function TourGuidePage() {
                         label="Tỷ lệ khách quay lại (%)"
                         style={{ minWidth: 160 }}
                       >
-                        <InputNumber min={0} max={100} style={{ width: '100%' }} />
+                        <InputNumber
+                          min={0}
+                          max={100}
+                          style={{ width: '100%' }}
+                        />
                       </Form.Item>
                     </Space>
                     <Form.Item label="CV (PDF/DOC)">
@@ -1011,7 +1287,9 @@ export default function TourGuidePage() {
                         multiple
                         beforeUpload={() => false}
                         fileList={editGalleryFileList}
-                        onChange={({ fileList }) => setEditGalleryFileList(fileList)}
+                        onChange={({ fileList }) =>
+                          setEditGalleryFileList(fileList)
+                        }
                       >
                         <Button icon={<UploadOutlined />}>Thêm ảnh</Button>
                       </Upload>
@@ -1033,7 +1311,11 @@ export default function TourGuidePage() {
                       >
                         <InputNumber min={0} style={{ width: '100%' }} />
                       </Form.Item>
-                      <Form.Item name="currency" label="Tiền tệ" style={{ minWidth: 120 }}>
+                      <Form.Item
+                        name="currency"
+                        label="Tiền tệ"
+                        style={{ minWidth: 120 }}
+                      >
                         <Select
                           options={[
                             { label: 'VND', value: 'VND' },
@@ -1042,7 +1324,10 @@ export default function TourGuidePage() {
                         />
                       </Form.Item>
                     </Space>
-                    <Form.Item name="contactMethods" label="Kênh liên hệ ưu tiên">
+                    <Form.Item
+                      name="contactMethods"
+                      label="Kênh liên hệ ưu tiên"
+                    >
                       <Select
                         mode="multiple"
                         options={CONTACT_METHOD_OPTIONS}
@@ -1063,7 +1348,6 @@ export default function TourGuidePage() {
           />
         </Form>
       </Modal>
-    </Card>
+    </div>
   );
 }
-

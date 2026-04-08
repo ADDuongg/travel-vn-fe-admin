@@ -1,4 +1,4 @@
-import { Card, Grid } from 'antd';
+import { Card, Empty, Grid, Skeleton, Typography } from 'antd';
 import {
   LineChart,
   Line,
@@ -11,25 +11,48 @@ import {
 import type { AdminDashboardOverview } from '@/services/dashboard.service';
 
 const { useBreakpoint } = Grid;
+const { Text } = Typography;
 
 type RevenueTrendChartProps = {
   overview?: AdminDashboardOverview;
+  loading?: boolean;
 };
 
-export default function RevenueTrendChart({ overview }: RevenueTrendChartProps) {
+export default function RevenueTrendChart({
+  overview,
+  loading,
+}: RevenueTrendChartProps) {
   const screens = useBreakpoint();
 
-  if (!overview) return null;
+  const chartHeight = screens.md ? 260 : 200;
+
+  if (loading) {
+    return (
+      <Card title="Xu hướng doanh thu" style={{ borderRadius: 12, height: '100%' }}>
+        <Skeleton active paragraph={{ rows: 6 }} />
+      </Card>
+    );
+  }
+
+  if (!overview) {
+    return (
+      <Card title="Xu hướng doanh thu" style={{ borderRadius: 12, height: '100%' }}>
+        <Empty
+          description={
+            <Text type="secondary">Chưa có dữ liệu để hiển thị biểu đồ.</Text>
+          }
+        />
+      </Card>
+    );
+  }
 
   const data = [
     { label: 'Hôm nay', value: overview.revenue.today },
     { label: 'Trong khoảng', value: overview.revenue.thisWeek },
   ];
 
-  const chartHeight = screens.md ? 260 : 200;
-
   return (
-    <Card title="Revenue Trend" style={{ borderRadius: 12, height: '100%' }}>
+    <Card title="Xu hướng doanh thu" style={{ borderRadius: 12, height: '100%' }}>
       <div style={{ width: '100%', height: chartHeight }}>
         <ResponsiveContainer>
           <LineChart
@@ -56,7 +79,7 @@ export default function RevenueTrendChart({ overview }: RevenueTrendChartProps) 
             <Line
               type="monotone"
               dataKey="value"
-              stroke="#1677ff"
+              stroke="#1E40AF"
               strokeWidth={2}
               dot={{ r: 4 }}
               activeDot={{ r: 6 }}

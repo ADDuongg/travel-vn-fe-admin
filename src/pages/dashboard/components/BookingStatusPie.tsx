@@ -1,4 +1,4 @@
-import { Card, Grid } from 'antd';
+import { Card, Empty, Grid, Skeleton, Typography } from 'antd';
 import {
   PieChart,
   Pie,
@@ -10,32 +10,53 @@ import {
 import type { AdminDashboardOverview } from '@/services/dashboard.service';
 
 const { useBreakpoint } = Grid;
+const { Text } = Typography;
 
 type BookingStatusPieProps = {
   overview?: AdminDashboardOverview;
+  loading?: boolean;
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  CONFIRMED: '#52c41a',
-  PENDING: '#faad14',
-  CANCELLED: '#ff4d4f',
-  EXPIRED: '#fa541c',
+  CONFIRMED: '#16A34A',
+  PENDING: '#F59E0B',
+  CANCELLED: '#DC2626',
+  EXPIRED: '#EA580C',
 };
 
-export default function BookingStatusPie({ overview }: BookingStatusPieProps) {
+export default function BookingStatusPie({ overview, loading }: BookingStatusPieProps) {
   const screens = useBreakpoint();
-
-  if (!overview) return null;
-
-  const data = Object.entries(overview.bookings.byStatus).map(
-    ([status, value]) => ({ name: status, value }),
-  );
 
   const chartHeight = screens.md ? 260 : 220;
 
+  if (loading) {
+    return (
+      <Card title="Phân bố trạng thái booking" style={{ borderRadius: 12, height: '100%' }}>
+        <Skeleton active paragraph={{ rows: 6 }} />
+      </Card>
+    );
+  }
+
+  if (!overview) {
+    return (
+      <Card title="Phân bố trạng thái booking" style={{ borderRadius: 12, height: '100%' }}>
+        <Empty
+          description={
+            <Text type="secondary">Chưa có dữ liệu để hiển thị biểu đồ.</Text>
+          }
+        />
+      </Card>
+    );
+  }
+
+  const data = Object.entries(overview.bookings.byStatus).map(([status, value]) => ({
+    name: status,
+    value,
+  }));
+
   return (
     <Card
-      title="Booking Status Distribution"
+      title="Phân bố trạng thái booking"
       style={{ borderRadius: 12, height: '100%' }}
     >
       <div style={{ width: '100%', height: chartHeight }}>

@@ -3,6 +3,9 @@ import {
   Button,
   Card,
   Collapse,
+  Drawer,
+  Empty,
+  Grid,
   Form,
   Input,
   InputNumber,
@@ -17,6 +20,7 @@ import {
   message,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import { FilterOutlined, ReloadOutlined } from '@ant-design/icons';
 import {
   useProvinces,
   useProvince,
@@ -33,8 +37,10 @@ import type {
   ProvinceGalleryItem,
   ProvinceWard,
 } from '@/interface/province';
+import tableStyles from '@/styles/promax-table.module.css';
 
 const { Title, Text } = Typography;
+const { useBreakpoint } = Grid;
 
 type ProvinceRow = Province;
 
@@ -50,10 +56,12 @@ type ProvinceFormValues = {
 };
 
 export default function ProvincePage() {
+  const screens = useBreakpoint();
   const [search, setSearch] = useState('');
   const [region, setRegion] = useState<string | undefined>();
   const [isPopular, setIsPopular] = useState<string | undefined>();
   const [isActive, setIsActive] = useState<string | undefined>();
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const [editSlug, setEditSlug] = useState<string | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -79,7 +87,12 @@ export default function ProvincePage() {
     [search, region, isPopular, isActive],
   );
 
-  const { data: provinces, isLoading } = useProvinces(params);
+  const {
+    data: provinces,
+    isLoading,
+    refetch,
+    isFetching,
+  } = useProvinces(params);
 
   const { data: provinceDetail, isLoading: isDetailLoading } = useProvince(
     editSlug || undefined,
@@ -220,6 +233,7 @@ export default function ProvincePage() {
     {
       title: 'Tên',
       key: 'name',
+      width: 280,
       render: (_, row) => (
         <div>
           <div>{row.name?.vi || row.name?.en || '-'}</div>
@@ -234,16 +248,22 @@ export default function ProvincePage() {
     {
       title: 'Code',
       dataIndex: 'code',
+      width: 120,
+      responsive: ['sm', 'md', 'lg', 'xl'],
     },
     {
       title: 'Region',
       dataIndex: 'region',
+      width: 120,
+      responsive: ['sm', 'md', 'lg', 'xl'],
       render: (v: ProvinceRegion | undefined) =>
         v ? <Tag color="blue">{v}</Tag> : '—',
     },
     {
       title: 'Nổi bật',
       dataIndex: 'isPopular',
+      width: 120,
+      responsive: ['md', 'lg', 'xl'],
       render: (v: boolean | undefined) => (
         <Tag color={v ? 'gold' : 'default'}>{v ? 'Popular' : 'Normal'}</Tag>
       ),
@@ -251,6 +271,8 @@ export default function ProvincePage() {
     {
       title: 'Active',
       dataIndex: 'isActive',
+      width: 120,
+      responsive: ['md', 'lg', 'xl'],
       render: (v: boolean | undefined) => (
         <Tag color={v ? 'green' : 'red'}>{v ? 'Active' : 'Inactive'}</Tag>
       ),
@@ -258,11 +280,15 @@ export default function ProvincePage() {
     {
       title: 'Order',
       dataIndex: 'displayOrder',
+      width: 100,
+      responsive: ['lg', 'xl'],
       render: (v: number | undefined) => (v != null ? v : '—'),
     },
     {
       title: 'Actions',
       key: 'actions',
+      width: 300,
+      fixed: 'right',
       render: (_, row) => (
         <Space>
           <Button size="small" onClick={() => handleOpenEdit(row)}>
@@ -347,71 +373,112 @@ export default function ProvincePage() {
     },
   ];
 
-  return (
-    <Card>
-      {contextHolder}
-      <Space
-        style={{
-          width: '100%',
-          justifyContent: 'space-between',
-          marginBottom: 16,
-        }}
-        wrap
-      >
-        <Space wrap>
-          <Title level={5} style={{ margin: 0 }}>
-            Provinces
-          </Title>
-          <Input
-            allowClear
-            placeholder="Tìm theo tên / code"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{ width: 240 }}
-          />
-          <Select
-            allowClear
-            placeholder="Region"
-            style={{ width: 160 }}
-            value={region}
-            onChange={setRegion}
-            options={[
-              { label: 'North', value: 'NORTH' },
-              { label: 'Central', value: 'CENTRAL' },
-              { label: 'South', value: 'SOUTH' },
-            ]}
-          />
-          <Select
-            allowClear
-            placeholder="Popular?"
-            style={{ width: 140 }}
-            value={isPopular}
-            onChange={setIsPopular}
-            options={[
-              { label: 'Popular', value: 'true' },
-              { label: 'Normal', value: 'false' },
-            ]}
-          />
-          <Select
-            allowClear
-            placeholder="Active?"
-            style={{ width: 140 }}
-            value={isActive}
-            onChange={setIsActive}
-            options={[
-              { label: 'Đang hoạt động', value: 'true' },
-              { label: 'Đã ẩn (soft delete)', value: 'false' },
-            ]}
-          />
-        </Space>
-      </Space>
-
-      <Table<ProvinceRow>
-        rowKey="_id"
-        loading={isLoading}
-        dataSource={provinces?.items ?? []}
-        columns={columns}
+  const filters = (
+    <div className={tableStyles.filtersForm}>
+      <Input
+        allowClear
+        placeholder="Tìm theo tên / code"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
       />
+      <Select
+        allowClear
+        placeholder="Region"
+        value={region}
+        onChange={setRegion}
+        options={[
+          { label: 'North', value: 'NORTH' },
+          { label: 'Central', value: 'CENTRAL' },
+          { label: 'South', value: 'SOUTH' },
+        ]}
+      />
+      <Select
+        allowClear
+        placeholder="Popular?"
+        value={isPopular}
+        onChange={setIsPopular}
+        options={[
+          { label: 'Popular', value: 'true' },
+          { label: 'Normal', value: 'false' },
+        ]}
+      />
+      <Select
+        allowClear
+        placeholder="Active?"
+        value={isActive}
+        onChange={setIsActive}
+        options={[
+          { label: 'Đang hoạt động', value: 'true' },
+          { label: 'Đã ẩn (soft delete)', value: 'false' },
+        ]}
+      />
+    </div>
+  );
+
+  return (
+    <div
+      className={tableStyles.page}
+      style={{ maxWidth: 1200, margin: '0 auto' }}
+    >
+      {contextHolder}
+      <Card className={tableStyles.mainCard}>
+        <div className={tableStyles.header}>
+          <div className={tableStyles.titleWrap}>
+            <Title level={screens.sm ? 4 : 5} style={{ margin: 0 }}>
+              Provinces
+            </Title>
+            <Text type="secondary" style={{ fontSize: screens.sm ? 13 : 12 }}>
+              Quản lý danh sách tỉnh/thành, trạng thái hoạt động và hiển thị.
+            </Text>
+          </div>
+
+          <div className={tableStyles.toolbar}>
+            {!screens.md && (
+              <Button
+                icon={<FilterOutlined />}
+                onClick={() => setFiltersOpen(true)}
+              >
+                Bộ lọc
+              </Button>
+            )}
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={() => refetch()}
+              loading={isFetching}
+            >
+              Làm mới
+            </Button>
+          </div>
+        </div>
+
+        {screens.md ? (
+          <div style={{ marginTop: 12 }}>{filters}</div>
+        ) : (
+          <Drawer
+            title="Bộ lọc"
+            open={filtersOpen}
+            onClose={() => setFiltersOpen(false)}
+            placement="right"
+            width={360}
+          >
+            {filters}
+          </Drawer>
+        )}
+
+        <Table<ProvinceRow>
+          rowKey="_id"
+          loading={isLoading}
+          dataSource={provinces?.items ?? []}
+          columns={columns}
+          size={screens.md ? 'middle' : 'small'}
+          scroll={{ x: 900 }}
+          locale={{
+            emptyText: (
+              <Empty description="Không có tỉnh/thành phù hợp với điều kiện lọc." />
+            ),
+          }}
+        />
+      </Card>
 
       <Modal
         title={
@@ -584,6 +651,6 @@ export default function ProvincePage() {
           ]}
         />
       </Modal>
-    </Card>
+    </div>
   );
 }

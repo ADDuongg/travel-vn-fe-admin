@@ -2,7 +2,9 @@ import {
   Button,
   Card,
   DatePicker,
+  Drawer,
   Form,
+  Grid,
   Input,
   InputNumber,
   Modal,
@@ -10,16 +12,20 @@ import {
   Space,
   Table,
   Typography,
+  Empty,
   message,
 } from 'antd';
 import { useMemo, useState } from 'react';
+import { FilterOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTours } from '@/queries/tour.queries';
 import { useTourAvailability } from '@/queries/tour.queries';
 import { useEnsureTourInventory } from '@/queries/tour-inventory.queries';
 import type { Tour } from '@/interface/tour';
 import type { TourAvailabilityItem } from '@/interface/tour-booking';
+import tableStyles from '@/styles/promax-table.module.css';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
+const { useBreakpoint } = Grid;
 
 function toYYYYMM(d: Date): string {
   const y = d.getFullYear();
@@ -43,9 +49,11 @@ const statusColor: Record<string, string> = {
 };
 
 export default function TourInventoryPage() {
+  const screens = useBreakpoint();
   const [tourId, setTourId] = useState<string | undefined>();
   const [month, setMonth] = useState<string>(currentMonth());
   const [modalOpen, setModalOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [form] = Form.useForm();
 
   const { data: toursData } = useTours({ page: 1, limit: 50 });
@@ -54,9 +62,48 @@ export default function TourInventoryPage() {
     [toursData?.items],
   );
 
-  const { data: availability = [], isLoading: loadingAvailability } =
-    useTourAvailability(tourId, month);
+  const {
+    data: availability = [],
+    isLoading: loadingAvailability,
+    refetch,
+    isFetching,
+  } = useTourAvailability(tourId, month);
   const ensureMutation = useEnsureTourInventory();
+
+  const filters = (
+    <div className={tableStyles.filtersForm}>
+      <Select
+        showSearch
+        placeholder="Chọn tour"
+        value={tourId}
+        onChange={setTourId}
+        optionFilterProp="label"
+        options={tours.map((t) => ({
+          label: `${getTourName(t)} (${t.code})`,
+          value: t._id,
+        }))}
+      />
+      <Input
+        type="month"
+        value={month}
+        onChange={(e) => setMonth(e.target.value || currentMonth())}
+      />
+      <Button
+        type="primary"
+        disabled={!tourId}
+        onClick={() => {
+          form.setFieldsValue({
+            departureDate: null,
+            totalSlots: 20,
+            specialPrice: undefined,
+          });
+          setModalOpen(true);
+        }}
+      >
+        Thêm / Cập nhật slots
+      </Button>
+    </div>
+  );
 
   const handleEnsure = async () => {
     const values = await form.validateFields();
@@ -91,93 +138,103 @@ export default function TourInventoryPage() {
   };
 
   return (
-    <Card>
-      <Space
-        style={{
-          width: '100%',
-          justifyContent: 'space-between',
-          marginBottom: 16,
-        }}
-        wrap
-      >
-        <Title level={5} style={{ margin: 0 }}>
-          Tour Inventory
-        </Title>
-        <Space wrap>
-          <Select
-            showSearch
-            placeholder="Chọn tour"
-            style={{ width: 280 }}
-            value={tourId}
-            onChange={setTourId}
-            optionFilterProp="label"
-            options={tours.map((t) => ({
-              label: `${getTourName(t)} (${t.code})`,
-              value: t._id,
-            }))}
-          />
-          <Input
-            type="month"
-            value={month}
-            onChange={(e) => setMonth(e.target.value || currentMonth())}
-            style={{ width: 160 }}
-          />
-          <Button
-            type="primary"
-            disabled={!tourId}
-            onClick={() => {
-              form.setFieldsValue({
-                departureDate: null,
-                totalSlots: 20,
-                specialPrice: undefined,
-              });
-              setModalOpen(true);
-            }}
-          >
-            Thêm / Cập nhật slots
-          </Button>
-        </Space>
-      </Space>
+    <div className={tableStyles.page} style={{ maxWidth: 1200, margin: '0 auto' }}>
+      <Card className={tableStyles.mainCard}>
+          <div className={tableStyles.header}>
+            <div className={tableStyles.titleWrap}>
+              <Title level={screens.sm ? 4 : 5} style={{ margin: 0 }}>
+                Tour Inventory
+              </Title>
+              <Text type="secondary" style={{ fontSize: screens.sm ? 13 : 12 }}>
+                Theo dõi tình trạng slots theo tháng và cập nhật nhanh khi cần.
+              </Text>
+            </div>
 
-      <Table<TourAvailabilityItem>
-        rowKey="departureDate"
-        loading={loadingAvailability}
-        dataSource={availability}
-        pagination={false}
-        size="small"
-        scroll={{ x: 700 }}
-        columns={[
-          {
-            title: 'Ngày khởi hành',
-            dataIndex: 'departureDate',
-            width: 160,
-            render: (d: string) => d?.slice(0, 10),
-          },
-          {
-            title: 'Còn trống',
-            dataIndex: 'availableSlots',
-            width: 160,
-            render: (v: number, r) => `${v} / ${r.totalSlots}`,
-          },
-          {
-            title: 'Trạng thái',
-            dataIndex: 'status',
-            width: 140,
-            render: (s: string) => (
-              <span style={{ color: statusColor[s] || undefined }}>{s}</span>
-            ),
-          },
-          {
-            title: 'Giá đặc biệt',
-            dataIndex: 'specialPrice',
-            width: 200,
-            render: (v: number | null, r) =>
-              v != null
-                ? `${Number(v).toLocaleString()} ${r.currency || 'VND'}`
-                : '—',
-          },
-        ]}
-      />
+            <div className={tableStyles.toolbar}>
+              {!screens.md && (
+                <Button
+                  icon={<FilterOutlined />}
+                  onClick={() => setFiltersOpen(true)}
+                >
+                  Bộ lọc
+                </Button>
+              )}
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={() => refetch()}
+                loading={isFetching}
+                disabled={!tourId}
+              >
+                Làm mới
+              </Button>
+            </div>
+          </div>
+
+          {screens.md ? (
+            <div style={{ marginTop: 12 }}>{filters}</div>
+          ) : (
+            <Drawer
+              title="Bộ lọc"
+              open={filtersOpen}
+              onClose={() => setFiltersOpen(false)}
+              placement="right"
+              width={360}
+            >
+              {filters}
+            </Drawer>
+          )}
+
+          <Table<TourAvailabilityItem>
+            rowKey="departureDate"
+            loading={loadingAvailability}
+            dataSource={availability}
+            pagination={false}
+            size={screens.md ? 'middle' : 'small'}
+            scroll={{ x: 700 }}
+            locale={{
+              emptyText: (
+                <Empty
+                  description={
+                    <span>
+                      Chưa có dữ liệu. Hãy chọn tour và tháng để xem inventory.
+                    </span>
+                  }
+                />
+              ),
+            }}
+            columns={[
+              {
+                title: 'Ngày khởi hành',
+                dataIndex: 'departureDate',
+                width: 160,
+                render: (d: string) => d?.slice(0, 10),
+              },
+              {
+                title: 'Còn trống',
+                dataIndex: 'availableSlots',
+                width: 160,
+                render: (v: number, r) => `${v} / ${r.totalSlots}`,
+              },
+              {
+                title: 'Trạng thái',
+                dataIndex: 'status',
+                width: 140,
+                render: (s: string) => (
+                  <span style={{ color: statusColor[s] || undefined }}>{s}</span>
+                ),
+              },
+              {
+                title: 'Giá đặc biệt',
+                dataIndex: 'specialPrice',
+                width: 200,
+                render: (v: number | null, r) =>
+                  v != null
+                    ? `${Number(v).toLocaleString()} ${r.currency || 'VND'}`
+                    : '—',
+              },
+            ]}
+          />
+      </Card>
 
       <Modal
         title="Thêm / Cập nhật inventory"
@@ -214,6 +271,6 @@ export default function TourInventoryPage() {
           </Form.Item>
         </Form>
       </Modal>
-    </Card>
+    </div>
   );
 }
