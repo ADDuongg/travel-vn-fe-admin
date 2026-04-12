@@ -1,0 +1,209 @@
+# =============================================================================
+# GITLAB CI/CD PIPELINE -- React Vite SPA (Admin)
+# =============================================================================
+#
+# Pipeline tu dong: lint, typecheck, build Docker image, deploy len VPS.
+#
+# 4 STAGES:
+#   1. validate  -- Lint code + TypeScript type check (chay tren MOI branch)
+#   2. test      -- Unit tests (hien tai SKIP vi chua co test scripts)
+#   3. build     -- Build Docker image + push len GitLab Container Registry
+#                   (chi branch staging hoac production)
+#   4. deploy    -- Pull image + restart container tren VPS
+#                   (chi branch staging hoac production)
+#
+# BRANCH STRATEGY:
+#   - Branch "staging"    -> build + deploy len staging  (127.0.0.1:8081 -> staging.admin.travel-vn.site)
+#   - Branch "production" -> build + deploy len production (127.0.0.1:9081 -> admin.travel-vn.site)
+#   - Cac branch khac     -> chi chay validate (khong deploy)
+#
+# GITLAB CI VARIABLES CAN THIET (Settings > CI/CD > Variables):
+#   - VPS_HOST            : IP hoac domain cua VPS
+#   - VPS_USER            : SSH username tren VPS
+#   - SSH_PRIVATE_KEY     : SSH private key (type: File, Protected, Masked)
+#   - VITE_API_BASE_URL   : API endpoint (scoped theo environment)
+#   - VITE_SOCKET_URL     : Socket endpoint (scoped theo environment)
+#   - VITE_APP_API_URL    : App API URL (scoped theo environment)
+#   - VITE_DROP_CONSOLE   : true/false (scoped theo environment)
+#
+# =============================================================================
+
+stages:
+  - validate
+  # - test  # Uncomment khi admin co test scripts
+  - build
+  - deploy
+
+variables:
+  NODE_IMAGE: node:22-alpine
+  DOCKER_TLS_CERTDIR: '/certs'
+
+cache:
+  key:
+    files:
+      - yarn.lock
+  paths:
+    - node_modules/
+  policy: pull
+
+# ===========================================================================
+# STAGE 1: VALIDATE
+# ===========================================================================
+
+lint:
+  stage: validate
+  image: $NODE_IMAGE
+  cache:
+    key:
+      files:
+        - yarn.lock
+    paths:
+      - node_modules/
+    policy: pull-push
+  script:
+    - yarn install --frozen-lockfile
+    - yarn lint
+  tags:
+    - travel-staging
+
+typecheck:
+  stage: validate
+  image: $NODE_IMAGE
+  script:
+    - yarn install --frozen-lockfile
+    - npx tsc -b --noEmit
+  tags:
+    - travel-staging
+
+# ===========================================================================
+# STAGE 2: TEST (SKIP -- admin chua co test scripts)
+# ===========================================================================
+# Uncomment khi da them Jest/Vitest vao project:
+#
+# test:
+#   stage: test
+#   image: $NODE_IMAGE
+#   script:
+#     - yarn install --frozen-lockfile
+#     - yarn test --coverage --passWithNoTests
+#   coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
+#   artifacts:
+#     when: always
+#     paths:
+#       - coverage/
+#     expire_in: 7 days
+#   tags:
+#     - travel-staging
+
+# ===========================================================================
+# STAGE 3: BUILD -- Docker build + push to registry
+# ===========================================================================
+
+build:staging:
+  stage: build
+  image: docker:27
+  services:
+    - docker:27-dind
+  variables:
+    DOCKER_TLS_CERTDIR: '/certs'
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - >
+      docker build
+      --build-arg VITE_API_BASE_URL=$VITE_API_BASE_URL
+      --build-arg VITE_SOCKET_URL=$VITE_SOCKET_URL
+      --build-arg VITE_APP_API_URL=$VITE_APP_API_URL
+      --build-arg VITE_DROP_CONSOLE=$VITE_DROP_CONSOLE
+      -t $CI_REGISTRY_IMAGE:staging-$CI_COMMIT_SHORT_SHA
+      -t $CI_REGISTRY_IMAGE:staging-latest
+      .
+    - docker push $CI_REGISTRY_IMAGE:staging-$CI_COMMIT_SHORT_SHA
+    - docker push $CI_REGISTRY_IMAGE:staging-latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "staging"'
+  environment:
+    name: staging
+  tags:
+    - travel-staging
+
+build:production:
+  stage: build
+  image: docker:27
+  services:
+    - docker:27-dind
+  variables:
+    DOCKER_TLS_CERTDIR: '/certs'
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - >
+      docker build
+      --build-arg VITE_API_BASE_URL=$VITE_API_BASE_URL
+      --build-arg VITE_SOCKET_URL=$VITE_SOCKET_URL
+      --build-arg VITE_APP_API_URL=$VITE_APP_API_URL
+      --build-arg VITE_DROP_CONSOLE=$VITE_DROP_CONSOLE
+      -t $CI_REGISTRY_IMAGE:prod-$CI_COMMIT_SHORT_SHA
+      -t $CI_REGISTRY_IMAGE:prod-latest
+      .
+    - docker push $CI_REGISTRY_IMAGE:prod-$CI_COMMIT_SHORT_SHA
+    - docker push $CI_REGISTRY_IMAGE:prod-latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "production"'
+  environment:
+    name: production
+  tags:
+    - travel-production
+
+# ===========================================================================
+# STAGE 4: DEPLOY -- Pull image + restart container tren VPS
+# ===========================================================================
+
+deploy:staging:
+  stage: deploy
+  script:
+    - cd /opt/travel-admin/staging
+    - echo "Login registry..."
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+    - echo "Set image tag..."
+    - export IMAGE_TAG=staging-$CI_COMMIT_SHORT_SHA
+
+    - echo "Pull latest image..."
+    - docker compose -f docker-compose.staging.yml pull
+
+    - echo "Restart container..."
+    - docker compose -f docker-compose.staging.yml up -d --force-recreate
+
+    - echo "Health check..."
+    - sleep 10
+    - curl -f http://127.0.0.1:8081/health || exit 1
+
+    - echo "Deploy staging success"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "staging"'
+  environment:
+    name: staging
+    url: https://staging.admin.travel-vn.site
+  tags:
+    - travel-staging
+
+deploy:production:
+  stage: deploy
+  script:
+    - cd /opt/travel-admin/production
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - export IMAGE_TAG=prod-$CI_COMMIT_SHORT_SHA
+    - docker compose -f docker-compose.production.yml pull
+    - docker compose -f docker-compose.production.yml up -d --force-recreate
+    - echo "Health check..."
+    - sleep 10
+    - curl -f http://127.0.0.1:9081/health || exit 1
+    - echo "Deploy production success"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "production"'
+  environment:
+    name: production
+    url: https://admin.travel-vn.site
+  tags:
+    - travel-production

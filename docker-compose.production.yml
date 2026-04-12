@@ -1,0 +1,72 @@
+# =============================================================================
+# DOCKER COMPOSE -- PRODUCTION ENVIRONMENT (Admin)
+# =============================================================================
+#
+# Production la moi truong user cuoi truy cap -- can on dinh va nhanh.
+# Host VPS nginx proxy admin.travel-vn.site:443 -> 127.0.0.1:9081
+#
+# Cach chay:
+#   docker compose -f docker-compose.production.yml up -d
+#
+# Cach dung:
+#   docker compose -f docker-compose.production.yml down
+#
+# Xem log:
+#   docker compose -f docker-compose.production.yml logs -f
+#
+# Luu y:
+#   - Image duoc build boi GitLab CI va push len GitLab Container Registry.
+#   - Tren VPS, file nay chi pull image tu registry, KHONG build local.
+#   - Production duoc cap nhieu resources hon staging.
+#
+# =============================================================================
+
+services:
+  admin-web-production:
+    image: ${CI_REGISTRY_IMAGE:-registry.gitlab.com/your-group/your-project}:${IMAGE_TAG:-prod-latest}
+
+    container_name: admin-frontend-production
+
+    # Host VPS nginx proxy admin.travel-vn.site -> 127.0.0.1:9081
+    ports:
+      - '127.0.0.1:9081:80'
+
+    restart: unless-stopped
+
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 64M
+
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'wget',
+          '--no-verbose',
+          '--tries=1',
+          '--spider',
+          'http://127.0.0.1/health',
+        ]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+
+    networks:
+      - travel-vn-network
+
+    logging:
+      driver: json-file
+      options:
+        max-size: '50m'
+        max-file: '5'
+
+networks:
+  travel-vn-network:
+    name: travel-vn-network
+    driver: bridge
