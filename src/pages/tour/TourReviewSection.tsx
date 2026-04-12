@@ -7,6 +7,7 @@ import {
   useApproveReview,
   useDeleteReview,
 } from '@/queries/review.queries';
+import type { Review } from '@/services/review.service';
 import { TOUR_KEYS } from '@/queries/tour.queries';
 
 const { Text } = Typography;
@@ -54,7 +55,7 @@ export default function TourReviewSection({
         </Space>
       )}
 
-      <Table
+      <Table<Review>
         rowKey="_id"
         loading={isLoading}
         dataSource={reviews}
@@ -79,10 +80,8 @@ export default function TourReviewSection({
           },
           {
             title: 'User',
-            render: (
-              _: unknown,
-              r: { userId?: { email?: string; username?: string } },
-            ) => r.userId?.email || r.userId?.username || 'Anonymous',
+            render: (_: unknown, r) =>
+              r.userId?.email || r.userId?.username || 'Anonymous',
           },
           {
             title: 'Status',
@@ -104,7 +103,7 @@ export default function TourReviewSection({
           {
             title: 'Actions',
             width: 160,
-            render: (_: unknown, r: { _id: string; isApproved: boolean }) => (
+            render: (_: unknown, r) => (
               <Space size="small">
                 {!r.isApproved && (
                   <Button

@@ -1,4 +1,5 @@
 import {
+  keepPreviousData,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -35,7 +36,7 @@ export const useNotificationList = (
     queryKey: NOTIFICATION_KEYS.list(params),
     queryFn: () => getNotifications(params),
     enabled,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 
 export const useInfiniteNotificationList = (

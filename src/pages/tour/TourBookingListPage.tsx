@@ -1,4 +1,4 @@
-import { Button, Card, Drawer, Empty, Grid, Select, Space, Table, Tag, Typography } from 'antd';
+import { Button, Card, Drawer, Empty, Grid, Select, Table, Tag, Typography } from 'antd';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FilterOutlined, ReloadOutlined } from '@ant-design/icons';

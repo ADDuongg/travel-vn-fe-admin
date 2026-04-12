@@ -1,6 +1,6 @@
 import api from '@/lib/axios';
 
-export type ReviewEntityType = 'ROOM' | 'HOTEL' | 'TOUR' | 'BLOG';
+export type ReviewEntityType = 'ROOM' | 'HOTEL' | 'TOUR' | 'BLOG' | 'GUIDE';
 
 export type Review = {
   _id: string;
