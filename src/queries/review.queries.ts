@@ -9,10 +9,7 @@ import {
   approveReview,
   deleteReview,
 } from '@/services/review.service';
-import type {
-  GetAdminReviewsParams,
-  ReviewEntityType,
-} from '@/services/review.service';
+import type { GetAdminReviewsParams } from '@/services/review.service';
 
 /* ================= QUERY KEY ================= */
 

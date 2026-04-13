@@ -42,7 +42,7 @@ export default function OverviewCards({
   overview,
   isLoading,
   isError,
-}: OverviewCardsProps): JSX.Element {
+}: OverviewCardsProps) {
   const screens = useBreakpoint();
 
   const cardPadding = screens.md ? '20px 24px' : '14px 16px';
