@@ -50,6 +50,8 @@ cache:
 # STAGE 1: VALIDATE
 # ===========================================================================
 
+# Nếu runner dùng "shell" executor, GitLab bỏ qua `image:` — lint chạy với Node/Yarn
+# trên máy runner (cần Node >= 18). Dùng docker/kubernetes executor để luôn dùng $NODE_IMAGE.
 lint:
   stage: validate
   image: $NODE_IMAGE
