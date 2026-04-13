@@ -34,7 +34,7 @@ export default function ApiRoleTab() {
     if (apiRoles) {
       setChecked(apiRoles.map((r) => r.apiCode));
     }
-  }, [roleCode]);
+  }, [roleCode, apiRoles]);
 
   const onSave = () => {
     if (!roleCode) return;

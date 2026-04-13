@@ -28,7 +28,7 @@ import { EnumLanguage } from '@/constants/enum';
 import { useHotelOptions } from '@/queries/hotel.queries';
 
 const capacityValidator = ({ getFieldValue }: any) => ({
-  validator(_: any, _value: any) {
+  validator() {
     const capacity = getFieldValue('capacity');
 
     if (!capacity) return Promise.resolve();
