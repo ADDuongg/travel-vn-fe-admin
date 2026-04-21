@@ -2,6 +2,7 @@ export const ROUTES = {
   ROOT: '/',
   LOGIN: '/login',
   DASHBOARD: '/dashboard',
+  FAVORITES: '/dashboard/favorites',
 
   TOUR: {
     INDEX: '/dashboard/tour',
@@ -47,6 +48,7 @@ export const ROUTES = {
 
 export const ROUTE_KEYS = {
   DASHBOARD: 'DASHBOARD',
+  FAVORITES: 'FAVORITES',
   TOUR: 'TOUR_LIST',
   TOUR_INVENTORY: 'TOUR_INVENTORY',
   TOUR_BOOKING: 'TOUR_BOOKING_LIST',

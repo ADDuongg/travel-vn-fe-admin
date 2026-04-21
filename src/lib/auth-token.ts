@@ -2,17 +2,15 @@
  * Access token lưu trong memory (giảm rủi ro XSS).
  * Refresh token do Backend lưu HTTP-only cookie, FE không đọc/ghi.
  */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 let accessToken: string | null = null;
-let authUser: any | null = null;
+let authUser: unknown | null = null;
 
 export const authUtils = {
   getAuthUser() {
     return authUser;
   },
 
-  setAuthUser(user: any) {
+  setAuthUser(user: unknown) {
     authUser = user;
   },
 
@@ -32,6 +30,6 @@ export const authUtils = {
   getRefreshToken() {
     return null;
   },
-  setRefreshToken(_token: string) {},
+  setRefreshToken() {},
   clearRefreshToken() {},
 };

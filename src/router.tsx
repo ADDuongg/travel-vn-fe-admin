@@ -26,6 +26,7 @@ import BookingDetailPage from '@pages/booking/BookingDetail';
 import LoginPage from '@pages/auth/LoginPage';
 import TourGuidePage from '@pages/tour-guide/TourGuidePage';
 import ProvincePage from '@pages/province/ProvincePage';
+import FavoritesPage from '@pages/favorites/FavoritesPage';
 import { EnumRole } from '@/constants/enum';
 
 export const routes = [
@@ -46,6 +47,13 @@ export const routes = [
       {
         index: true,
         element: <Dashboard />,
+      },
+
+      // ===== FAVORITES =====
+      {
+        path: ROUTES.FAVORITES,
+        element: <FavoritesPage />,
+        handle: { breadcrumb: 'Favorites' },
       },
 
       // ===== TOUR =====

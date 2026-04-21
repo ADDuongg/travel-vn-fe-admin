@@ -1,6 +1,7 @@
 import LogoPHX from '@/assets/images/logo_phx.png';
 import { useThemeMode } from '@/providers/antd-theme/context';
 import {
+  HeartOutlined,
   InfoCircleFilled,
   LogoutOutlined,
   PieChartOutlined,
@@ -47,6 +48,7 @@ const siderStyle: React.CSSProperties = {
 
 const KEY_TO_PATH: Record<string, string> = {
   [ROUTE_KEYS.DASHBOARD]: ROUTES.DASHBOARD,
+  [ROUTE_KEYS.FAVORITES]: ROUTES.FAVORITES,
   [ROUTE_KEYS.TOUR]: ROUTES.TOUR.INDEX,
   [ROUTE_KEYS.TOUR_INVENTORY]: ROUTES.TOUR.INVENTORY,
   [ROUTE_KEYS.TOUR_BOOKING]: ROUTES.TOUR_BOOKING.INDEX,
@@ -65,6 +67,7 @@ const KEY_TO_PATH: Record<string, string> = {
 
 const items: MenuItem[] = [
   getItem('Dashboard', ROUTE_KEYS.DASHBOARD, <PieChartOutlined />),
+  getItem('Favorites', ROUTE_KEYS.FAVORITES, <HeartOutlined />),
   getItem('Tours', ROUTE_KEYS.TOUR, <PieChartOutlined />, [
     getItem('Tour List', ROUTE_KEYS.TOUR, <PieChartOutlined />),
     getItem('Tour Inventory', ROUTE_KEYS.TOUR_INVENTORY, <PieChartOutlined />),
