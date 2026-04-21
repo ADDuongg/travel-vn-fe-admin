@@ -1,4 +1,4 @@
-import { Button, Card, Popconfirm, Space, Table, Tag, Typography } from 'antd';
+import { Card, Space, Table, Typography } from 'antd';
 import { StarFilled } from '@ant-design/icons';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -6,9 +6,12 @@ import {
   useAdminReviews,
   useApproveReview,
   useDeleteReview,
+  useUpdateReviewStatus,
 } from '@/queries/review.queries';
 import type { Review } from '@/services/review.service';
 import { TOUR_KEYS } from '@/queries/tour.queries';
+import ReviewAdminActions from '@/pages/review/ReviewAdminActions';
+import { ReviewStatusTag } from '@/pages/review/ReviewStatusTag';
 
 const { Text } = Typography;
 
@@ -33,6 +36,7 @@ export default function TourReviewSection({
   });
 
   const approveMutation = useApproveReview();
+  const updateStatusMutation = useUpdateReviewStatus();
   const deleteMutation = useDeleteReview();
 
   const invalidateTour = () => {
@@ -66,6 +70,7 @@ export default function TourReviewSection({
           onChange: setPage,
           size: 'small',
         }}
+        scroll={{ x: 900 }}
         columns={[
           {
             title: 'Rating',
@@ -85,14 +90,17 @@ export default function TourReviewSection({
           },
           {
             title: 'Status',
-            dataIndex: 'isApproved',
-            width: 100,
-            render: (v: boolean) =>
-              v ? (
-                <Tag color="green">Approved</Tag>
-              ) : (
-                <Tag color="orange">Pending</Tag>
-              ),
+            width: 120,
+            render: (_: unknown, r) => (
+              <Space size={4} wrap>
+                <ReviewStatusTag status={r.status} />
+                {r.deletedAt != null && r.deletedAt !== '' && (
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    (deleted)
+                  </Text>
+                )}
+              </Space>
+            ),
           },
           {
             title: 'Created',
@@ -101,37 +109,39 @@ export default function TourReviewSection({
             render: (v: string) => (v ? new Date(v).toLocaleString() : '-'),
           },
           {
-            title: 'Actions',
+            title: 'Updated',
+            dataIndex: 'updatedAt',
             width: 160,
+            render: (v: string | undefined) =>
+              v ? new Date(v).toLocaleString() : '—',
+          },
+          {
+            title: 'Actions',
+            width: 260,
+            fixed: 'right',
             render: (_: unknown, r) => (
-              <Space size="small">
-                {!r.isApproved && (
-                  <Button
-                    size="small"
-                    type="link"
-                    loading={approveMutation.isPending}
-                    onClick={() =>
-                      approveMutation.mutate(r._id, {
-                        onSuccess: invalidateTour,
-                      })
-                    }
-                  >
-                    Approve
-                  </Button>
-                )}
-                <Popconfirm
-                  title="Xóa đánh giá này?"
-                  onConfirm={() =>
-                    deleteMutation.mutate(r._id, {
-                      onSuccess: invalidateTour,
-                    })
-                  }
-                >
-                  <Button danger size="small" type="link">
-                    Delete
-                  </Button>
-                </Popconfirm>
-              </Space>
+              <ReviewAdminActions
+                review={r}
+                compact
+                approvePending={approveMutation.isPending}
+                updateStatusPending={updateStatusMutation.isPending}
+                deletePending={deleteMutation.isPending}
+                onApprove={async () => {
+                  await approveMutation.mutateAsync(r._id);
+                  invalidateTour();
+                }}
+                onUpdateStatus={async (payload) => {
+                  await updateStatusMutation.mutateAsync({
+                    id: r._id,
+                    payload,
+                  });
+                  invalidateTour();
+                }}
+                onDelete={async () => {
+                  await deleteMutation.mutateAsync(r._id);
+                  invalidateTour();
+                }}
+              />
             ),
           },
         ]}

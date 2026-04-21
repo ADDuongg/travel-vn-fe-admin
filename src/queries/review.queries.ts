@@ -8,7 +8,9 @@ import {
   getAdminReviews,
   approveReview,
   deleteReview,
+  updateReviewStatus,
 } from '@/services/review.service';
+import type { UpdateReviewStatusPayload } from '@/services/review.service';
 import type { GetAdminReviewsParams } from '@/services/review.service';
 
 /* ================= QUERY KEY ================= */
@@ -31,6 +33,27 @@ export const useApproveReview = () => {
 
   return useMutation({
     mutationFn: approveReview,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ADMIN_REVIEW_QUERY_KEY,
+      });
+    },
+  });
+};
+
+/* ================= UPDATE STATUS ================= */
+
+export const useUpdateReviewStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: UpdateReviewStatusPayload;
+    }) => updateReviewStatus(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ADMIN_REVIEW_QUERY_KEY,
