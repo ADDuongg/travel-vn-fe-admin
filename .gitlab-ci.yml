@@ -43,8 +43,12 @@ cache:
     files:
       - yarn.lock
   paths:
-    - node_modules/
-  policy: pull
+    - .yarn/cache/
+  policy: pull-push
+
+default:
+  before_script:
+    - rm -rf node_modules
 
 # ===========================================================================
 # STAGE 1: VALIDATE
