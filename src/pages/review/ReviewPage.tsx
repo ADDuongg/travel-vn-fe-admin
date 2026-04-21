@@ -4,12 +4,13 @@ import {
   Drawer,
   Empty,
   Grid,
-  Popconfirm,
   Space,
   Table,
   Tag,
   Typography,
   Select,
+  Switch,
+  Tooltip,
 } from 'antd';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -18,9 +19,12 @@ import {
   useAdminReviews,
   useApproveReview,
   useDeleteReview,
+  useUpdateReviewStatus,
 } from '@/queries/review.queries';
-import type { ReviewEntityType } from '@/services/review.service';
+import type { ReviewEntityType, ReviewStatus } from '@/services/review.service';
 import tableStyles from '@/styles/promax-table.module.css';
+import ReviewAdminActions from './ReviewAdminActions';
+import { ReviewStatusTag } from './ReviewStatusTag';
 
 const { Title, Text } = Typography;
 const { useBreakpoint } = Grid;
@@ -33,6 +37,13 @@ const ENTITY_OPTIONS: { label: string; value: ReviewEntityType }[] = [
   { label: 'Guide', value: 'GUIDE' },
 ];
 
+const STATUS_FILTER_OPTIONS: { label: string; value: ReviewStatus }[] = [
+  { label: 'Pending', value: 'PENDING' },
+  { label: 'Approved', value: 'APPROVED' },
+  { label: 'Rejected', value: 'REJECTED' },
+  { label: 'Hidden', value: 'HIDDEN' },
+];
+
 export default function AdminReviewPage() {
   const screens = useBreakpoint();
   const [searchParams] = useSearchParams();
@@ -42,7 +53,10 @@ export default function AdminReviewPage() {
     () =>
       (searchParams.get('entityType') as ReviewEntityType) || undefined,
   );
-  const [isApproved, setIsApproved] = useState<boolean | undefined>(false);
+  const [statusFilter, setStatusFilter] = useState<ReviewStatus[] | undefined>(
+    () => ['PENDING'],
+  );
+  const [includeDeleted, setIncludeDeleted] = useState(false);
 
   useEffect(() => {
     const q = searchParams.get('entityType') as ReviewEntityType | null;
@@ -55,10 +69,13 @@ export default function AdminReviewPage() {
     page,
     limit,
     entityType,
-    isApproved,
+    status:
+      statusFilter && statusFilter.length > 0 ? statusFilter : undefined,
+    includeDeleted: includeDeleted ? true : undefined,
   });
 
   const approveMutation = useApproveReview();
+  const updateStatusMutation = useUpdateReviewStatus();
   const deleteMutation = useDeleteReview();
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -75,20 +92,28 @@ export default function AdminReviewPage() {
         options={ENTITY_OPTIONS as any}
       />
       <Select
-        placeholder="Status"
+        mode="multiple"
         allowClear
-        value={
-          isApproved === undefined ? undefined : isApproved ? 'approved' : 'pending'
-        }
+        placeholder="Tất cả trạng thái"
+        value={statusFilter}
         onChange={(v) => {
           setPage(1);
-          setIsApproved(v === undefined ? undefined : v === 'approved');
+          setStatusFilter(v?.length ? v : undefined);
         }}
-        options={[
-          { label: 'Pending', value: 'pending' },
-          { label: 'Approved', value: 'approved' },
-        ]}
+        options={STATUS_FILTER_OPTIONS}
       />
+      <Space align="center" style={{ whiteSpace: 'nowrap' }}>
+        <Text type="secondary" style={{ fontSize: 12 }}>
+          Đã xóa mềm
+        </Text>
+        <Switch
+          checked={includeDeleted}
+          onChange={(v) => {
+            setPage(1);
+            setIncludeDeleted(v);
+          }}
+        />
+      </Space>
     </div>
   );
 
@@ -145,7 +170,7 @@ export default function AdminReviewPage() {
               total: data?.pagination.total,
               onChange: setPage,
             }}
-            scroll={{ x: 900 }}
+            scroll={{ x: 1100 }}
             size={screens.md ? 'middle' : 'small'}
             columns={[
           {
@@ -164,56 +189,70 @@ export default function AdminReviewPage() {
             title: 'Comment',
             dataIndex: 'comment',
             ellipsis: true,
-            width: 320,
+            width: 280,
           },
           {
             title: 'User',
-            width: 180,
+            width: 160,
             render: (_, r) =>
               r.userId?.email || r.userId?.username || 'Anonymous',
           },
           {
             title: 'Status',
-            dataIndex: 'isApproved',
-            width: 120,
-            render: (v) =>
-              v ? (
-                <Tag color="green">Approved</Tag>
-              ) : (
-                <Tag color="orange">Pending</Tag>
-              ),
+            width: 140,
+            render: (_, r) => (
+              <Space size={4} wrap>
+                <ReviewStatusTag status={r.status} />
+                {r.deletedAt != null && r.deletedAt !== '' && (
+                  <Tag>Deleted</Tag>
+                )}
+              </Space>
+            ),
+          },
+          {
+            title: 'Lý do',
+            width: 140,
+            ellipsis: true,
+            render: (_, r) => {
+              const text = r.rejectReason || r.hiddenReason;
+              if (!text) return '—';
+              return (
+                <Tooltip title={text}>
+                  <span>{text}</span>
+                </Tooltip>
+              );
+            },
           },
           {
             title: 'Created',
             dataIndex: 'createdAt',
-            width: 180,
+            width: 150,
             render: (v: string) =>
               v ? new Date(v).toLocaleString() : '-',
           },
           {
+            title: 'Updated',
+            dataIndex: 'updatedAt',
+            width: 150,
+            render: (v: string | undefined) =>
+              v ? new Date(v).toLocaleString() : '—',
+          },
+          {
             title: 'Actions',
-            width: 180,
+            width: 280,
+            fixed: 'right',
             render: (_, r) => (
-              <Space>
-                {!r.isApproved && (
-                  <Button
-                    size="small"
-                    loading={approveMutation.isPending}
-                    onClick={() => approveMutation.mutate(r._id)}
-                  >
-                    Approve
-                  </Button>
-                )}
-
-                <Popconfirm
-                  title="Delete this review?"
-                  onConfirm={() => deleteMutation.mutate(r._id)}
-                >
-                  <Button danger size="small">
-                    Delete
-                  </Button>
-                </Popconfirm>
-              </Space>
+              <ReviewAdminActions
+                review={r}
+                approvePending={approveMutation.isPending}
+                updateStatusPending={updateStatusMutation.isPending}
+                deletePending={deleteMutation.isPending}
+                onApprove={() => approveMutation.mutateAsync(r._id)}
+                onUpdateStatus={(payload) =>
+                  updateStatusMutation.mutateAsync({ id: r._id, payload })
+                }
+                onDelete={() => deleteMutation.mutateAsync(r._id)}
+              />
             ),
           },
             ]}
