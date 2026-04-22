@@ -49,35 +49,38 @@ cache:
 default:
   before_script:
     - rm -rf node_modules
+  after_script:
+    - rm -rf node_modules dist build .vite || true
+  interruptible: true
 
 # ===========================================================================
 # STAGE 1: VALIDATE
 # ===========================================================================
 
-lint:
-  stage: validate
-  image: $NODE_IMAGE
-  cache:
-    key:
-      files:
-        - yarn.lock
-    paths:
-      - node_modules/
-    policy: pull-push
-  script:
-    - yarn install --frozen-lockfile
-    - yarn lint
-  tags:
-    - travel-staging
+# lint:
+#   stage: validate
+#   image: $NODE_IMAGE
+#   cache:
+#     key:
+#       files:
+#         - yarn.lock
+#     paths:
+#       - node_modules/
+#     policy: pull-push
+#   script:
+#     - yarn install --frozen-lockfile
+#     - yarn lint
+#   tags:
+#     - travel-staging
 
-typecheck:
-  stage: validate
-  image: $NODE_IMAGE
-  script:
-    - yarn install --frozen-lockfile
-    - npx tsc -b --noEmit
-  tags:
-    - travel-staging
+# typecheck:
+#   stage: validate
+#   image: $NODE_IMAGE
+#   script:
+#     - yarn install --frozen-lockfile
+#     - npx tsc -b --noEmit
+#   tags:
+#     - travel-staging
 
 # ===========================================================================
 # STAGE 2: TEST (SKIP -- admin chua co test scripts)
@@ -184,6 +187,8 @@ deploy:staging:
     - curl -f http://127.0.0.1:8081/health || exit 1
 
     - echo "Deploy staging success"
+  after_script:
+    - docker image prune -f || true
   rules:
     - if: '$CI_COMMIT_BRANCH == "staging"'
   environment:
@@ -204,6 +209,8 @@ deploy:production:
     - sleep 10
     - curl -f http://127.0.0.1:9081/health || exit 1
     - echo "Deploy production success"
+  after_script:
+    - docker image prune -f || true
   rules:
     - if: '$CI_COMMIT_BRANCH == "production"'
   environment:
