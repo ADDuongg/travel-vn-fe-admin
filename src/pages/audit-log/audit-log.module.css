@@ -1,5 +1,6 @@
 .card {
   cursor: pointer;
+  position: relative;
   transition: border-color var(--transition-color, 200ms ease),
     box-shadow var(--transition-shadow, 200ms ease);
 }
@@ -9,8 +10,27 @@
   outline-offset: 2px;
 }
 
+.card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--border-primary);
+  transition: background var(--transition-color);
+}
+
+.card:hover::before {
+  background: var(--accent-orange);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .card {
+    transition: none;
+  }
+  .card::before {
     transition: none;
   }
 }

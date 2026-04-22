@@ -19,15 +19,15 @@ export default function TourUpdatePage() {
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="form-page-card">
         <Spin />
       </Card>
     );
   }
 
   return (
-    <>
-      <Card title="Edit Tour">
+    <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <Card title="Edit Tour" className="form-page-card">
         <TourForm
           initialValues={data}
           submitText="Update"
@@ -39,6 +39,6 @@ export default function TourUpdatePage() {
       {id && (
         <TourReviewSection tourId={id} ratingSummary={data?.ratingSummary} />
       )}
-    </>
+    </div>
   );
 }

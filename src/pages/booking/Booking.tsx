@@ -6,7 +6,6 @@ import {
   Select,
   Space,
   Table,
-  Tag,
   Typography,
 } from 'antd';
 import { useMemo, useState } from 'react';
@@ -23,27 +22,46 @@ import type {
   BookingStatus,
   BookingType,
 } from '@/services/booking.service';
+import PageShell from '@/components/PageShell';
 
-const { Title } = Typography;
+const { Text } = Typography;
 
-const statusColor: Record<string, string> = {
-  PENDING: 'orange',
-  CONFIRMED: 'green',
-  CANCELLED: 'red',
-  EXPIRED: 'default',
+const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
+  PENDING: { bg: 'rgba(192, 133, 50, 0.1)', color: '#c08532' },
+  CONFIRMED: { bg: 'rgba(31, 138, 101, 0.1)', color: '#1f8a65' },
+  CANCELLED: { bg: 'rgba(207, 45, 86, 0.1)', color: '#cf2d56' },
+  EXPIRED: { bg: 'rgba(223, 168, 143, 0.15)', color: '#b07a5e' },
 };
 
-const paymentColor: Record<string, string> = {
-  UNPAID: 'orange',
-  PAID: 'green',
-  REFUNDED: 'blue',
-  FAILED: 'red',
-  EXPIRED: 'default',
+const PAYMENT_STYLES: Record<string, { bg: string; color: string }> = {
+  UNPAID: { bg: 'rgba(192, 133, 50, 0.1)', color: '#c08532' },
+  PAID: { bg: 'rgba(31, 138, 101, 0.1)', color: '#1f8a65' },
+  REFUNDED: { bg: 'rgba(159, 187, 224, 0.15)', color: '#5a8bb5' },
+  FAILED: { bg: 'rgba(207, 45, 86, 0.1)', color: '#cf2d56' },
+  EXPIRED: { bg: 'rgba(223, 168, 143, 0.15)', color: '#b07a5e' },
 };
+
+function StatusPill({ value, map }: { value: string; map: Record<string, { bg: string; color: string }> }) {
+  const s = map[value] ?? { bg: 'var(--warm-surface-300)', color: 'var(--text-secondary)' };
+  return (
+    <span style={{
+      display: 'inline-block',
+      padding: '2px 10px',
+      borderRadius: 'var(--radius-pill)',
+      background: s.bg,
+      color: s.color,
+      fontSize: 12,
+      fontWeight: 500,
+      lineHeight: '20px',
+    }}>
+      {value}
+    </span>
+  );
+}
 
 export default function BookingPage() {
   const navigate = useNavigate();
-  const [pageIndex, setPageIndex] = useState(0); // 0-based for API
+  const [pageIndex, setPageIndex] = useState(0);
   const [pageSize] = useState(10);
   const [q, setQ] = useState<string>('');
   const [search, setSearch] = useState<string>('');
@@ -69,13 +87,23 @@ export default function BookingPage() {
   const tableData = useMemo(() => data?.data ?? [], [data?.data]);
 
   return (
-    <Card>
-      <Space style={{ width: '100%', justifyContent: 'space-between' }} align="center">
-        <Title level={5}>Bookings</Title>
-
-        <Space>
+    <PageShell
+      title="Bookings"
+      subtitle="Quản lý đặt phòng, thanh toán và hoàn tiền."
+    >
+      <Card>
+        <div style={{
+          display: 'flex',
+          gap: 10,
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          marginBottom: 16,
+          padding: '10px 14px',
+          background: 'var(--warm-surface-300)',
+          borderRadius: 'var(--radius-md)',
+        }}>
           <Input.Search
-            placeholder="Search (room / tour / user email)"
+            placeholder="Tìm kiếm (room / tour / email)"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onSearch={(value) => {
@@ -83,32 +111,24 @@ export default function BookingPage() {
               setSearch(value.trim());
             }}
             allowClear
-            style={{ width: 320 }}
+            style={{ width: 280 }}
           />
-
           <Select
-            placeholder="Booking type"
-            style={{ width: 140 }}
+            placeholder="Loại booking"
+            style={{ width: 130 }}
             value={bookingType}
-            onChange={(v) => {
-              setBookingType(v);
-              setPageIndex(0);
-            }}
+            onChange={(v) => { setBookingType(v); setPageIndex(0); }}
             options={[
               { label: 'Room', value: 'ROOM' },
               { label: 'Tour', value: 'TOUR' },
             ]}
           />
-
           <Select
-            placeholder="Status"
+            placeholder="Trạng thái"
             allowClear
-            style={{ width: 140 }}
+            style={{ width: 130 }}
             value={status}
-            onChange={(v) => {
-              setStatus(v as BookingStatus | undefined);
-              setPageIndex(0);
-            }}
+            onChange={(v) => { setStatus(v as BookingStatus | undefined); setPageIndex(0); }}
             options={[
               { label: 'Pending', value: 'PENDING' },
               { label: 'Confirmed', value: 'CONFIRMED' },
@@ -116,16 +136,12 @@ export default function BookingPage() {
               { label: 'Expired', value: 'EXPIRED' },
             ]}
           />
-
           <Select
-            placeholder="Payment"
+            placeholder="Thanh toán"
             allowClear
-            style={{ width: 140 }}
+            style={{ width: 130 }}
             value={paymentStatus}
-            onChange={(v) => {
-              setPaymentStatus(v as BookingPaymentStatus | undefined);
-              setPageIndex(0);
-            }}
+            onChange={(v) => { setPaymentStatus(v as BookingPaymentStatus | undefined); setPageIndex(0); }}
             options={[
               { label: 'Unpaid', value: 'UNPAID' },
               { label: 'Paid', value: 'PAID' },
@@ -134,131 +150,119 @@ export default function BookingPage() {
               { label: 'Expired', value: 'EXPIRED' },
             ]}
           />
-        </Space>
-      </Space>
+        </div>
 
-      <Table
-        rowKey="_id"
-        loading={isLoading}
-        style={{ marginTop: 16 }}
-        dataSource={tableData}
-        pagination={{
-          current: (data?.meta?.pageIndex ?? pageIndex) + 1,
-          pageSize: data?.meta?.pageSize ?? pageSize,
-          total: data?.meta?.total ?? 0,
-          onChange: (page) => setPageIndex(page - 1),
-        }}
-        columns={[
-          {
-            title: 'Booking',
-            render: (_: unknown, b: AdminBooking) => (
-              <div>
-                <a
-                  style={{ fontWeight: 600 }}
-                  onClick={() => navigate(`/dashboard/bookings/${b._id}`)}
-                >
-                  #{b._id.slice(-6)}
-                </a>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                  {b.user?.email || b.user?.name || '—'}
-                </div>
-              </div>
-            ),
-          },
-          {
-            title: 'Room',
-            render: (_: unknown, b: AdminBooking) =>
-              b.rooms?.[0]?.room?.name || b.rooms?.[0]?.room?.slug || '—',
-          },
-          {
-            title: 'Amount',
-            dataIndex: 'amount',
-            render: (v: number, b: AdminBooking) =>
-              `${(v ?? 0).toLocaleString()} ${b.currency || 'VND'}`,
-          },
-          {
-            title: 'Status',
-            dataIndex: 'status',
-            render: (v: string) => <Tag color={statusColor[v] || 'default'}>{v}</Tag>,
-          },
-          {
-            title: 'Payment',
-            dataIndex: 'paymentStatus',
-            render: (v: string) => <Tag color={paymentColor[v] || 'default'}>{v}</Tag>,
-          },
-          {
-            title: 'Receipt',
-            render: (_: unknown, b: AdminBooking) =>
-              b.bankReceipt?.url ? (
-                <a href={b.bankReceipt.url} target="_blank" rel="noreferrer">
-                  View
-                </a>
-              ) : (
-                '—'
-              ),
-          },
-          {
-            title: 'Actions',
-            render: (_: unknown, b: AdminBooking) => (
-              <Space>
-                {b.paymentStatus === 'UNPAID' && (
-                  <>
-                    <Popconfirm
-                      title="Mark this booking as PAID?"
-                      okText="Mark as paid"
-                      cancelText="Cancel"
-                      onConfirm={() => markPaidMutation.mutate(b._id)}
-                    >
-                      <Button
-                        size="small"
-                        type="primary"
-                        loading={markPaidMutation.isPending}
-                      >
-                        Mark as paid
-                      </Button>
-                    </Popconfirm>
-
-                    <Popconfirm
-                      title="Cancel this unpaid booking? Inventory will be released if before check-in."
-                      okText="Cancel booking"
-                      cancelText="No"
-                      onConfirm={() => cancelMutation.mutate(b._id)}
-                    >
-                      <Button
-                        size="small"
-                        danger
-                        loading={cancelMutation.isPending}
-                      >
-                        Cancel
-                      </Button>
-                    </Popconfirm>
-                  </>
-                )}
-
-                {b.paymentStatus === 'PAID' && (
-                  <Popconfirm
-                    title="Refund this paid booking? Inventory will be released if before check-in."
-                    okText="Refund"
-                    cancelText="No"
-                    onConfirm={() =>
-                      refundMutation.mutate({ id: b._id, fullyRefunded: true })
-                    }
+        <Table
+          rowKey="_id"
+          loading={isLoading}
+          dataSource={tableData}
+          size="middle"
+          pagination={{
+            current: (data?.meta?.pageIndex ?? pageIndex) + 1,
+            pageSize: data?.meta?.pageSize ?? pageSize,
+            total: data?.meta?.total ?? 0,
+            onChange: (page) => setPageIndex(page - 1),
+          }}
+          columns={[
+            {
+              title: 'Booking',
+              render: (_: unknown, b: AdminBooking) => (
+                <div>
+                  <a
+                    style={{ fontWeight: 500, fontSize: 13 }}
+                    onClick={() => navigate(`/dashboard/bookings/${b._id}`)}
                   >
-                    <Button
-                      size="small"
-                      danger
-                      loading={refundMutation.isPending}
+                    #{b._id.slice(-6)}
+                  </a>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                    {b.user?.email || b.user?.name || '---'}
+                  </div>
+                </div>
+              ),
+            },
+            {
+              title: 'Room',
+              render: (_: unknown, b: AdminBooking) => (
+                <Text style={{ fontSize: 13 }}>
+                  {b.rooms?.[0]?.room?.name || b.rooms?.[0]?.room?.slug || '---'}
+                </Text>
+              ),
+            },
+            {
+              title: 'Amount',
+              dataIndex: 'amount',
+              width: 140,
+              render: (v: number, b: AdminBooking) => (
+                <Text style={{ fontSize: 13, fontFamily: 'var(--font-mono)' }}>
+                  {(v ?? 0).toLocaleString()} {b.currency || 'VND'}
+                </Text>
+              ),
+            },
+            {
+              title: 'Status',
+              dataIndex: 'status',
+              width: 120,
+              render: (v: string) => <StatusPill value={v} map={STATUS_STYLES} />,
+            },
+            {
+              title: 'Payment',
+              dataIndex: 'paymentStatus',
+              width: 120,
+              render: (v: string) => <StatusPill value={v} map={PAYMENT_STYLES} />,
+            },
+            {
+              title: 'Receipt',
+              width: 80,
+              render: (_: unknown, b: AdminBooking) =>
+                b.bankReceipt?.url ? (
+                  <a href={b.bankReceipt.url} target="_blank" rel="noreferrer" style={{ fontSize: 13 }}>
+                    View
+                  </a>
+                ) : (
+                  <Text type="secondary" style={{ fontSize: 12 }}>---</Text>
+                ),
+            },
+            {
+              title: 'Actions',
+              width: 200,
+              render: (_: unknown, b: AdminBooking) => (
+                <Space size={4}>
+                  {b.paymentStatus === 'UNPAID' && (
+                    <>
+                      <Popconfirm
+                        title="Mark this booking as PAID?"
+                        onConfirm={() => markPaidMutation.mutate(b._id)}
+                      >
+                        <Button size="small" type="primary" loading={markPaidMutation.isPending}>
+                          Paid
+                        </Button>
+                      </Popconfirm>
+                      <Popconfirm
+                        title="Cancel this unpaid booking?"
+                        onConfirm={() => cancelMutation.mutate(b._id)}
+                      >
+                        <Button size="small" danger loading={cancelMutation.isPending}>
+                          Cancel
+                        </Button>
+                      </Popconfirm>
+                    </>
+                  )}
+                  {b.paymentStatus === 'PAID' && (
+                    <Popconfirm
+                      title="Refund this paid booking?"
+                      onConfirm={() => refundMutation.mutate({ id: b._id, fullyRefunded: true })}
                     >
-                      Refund
-                    </Button>
-                  </Popconfirm>
-                )}
-              </Space>
-            ),
-          },
-        ]}
-      />
-    </Card>
+                      <Button size="small" danger loading={refundMutation.isPending}>
+                        Refund
+                      </Button>
+                    </Popconfirm>
+                  )}
+                </Space>
+              ),
+            },
+          ]}
+        />
+      </Card>
+    </PageShell>
   );
 }
-

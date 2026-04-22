@@ -1,4 +1,4 @@
-import { Card, Empty, Grid, Skeleton, Typography, theme } from 'antd';
+import { Card, Empty, Grid, Skeleton, Typography } from 'antd';
 import {
   LineChart,
   Line,
@@ -7,6 +7,8 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
+  Area,
+  AreaChart,
 } from 'recharts';
 import type { AdminDashboardOverview } from '@/services/dashboard.service';
 
@@ -23,12 +25,15 @@ export default function RevenueTrendChart({
   loading,
 }: RevenueTrendChartProps) {
   const screens = useBreakpoint();
-  const { token } = theme.useToken();
-  const chartHeight = screens.md ? 260 : 200;
+  const chartHeight = screens.md ? 280 : 200;
+
+  const cardTitle = (
+    <span className="premium-card-title">Xu hướng doanh thu</span>
+  );
 
   if (loading) {
     return (
-      <Card title="Xu hướng doanh thu" style={{ height: '100%' }}>
+      <Card title={cardTitle} style={{ height: '100%' }}>
         <Skeleton active paragraph={{ rows: 6 }} />
       </Card>
     );
@@ -36,10 +41,12 @@ export default function RevenueTrendChart({
 
   if (!overview) {
     return (
-      <Card title="Xu hướng doanh thu" style={{ height: '100%' }}>
+      <Card title={cardTitle} style={{ height: '100%' }}>
         <Empty
           description={
-            <Text type="secondary">Chưa có dữ liệu để hiển thị biểu đồ.</Text>
+            <Text type="secondary" style={{ fontFamily: 'var(--font-editorial)' }}>
+              Chưa có dữ liệu để hiển thị biểu đồ.
+            </Text>
           }
         />
       </Card>
@@ -52,53 +59,65 @@ export default function RevenueTrendChart({
   ];
 
   return (
-    <Card title="Xu hướng doanh thu" style={{ height: '100%' }}>
+    <Card title={cardTitle} style={{ height: '100%' }}>
       <div style={{ width: '100%', height: chartHeight }}>
         <ResponsiveContainer>
-          <LineChart
+          <AreaChart
             data={data}
             margin={{
-              top: 16,
-              right: screens.sm ? 24 : 8,
+              top: 8,
+              right: screens.sm ? 16 : 8,
               left: 0,
               bottom: 0,
             }}
           >
+            <defs>
+              <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#f54e00" stopOpacity={0.12} />
+                <stop offset="100%" stopColor="#f54e00" stopOpacity={0.01} />
+              </linearGradient>
+            </defs>
             <CartesianGrid
-              strokeDasharray="3 3"
-              stroke={token.colorBorderSecondary}
+              strokeDasharray="none"
+              stroke="var(--border-primary)"
+              strokeOpacity={0.5}
+              vertical={false}
             />
             <XAxis
               dataKey="label"
-              tick={{ fontSize: screens.sm ? 13 : 11, fill: token.colorTextSecondary }}
-              stroke={token.colorBorderSecondary}
+              tick={{ fontSize: 12, fill: 'var(--text-muted)' }}
+              axisLine={false}
+              tickLine={false}
             />
             <YAxis
               tickFormatter={(v) => Number(v).toLocaleString('vi-VN')}
               width={screens.sm ? 80 : 50}
-              tick={{ fontSize: screens.sm ? 13 : 11, fill: token.colorTextSecondary }}
-              stroke={token.colorBorderSecondary}
+              tick={{ fontSize: 12, fill: 'var(--text-muted)' }}
+              axisLine={false}
+              tickLine={false}
             />
             <Tooltip
               formatter={(value: number) =>
                 `${value.toLocaleString('vi-VN')} ${overview.revenue.currency}`
               }
               contentStyle={{
-                background: token.colorBgElevated,
-                border: `1px solid ${token.colorBorderSecondary}`,
+                background: 'var(--warm-surface-100)',
+                border: '1px solid var(--border-primary)',
                 borderRadius: 8,
                 boxShadow: 'var(--shadow-sm)',
+                fontSize: 13,
               }}
             />
-            <Line
+            <Area
               type="monotone"
               dataKey="value"
               stroke="#f54e00"
               strokeWidth={2}
-              dot={{ r: 4, fill: '#f54e00' }}
-              activeDot={{ r: 6, fill: '#f54e00' }}
+              fill="url(#revenueGradient)"
+              dot={false}
+              activeDot={{ r: 5, fill: '#fff', stroke: '#f54e00', strokeWidth: 2 }}
             />
-          </LineChart>
+          </AreaChart>
         </ResponsiveContainer>
       </div>
     </Card>

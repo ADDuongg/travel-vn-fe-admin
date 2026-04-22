@@ -1,11 +1,11 @@
-import { Card, Empty, Grid, Skeleton, Typography, theme } from 'antd';
+import { Card, Empty, Grid, Skeleton, Typography } from 'antd';
 import {
   PieChart,
   Pie,
   Cell,
   Tooltip,
-  Legend,
   ResponsiveContainer,
+  Label,
 } from 'recharts';
 import type { AdminDashboardOverview } from '@/services/dashboard.service';
 
@@ -24,14 +24,62 @@ const STATUS_COLORS: Record<string, string> = {
   EXPIRED: '#dfa88f',
 };
 
+function CustomLegend({ data }: { data: { name: string; value: number }[] }) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 8,
+        justifyContent: 'center',
+        marginTop: 12,
+      }}
+    >
+      {data.map((entry) => (
+        <span
+          key={entry.name}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '4px 10px',
+            borderRadius: 'var(--radius-pill)',
+            background: 'var(--warm-surface-300)',
+            fontSize: 12,
+            fontWeight: 450,
+            color: 'var(--text-primary)',
+          }}
+        >
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: STATUS_COLORS[entry.name] ?? '#9fbbe0',
+              flexShrink: 0,
+            }}
+          />
+          {entry.name}
+          <span style={{ color: 'var(--text-muted)' }}>
+            {entry.value.toLocaleString('vi-VN')}
+          </span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export default function BookingStatusPie({ overview, loading }: BookingStatusPieProps) {
   const screens = useBreakpoint();
-  const { token } = theme.useToken();
-  const chartHeight = screens.md ? 260 : 220;
+  const chartHeight = screens.md ? 240 : 200;
+
+  const cardTitle = (
+    <span className="premium-card-title">Trạng thái booking</span>
+  );
 
   if (loading) {
     return (
-      <Card title="Phân bố trạng thái booking" style={{ height: '100%' }}>
+      <Card title={cardTitle} style={{ height: '100%' }}>
         <Skeleton active paragraph={{ rows: 6 }} />
       </Card>
     );
@@ -39,10 +87,12 @@ export default function BookingStatusPie({ overview, loading }: BookingStatusPie
 
   if (!overview) {
     return (
-      <Card title="Phân bố trạng thái booking" style={{ height: '100%' }}>
+      <Card title={cardTitle} style={{ height: '100%' }}>
         <Empty
           description={
-            <Text type="secondary">Chưa có dữ liệu để hiển thị biểu đồ.</Text>
+            <Text type="secondary" style={{ fontFamily: 'var(--font-editorial)' }}>
+              Chưa có dữ liệu để hiển thị biểu đồ.
+            </Text>
           }
         />
       </Card>
@@ -54,8 +104,10 @@ export default function BookingStatusPie({ overview, loading }: BookingStatusPie
     value,
   }));
 
+  const total = data.reduce((sum, d) => sum + d.value, 0);
+
   return (
-    <Card title="Phân bố trạng thái booking" style={{ height: '100%' }}>
+    <Card title={cardTitle} style={{ height: '100%' }}>
       <div style={{ width: '100%', height: chartHeight }}>
         <ResponsiveContainer>
           <PieChart>
@@ -63,9 +115,10 @@ export default function BookingStatusPie({ overview, loading }: BookingStatusPie
               data={data}
               dataKey="value"
               nameKey="name"
-              innerRadius="50%"
-              outerRadius="78%"
-              paddingAngle={4}
+              innerRadius="52%"
+              outerRadius="80%"
+              paddingAngle={3}
+              stroke="none"
             >
               {data.map((entry) => (
                 <Cell
@@ -73,24 +126,60 @@ export default function BookingStatusPie({ overview, loading }: BookingStatusPie
                   fill={STATUS_COLORS[entry.name] ?? '#9fbbe0'}
                 />
               ))}
+              <Label
+                position="center"
+                content={() => (
+                  <text
+                    x="50%"
+                    y="50%"
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                  >
+                    <tspan
+                      x="50%"
+                      dy="-6"
+                      style={{
+                        fontSize: 22,
+                        fontWeight: 600,
+                        fill: 'var(--text-primary)',
+                        letterSpacing: '-0.5px',
+                      }}
+                    >
+                      {total.toLocaleString('vi-VN')}
+                    </tspan>
+                    <tspan
+                      x="50%"
+                      dy="18"
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 500,
+                        fill: 'var(--text-muted)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                      }}
+                    >
+                      TOTAL
+                    </tspan>
+                  </text>
+                )}
+              />
             </Pie>
             <Tooltip
               formatter={(value: number) =>
                 `${value.toLocaleString('vi-VN')} booking`
               }
               contentStyle={{
-                background: token.colorBgElevated,
-                border: `1px solid ${token.colorBorderSecondary}`,
+                background: 'var(--warm-surface-100)',
+                border: '1px solid var(--border-primary)',
                 borderRadius: 8,
                 boxShadow: 'var(--shadow-sm)',
+                fontSize: 13,
               }}
-            />
-            <Legend
-              wrapperStyle={{ fontSize: screens.sm ? 13 : 12 }}
             />
           </PieChart>
         </ResponsiveContainer>
       </div>
+      <CustomLegend data={data} />
     </Card>
   );
 }

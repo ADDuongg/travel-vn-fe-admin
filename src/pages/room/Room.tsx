@@ -10,13 +10,15 @@ import {
   Typography,
   message,
 } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useRooms, useDeleteRoom } from '@/queries/room.queries';
 import { useProvinceDropdown } from '@/queries/province.queries';
 import { useHotelOptions } from '@/queries/hotel.queries';
 import api from '@/lib/axios';
+import PageShell from '@/components/PageShell';
 
-const { Title } = Typography;
+const { Text } = Typography;
 
 function getHotelName(room: { hotelId?: unknown }) {
   const hotel = room?.hotelId;
@@ -76,9 +78,7 @@ export default function RoomPage() {
       await api.post(
         `/api/v1/room-inventories/ensure/${roomId}`,
         undefined,
-        {
-          params: { from, to },
-        },
+        { params: { from, to } },
       );
       message.success('Generate room inventory success');
     } catch (error: any) {
@@ -89,14 +89,19 @@ export default function RoomPage() {
   };
 
   return (
-    <Card>
-      <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 16 }} wrap>
-        <Space wrap>
-          <Title level={5} style={{ margin: 0 }}>
-            Rooms
-          </Title>
+    <PageShell
+      title="Rooms"
+      subtitle="Quản lý phòng theo khách sạn và tỉnh/thành."
+      actions={
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/dashboard/room/create')}>
+          Tạo phòng
+        </Button>
+      }
+    >
+      <Card>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
           <Select
-            placeholder="Filter by province"
+            placeholder="Lọc theo tỉnh/thành"
             allowClear
             style={{ width: 200 }}
             value={provinceId}
@@ -107,10 +112,10 @@ export default function RoomPage() {
             }))}
           />
           <Select
-            placeholder="Filter by hotel"
+            placeholder="Lọc theo hotel"
             allowClear
             mode="multiple"
-            style={{ minWidth: 220 }}
+            style={{ minWidth: 240 }}
             value={hotelIds}
             onChange={setHotelIds}
             options={hotelOptions.map((h) => ({
@@ -118,74 +123,84 @@ export default function RoomPage() {
               value: h._id,
             }))}
           />
-        </Space>
-        <Button type="primary" onClick={() => navigate('/dashboard/room/create')}>
-          Create Room
-        </Button>
-      </Space>
+        </div>
 
-      <Table
-        rowKey="_id"
-        loading={isLoading}
-        style={{ marginTop: 16 }}
-        dataSource={tableData}
-        columns={[
-          { title: 'Code', dataIndex: 'code' },
-          {
-            title: 'Hotel',
-            key: 'hotel',
-            render: (_, room) => getHotelName(room),
-          },
-          {
-            title: 'Province',
-            key: 'province',
-            render: (_, room) => getProvinceName(room),
-          },
-          {
-            title: 'Price',
-            dataIndex: ['pricing', 'basePrice'],
-            render: (v) => (v != null ? v.toLocaleString() : '-'),
-          },
-          {
-            title: 'Capacity',
-            dataIndex: 'maxGuests',
-          },
-          {
-            title: 'Active',
-            dataIndex: 'isActive',
-            render: (v) => <Switch checked={v} disabled />,
-          },
-          {
-            title: 'Actions',
-            render: (_, room) => (
-              <Space>
-                <Button
-                  size="small"
-                  onClick={() => navigate(`/dashboard/room/${room._id}/edit`)}
-                >
-                  Edit
-                </Button>
-                <Button
-                  size="small"
-                  loading={generatingRoomId === room._id}
-                  disabled={generatingRoomId === room._id}
-                  onClick={() => handleGenerateInventory(room._id)}
-                >
-                  Gen inventory
-                </Button>
-                <Popconfirm
-                  title="Delete this room?"
-                  onConfirm={() => deleteMutation.mutate(room._id)}
-                >
-                  <Button size="small" danger>
-                    Delete
+        <Table
+          rowKey="_id"
+          loading={isLoading}
+          dataSource={tableData}
+          size="middle"
+          columns={[
+            {
+              title: 'Code',
+              dataIndex: 'code',
+              width: 100,
+              render: (v) => <Text style={{ fontFamily: 'var(--font-mono)', fontSize: 13 }}>{v}</Text>,
+            },
+            {
+              title: 'Hotel',
+              key: 'hotel',
+              render: (_, room) => <Text style={{ fontSize: 13 }}>{getHotelName(room)}</Text>,
+            },
+            {
+              title: 'Province',
+              key: 'province',
+              render: (_, room) => <Text style={{ fontSize: 13 }}>{getProvinceName(room)}</Text>,
+            },
+            {
+              title: 'Price',
+              dataIndex: ['pricing', 'basePrice'],
+              width: 120,
+              render: (v) => (
+                <Text style={{ fontSize: 13, fontFamily: 'var(--font-mono)' }}>
+                  {v != null ? v.toLocaleString() : '-'}
+                </Text>
+              ),
+            },
+            {
+              title: 'Capacity',
+              dataIndex: 'maxGuests',
+              width: 90,
+            },
+            {
+              title: 'Active',
+              dataIndex: 'isActive',
+              width: 80,
+              render: (v) => <Switch checked={v} disabled size="small" />,
+            },
+            {
+              title: 'Actions',
+              width: 240,
+              render: (_, room) => (
+                <Space size={4}>
+                  <Button
+                    size="small"
+                    onClick={() => navigate(`/dashboard/room/${room._id}/edit`)}
+                  >
+                    Edit
                   </Button>
-                </Popconfirm>
-              </Space>
-            ),
-          },
-        ]}
-      />
-    </Card>
+                  <Button
+                    size="small"
+                    loading={generatingRoomId === room._id}
+                    disabled={generatingRoomId === room._id}
+                    onClick={() => handleGenerateInventory(room._id)}
+                  >
+                    Gen inventory
+                  </Button>
+                  <Popconfirm
+                    title="Delete this room?"
+                    onConfirm={() => deleteMutation.mutate(room._id)}
+                  >
+                    <Button size="small" danger>
+                      Delete
+                    </Button>
+                  </Popconfirm>
+                </Space>
+              ),
+            },
+          ]}
+        />
+      </Card>
+    </PageShell>
   );
 }

@@ -1,4 +1,4 @@
-import { Button, Col, Grid, Radio, Row, Typography, theme } from 'antd';
+import { Button, Radio, Tooltip } from 'antd';
 import { useState } from 'react';
 import { ReloadOutlined } from '@ant-design/icons';
 import type { DashboardRange } from '@/services/dashboard.service';
@@ -10,12 +10,8 @@ import RecentBookingsTable from './components/RecentBookingsTable';
 import { useAdminDashboardOverview } from '@/queries/dashboard.queries';
 import styles from './dashboard.module.css';
 
-const { Title, Paragraph, Text } = Typography;
-const { useBreakpoint } = Grid;
-
 const Dashboard = () => {
   const [range, setRange] = useState<DashboardRange>('7d');
-  const { token } = theme.useToken();
   const {
     data: overview,
     isLoading: isOverviewLoading,
@@ -23,92 +19,63 @@ const Dashboard = () => {
     refetch: refetchOverview,
     isFetching: isOverviewFetching,
   } = useAdminDashboardOverview({ range });
-  const screens = useBreakpoint();
 
   return (
-    <div
-      style={{
-        padding: screens.md ? 24 : 12,
-        maxWidth: 1200,
-        margin: '0 auto',
-      }}
-    >
-      <div className={styles.page}>
-        <div className={styles.header}>
-          <div>
-            <Title
-              level={screens.sm ? 3 : 4}
-              className={styles.title}
-              style={{ marginBottom: 4 }}
-            >
-              Dashboard tổng quan
-            </Title>
-            <Paragraph
-              className={styles.subtitle}
-              style={{
-                marginBottom: 0,
-                fontSize: screens.sm ? 14 : 12,
-                color: token.colorTextSecondary,
-              }}
-            >
-              Thống kê nhanh bookings, doanh thu, người dùng và catalog trong hệ
-              thống.
-            </Paragraph>
-          </div>
+    <div className={styles.page}>
+      <div className={styles.header}>
+        <div className={styles.headerLeft}>
+          <h3>Dashboard</h3>
+          <p className={styles.subtitle}>
+            Thống kê bookings, doanh thu, người dùng và catalog trong hệ thống.
+          </p>
+        </div>
 
-          <div className={styles.actions}>
-            <Text
-              style={{
-                fontSize: screens.sm ? 13 : 12,
-                color: token.colorTextTertiary,
-              }}
-            >
-              Khoảng thời gian:
-            </Text>
-            <Radio.Group
-              value={range}
-              onChange={(e) => setRange(e.target.value)}
-              optionType="button"
-              buttonStyle="solid"
-              size={screens.sm ? 'middle' : 'small'}
-            >
-              <Radio.Button value="today">Hôm nay</Radio.Button>
-              <Radio.Button value="7d">7 ngày</Radio.Button>
-              <Radio.Button value="30d">30 ngày</Radio.Button>
-            </Radio.Group>
+        <div className={styles.actions}>
+          <Radio.Group
+            value={range}
+            onChange={(e) => setRange(e.target.value)}
+            optionType="button"
+            buttonStyle="solid"
+            size="small"
+            className={styles.rangeGroup}
+          >
+            <Radio.Button value="today">Hôm nay</Radio.Button>
+            <Radio.Button value="7d">7 ngày</Radio.Button>
+            <Radio.Button value="30d">30 ngày</Radio.Button>
+          </Radio.Group>
+          <Tooltip title="Làm mới">
             <Button
+              type="text"
               icon={<ReloadOutlined />}
               onClick={() => refetchOverview()}
               loading={isOverviewFetching}
-              size={screens.sm ? 'middle' : 'small'}
-            >
-              Làm mới
-            </Button>
-          </div>
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 6,
+              }}
+            />
+          </Tooltip>
         </div>
-
-        <CatalogCards />
-
-        <div className={styles.section}>
-          <OverviewCards
-            range={range}
-            overview={overview}
-            isLoading={isOverviewLoading}
-            isError={isOverviewError}
-          />
-        </div>
-
-        <Row gutter={[16, 16]} style={{ marginTop: 8 }}>
-          <Col xs={24} lg={14}>
-            <RevenueTrendChart overview={overview} loading={isOverviewLoading} />
-          </Col>
-          <Col xs={24} lg={10}>
-            <BookingStatusPie overview={overview} loading={isOverviewLoading} />
-          </Col>
-        </Row>
-
-        <RecentBookingsTable />
       </div>
+
+      <CatalogCards />
+
+      <div className={styles.section}>
+        <OverviewCards
+          range={range}
+          overview={overview}
+          isLoading={isOverviewLoading}
+          isError={isOverviewError}
+        />
+      </div>
+
+      <div className={styles.chartsRow}>
+        <RevenueTrendChart overview={overview} loading={isOverviewLoading} />
+        <BookingStatusPie overview={overview} loading={isOverviewLoading} />
+      </div>
+
+      <RecentBookingsTable />
     </div>
   );
 };

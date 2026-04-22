@@ -11,7 +11,7 @@ export default function RoomUpdatePage() {
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="form-page-card">
         <Spin />
       </Card>
     );
@@ -24,7 +24,7 @@ export default function RoomUpdatePage() {
   };
 
   return (
-    <Card>
+    <Card title="Edit Room" className="form-page-card">
       <RoomForm
         initialValues={data}
         submitText="Update"

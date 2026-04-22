@@ -3,6 +3,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   UserOutlined,
+  DownOutlined,
 } from '@ant-design/icons';
 import CustomBreadCrumb from '@components/CustomBreadCrumb';
 import ThemeModeDropdown from '@components/ThemeModeDropdown';
@@ -57,39 +58,49 @@ export default function AppHeader({
         paddingInline: 16,
         background: token.colorBgContainer,
         borderBottom: `1px solid ${token.colorBorderSecondary}`,
-        backdropFilter: 'blur(8px)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
       }}
     >
       <Button
         type="text"
         onClick={onToggleCollapsed}
         icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-        style={{ color: token.colorTextSecondary }}
+        style={{
+          color: token.colorTextSecondary,
+          width: 32,
+          height: 32,
+          borderRadius: 6,
+        }}
       />
+
       <CustomBreadCrumb />
+
       <div
         style={{
           marginLeft: 'auto',
           display: 'flex',
           alignItems: 'center',
-          gap: 8,
+          gap: 4,
         }}
       >
         <ThemeModeDropdown />
-
         <NotificationDropdown />
 
         <Dropdown menu={userMenu} trigger={['click']}>
           <Space
             style={{
               cursor: 'pointer',
-              padding: '4px 8px',
-              borderRadius: 8,
+              padding: '4px 10px',
+              borderRadius: 6,
               transition: 'background 150ms ease',
+              marginLeft: 4,
             }}
+            className="header-user-trigger"
           >
             <Avatar
-              size="small"
+              size={28}
               icon={<UserOutlined />}
               style={{
                 backgroundColor: token.colorPrimary,
@@ -100,13 +111,19 @@ export default function AppHeader({
               ellipsis
               style={{
                 display: 'inline-block',
-                maxWidth: 160,
+                maxWidth: 140,
                 fontSize: 13,
                 fontWeight: 500,
               }}
             >
-              {authUser?.username ?? '—'}
+              {authUser?.username ?? '---'}
             </Text>
+            <DownOutlined
+              style={{
+                fontSize: 10,
+                color: token.colorTextTertiary,
+              }}
+            />
           </Space>
         </Dropdown>
       </div>

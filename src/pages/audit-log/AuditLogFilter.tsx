@@ -32,11 +32,14 @@ interface AuditLogFilterProps {
   onChange: (filters: Record<string, string | undefined>) => void;
 }
 
-export default function AuditLogFilter({ values, onChange }: AuditLogFilterProps) {
+export default function AuditLogFilter({
+  values,
+  onChange,
+}: AuditLogFilterProps) {
   const screens = Grid.useBreakpoint();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [ipValue, setIpValue] = useState(values.ip ?? '');
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: users } = useUsers();
 
@@ -47,7 +50,7 @@ export default function AuditLogFilter({ values, onChange }: AuditLogFilterProps
   const handleIpChange = useCallback(
     (val: string) => {
       setIpValue(val);
-      clearTimeout(debounceRef.current);
+      clearTimeout(debounceRef.current ?? undefined);
       debounceRef.current = setTimeout(() => {
         onChange({ ip: val || undefined });
       }, 300);
@@ -56,7 +59,7 @@ export default function AuditLogFilter({ values, onChange }: AuditLogFilterProps
   );
 
   useEffect(() => {
-    return () => clearTimeout(debounceRef.current);
+    return () => clearTimeout(debounceRef.current ?? undefined);
   }, []);
 
   const actionOptions = useMemo(() => {
@@ -274,11 +277,7 @@ export default function AuditLogFilter({ values, onChange }: AuditLogFilterProps
               style={{ width: '100%' }}
             />
             {hasActiveFilters && (
-              <Button
-                icon={<ClearOutlined />}
-                onClick={handleClear}
-                block
-              >
+              <Button icon={<ClearOutlined />} onClick={handleClear} block>
                 Xóa bộ lọc
               </Button>
             )}

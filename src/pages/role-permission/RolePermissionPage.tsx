@@ -1,36 +1,28 @@
-import { Tabs, Typography } from 'antd';
+import { Tabs } from 'antd';
 import AccountTab from './tabs/AccountTab';
 import RouterRoleTab from './tabs/RouterRoleTab';
 import ApiRoleTab from './tabs/ApiRoleTab';
 import RolesTab from './tabs/RolesTab';
 import RouterTab from './tabs/RouterTab';
 import ApiTab from './tabs/ApiTab';
-
-const { Title } = Typography;
+import PageShell from '@/components/PageShell';
 
 export default function RolePermissionPage() {
   return (
-    <div>
-      <Title level={4}>Role & Permissions</Title>
-
+    <PageShell
+      title="Role & Permissions"
+      subtitle="Quản lý vai trò, quyền truy cập route và API."
+    >
       <Tabs
         items={[
-          { key: 'role', label: 'ROLE', children: <RolesTab /> },
-          {
-            key: 'router-role',
-            label: 'ROUTER_ROLE',
-            children: <RouterRoleTab />,
-          },
-          {
-            key: 'router-api',
-            label: 'ROUTER_API',
-            children: <ApiRoleTab />,
-          },
-          { key: 'router', label: 'ROUTER', children: <RouterTab /> },
-          { key: 'api', label: 'API', children: <ApiTab /> },
-          { key: 'account', label: 'ACCOUNT', children: <AccountTab /> },
+          { key: 'role', label: 'Roles', children: <RolesTab /> },
+          { key: 'router-role', label: 'Router Roles', children: <RouterRoleTab /> },
+          { key: 'router-api', label: 'API Roles', children: <ApiRoleTab /> },
+          { key: 'router', label: 'Routers', children: <RouterTab /> },
+          { key: 'api', label: 'APIs', children: <ApiTab /> },
+          { key: 'account', label: 'Accounts', children: <AccountTab /> },
         ]}
       />
-    </div>
+    </PageShell>
   );
 }

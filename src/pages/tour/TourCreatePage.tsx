@@ -14,7 +14,7 @@ export default function TourCreatePage() {
   };
 
   return (
-    <Card title="Add Tour">
+    <Card title="Add Tour" className="form-page-card">
       <TourForm
         submitText="Create"
         loading={createMutation.isPending}
@@ -24,4 +24,3 @@ export default function TourCreatePage() {
     </Card>
   );
 }
-

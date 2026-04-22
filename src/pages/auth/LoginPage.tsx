@@ -57,19 +57,21 @@ export default function LoginPage() {
             style={{
               textAlign: 'center',
               marginBottom: 4,
-              fontFamily: 'var(--font-editorial)',
-              letterSpacing: '-0.3px',
+              letterSpacing: '-0.5px',
+              fontWeight: 600,
             }}
           >
-            Travel VN Admin
+            Welcome back
           </Title>
           <Text
             style={{
               color: token.colorTextSecondary,
               fontSize: 14,
+              fontFamily: 'var(--font-editorial)',
+              fontStyle: 'italic',
             }}
           >
-            Đăng nhập để tiếp tục
+            Sign in to Travel VN Admin
           </Text>
         </div>
 
@@ -173,6 +175,12 @@ export default function LoginPage() {
             </Text>
           </div>
         </Card>
+
+        <div style={{ textAlign: 'center', marginTop: 24 }}>
+          <Text style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.2px' }}>
+            Powered by PHX
+          </Text>
+        </div>
       </div>
     </Layout>
   );

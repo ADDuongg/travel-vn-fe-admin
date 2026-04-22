@@ -14,7 +14,7 @@ export default function HotelCreatePage() {
   };
 
   return (
-    <Card title="Add Hotel">
+    <Card title="Add Hotel" className="form-page-card">
       <HotelForm
         submitText="Create"
         loading={createMutation.isPending}

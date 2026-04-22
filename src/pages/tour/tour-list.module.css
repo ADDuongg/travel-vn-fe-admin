@@ -1,7 +1,7 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .header {
@@ -18,15 +18,24 @@
   gap: 2px;
 }
 
-.subtitle {
+.titleWrap h4,
+.titleWrap h5 {
   margin: 0;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+
+.subtitle {
+  margin: 2px 0 0;
+  font-family: var(--font-editorial);
+  font-style: italic;
 }
 
 .toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .filtersRow {
@@ -34,10 +43,9 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
-}
-
-.tableCard {
-  border: 1px solid var(--border-primary);
+  padding: 10px 14px;
+  background: var(--warm-surface-300);
+  border-radius: var(--radius-md);
 }
 
 .tableCard :global(.ant-card-body) {

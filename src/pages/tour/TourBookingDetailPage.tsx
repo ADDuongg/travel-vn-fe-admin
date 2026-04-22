@@ -111,7 +111,7 @@ export default function TourBookingDetailPage() {
   };
 
   return (
-    <Card loading={isLoading}>
+    <Card loading={isLoading} className="form-page-card">
       <Space style={{ width: '100%', justifyContent: 'space-between' }} align="center">
         <div>
           <Title level={5} style={{ marginBottom: 0 }}>

@@ -30,6 +30,8 @@ export const lightTheme: ThemeConfig = {
     colorBorderSecondary: 'rgba(38, 37, 30, 0.08)',
 
     borderRadius: 8,
+    fontSize: 14,
+    lineHeight: 1.5,
     fontFamily: FONT_FAMILY,
     fontFamilyCode: FONT_FAMILY_CODE,
 
@@ -52,15 +54,17 @@ export const lightTheme: ThemeConfig = {
     Card: {
       borderRadiusLG: 10,
       colorBgContainer: '#f7f7f4',
-      boxShadowTertiary:
-        'rgba(0,0,0,0.02) 0px 0px 16px, rgba(0,0,0,0.008) 0px 0px 8px',
+      paddingLG: 24,
+      boxShadowTertiary: 'none',
     },
     Table: {
       headerBg: '#ebeae5',
-      headerColor: '#26251e',
-      rowHoverBg: '#ebeae5',
+      headerColor: 'rgba(38, 37, 30, 0.65)',
+      rowHoverBg: 'rgba(38, 37, 30, 0.03)',
       borderColor: 'rgba(38, 37, 30, 0.08)',
       headerBorderRadius: 8,
+      cellPaddingBlock: 14,
+      cellPaddingInline: 16,
     },
     Input: {
       activeBorderColor: '#f54e00',
@@ -73,12 +77,14 @@ export const lightTheme: ThemeConfig = {
     Menu: {
       itemBg: 'transparent',
       itemColor: 'rgba(38, 37, 30, 0.65)',
-      itemHoverColor: '#f54e00',
-      itemHoverBg: 'rgba(38, 37, 30, 0.04)',
+      itemHoverColor: '#26251e',
+      itemHoverBg: 'rgba(38, 37, 30, 0.05)',
       itemSelectedColor: '#f54e00',
       itemSelectedBg: 'rgba(245, 78, 0, 0.06)',
       subMenuItemBg: 'transparent',
-      itemBorderRadius: 8,
+      itemBorderRadius: 6,
+      itemHeight: 36,
+      iconMarginInlineEnd: 10,
       activeBarBorderWidth: 0,
     },
     Layout: {
@@ -128,6 +134,10 @@ export const lightTheme: ThemeConfig = {
       buttonSolidCheckedBg: '#26251e',
       buttonSolidCheckedHoverBg: '#3a3930',
     },
+    Typography: {
+      titleMarginBottom: 0,
+      titleMarginTop: 0,
+    },
   },
 };
 
@@ -152,6 +162,8 @@ export const darkTheme: ThemeConfig = {
     colorBorderSecondary: 'rgba(230, 229, 224, 0.06)',
 
     borderRadius: 8,
+    fontSize: 14,
+    lineHeight: 1.5,
     fontFamily: FONT_FAMILY,
     fontFamilyCode: FONT_FAMILY_CODE,
 
@@ -174,13 +186,17 @@ export const darkTheme: ThemeConfig = {
     Card: {
       borderRadiusLG: 10,
       colorBgContainer: '#26251e',
+      paddingLG: 24,
+      boxShadowTertiary: 'none',
     },
     Table: {
       headerBg: '#2d2c25',
-      headerColor: '#e6e5e0',
-      rowHoverBg: '#2d2c25',
+      headerColor: 'rgba(230, 229, 224, 0.6)',
+      rowHoverBg: 'rgba(230, 229, 224, 0.04)',
       borderColor: 'rgba(230, 229, 224, 0.08)',
       headerBorderRadius: 8,
+      cellPaddingBlock: 14,
+      cellPaddingInline: 16,
     },
     Input: {
       activeBorderColor: '#f54e00',
@@ -193,12 +209,14 @@ export const darkTheme: ThemeConfig = {
     Menu: {
       itemBg: 'transparent',
       itemColor: 'rgba(230, 229, 224, 0.6)',
-      itemHoverColor: '#f5814d',
+      itemHoverColor: '#e6e5e0',
       itemHoverBg: 'rgba(230, 229, 224, 0.06)',
       itemSelectedColor: '#f5814d',
       itemSelectedBg: 'rgba(245, 78, 0, 0.1)',
       subMenuItemBg: 'transparent',
-      itemBorderRadius: 8,
+      itemBorderRadius: 6,
+      itemHeight: 36,
+      iconMarginInlineEnd: 10,
       activeBarBorderWidth: 0,
     },
     Layout: {
@@ -245,6 +263,10 @@ export const darkTheme: ThemeConfig = {
       buttonSolidCheckedBg: '#e6e5e0',
       buttonSolidCheckedHoverBg: '#d5d4cf',
       buttonSolidCheckedColor: '#1a1915',
+    },
+    Typography: {
+      titleMarginBottom: 0,
+      titleMarginTop: 0,
     },
   },
 };

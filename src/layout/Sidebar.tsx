@@ -1,5 +1,7 @@
 import LogoPHX from '@/assets/images/logo_phx.png';
-import { useThemeMode } from '@/providers/antd-theme/context';
+import { ROUTE_KEYS, ROUTES } from '@/constants/route.constant';
+import { useLogout } from '@/queries/auth.queries';
+import { useAuthStore } from '@/stores/useAuthStore';
 import {
   AuditOutlined,
   BankOutlined,
@@ -8,7 +10,6 @@ import {
   CreditCardOutlined,
   HeartOutlined,
   HomeOutlined,
-  InfoCircleFilled,
   LogoutOutlined,
   PieChartOutlined,
   RightOutlined,
@@ -16,21 +17,22 @@ import {
   StarOutlined,
   TeamOutlined,
   UnorderedListOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
 import {
+  Avatar,
   Button,
-  Divider,
   Image,
   Layout,
   Menu,
   theme,
+  Tooltip,
   Typography,
   type MenuProps,
 } from 'antd';
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styles from './sidebar.module.css';
-import { ROUTE_KEYS, ROUTES } from '@/constants/route.constant';
 
 const { Sider } = Layout;
 const { Text } = Typography;
@@ -66,28 +68,48 @@ const KEY_TO_PATH: Record<string, string> = {
   [ROUTE_KEYS.AUDIT_LOGS]: ROUTES.SYSTEM.AUDIT_LOGS,
 };
 
-const items: MenuItem[] = [
-  getItem('Dashboard', ROUTE_KEYS.DASHBOARD, <PieChartOutlined />),
-  getItem('Favorites', ROUTE_KEYS.FAVORITES, <HeartOutlined />),
-  getItem('Tours', ROUTE_KEYS.TOUR, <CompassOutlined />, [
-    getItem('Tour List', ROUTE_KEYS.TOUR, <UnorderedListOutlined />),
-    getItem('Tour Inventory', ROUTE_KEYS.TOUR_INVENTORY, <CalendarOutlined />),
-    getItem('Tour Bookings', ROUTE_KEYS.TOUR_BOOKING, <CreditCardOutlined />),
-    getItem('Tour Reviews', ROUTE_KEYS.TOUR_REVIEWS, <StarOutlined />),
-    getItem('Tour Guides', ROUTE_KEYS.TOUR_GUIDE, <TeamOutlined />),
-  ]),
-  getItem('Provinces', ROUTE_KEYS.PROVINCE, <HomeOutlined />),
-  getItem('Hotels', ROUTE_KEYS.HOTEL, <BankOutlined />),
-  getItem('Room', ROUTE_KEYS.ROOM, <HomeOutlined />, [
-    getItem('Room List', ROUTE_KEYS.ROOM, <UnorderedListOutlined />),
-    getItem('Amenities', ROUTE_KEYS.ROOM_AMENITIES, <StarOutlined />),
-  ]),
-  getItem('Bookings', ROUTE_KEYS.BOOKING, <CreditCardOutlined />),
-  getItem('Reviews', ROUTE_KEYS.ADMIN_REVIEWS, <StarOutlined />),
-  getItem('System', 'SYSTEM_GROUP', <SettingOutlined />, [
-    getItem('System', ROUTE_KEYS.SYSTEM, <SettingOutlined />),
-    getItem('Audit Logs', ROUTE_KEYS.AUDIT_LOGS, <AuditOutlined />),
-  ]),
+const mainItems: MenuItem[] = [
+  {
+    type: 'group',
+    label: 'Overview',
+    children: [
+      getItem('Dashboard', ROUTE_KEYS.DASHBOARD, <PieChartOutlined />),
+      getItem('Favorites', ROUTE_KEYS.FAVORITES, <HeartOutlined />),
+    ],
+  },
+  {
+    type: 'group',
+    label: 'Management',
+    children: [
+      getItem('Tours', ROUTE_KEYS.TOUR, <CompassOutlined />, [
+        getItem('Tour List', ROUTE_KEYS.TOUR, <UnorderedListOutlined />),
+        getItem('Inventory', ROUTE_KEYS.TOUR_INVENTORY, <CalendarOutlined />),
+        getItem(
+          'Tour Bookings',
+          ROUTE_KEYS.TOUR_BOOKING,
+          <CreditCardOutlined />,
+        ),
+        getItem('Reviews', ROUTE_KEYS.TOUR_REVIEWS, <StarOutlined />),
+        getItem('Guides', ROUTE_KEYS.TOUR_GUIDE, <TeamOutlined />),
+      ]),
+      getItem('Hotels', ROUTE_KEYS.HOTEL, <BankOutlined />),
+      getItem('Rooms', ROUTE_KEYS.ROOM, <HomeOutlined />, [
+        getItem('Room List', ROUTE_KEYS.ROOM, <UnorderedListOutlined />),
+        getItem('Amenities', ROUTE_KEYS.ROOM_AMENITIES, <StarOutlined />),
+      ]),
+      getItem('Provinces', ROUTE_KEYS.PROVINCE, <HomeOutlined />),
+      getItem('Bookings', ROUTE_KEYS.BOOKING, <CreditCardOutlined />),
+      getItem('Reviews', ROUTE_KEYS.ADMIN_REVIEWS, <StarOutlined />),
+    ],
+  },
+  {
+    type: 'group',
+    label: 'System',
+    children: [
+      getItem('Settings', ROUTE_KEYS.SYSTEM, <SettingOutlined />),
+      getItem('Audit Logs', ROUTE_KEYS.AUDIT_LOGS, <AuditOutlined />),
+    ],
+  },
 ];
 
 export default function Sidebar({
@@ -97,10 +119,13 @@ export default function Sidebar({
   collapsed: boolean;
   setCollapsed: (v: boolean) => void;
 }) {
-  const { resolvedMode } = useThemeMode();
+  // const { resolvedMode } = useThemeMode();
   const { token } = theme.useToken();
   const navigate = useNavigate();
   const location = useLocation();
+  const authUser = useAuthStore((s) => s.authUser);
+  const { logout, isPending: isLoggingOut } = useLogout();
+
   const selectedKeys = React.useMemo(() => {
     const found = Object.entries(KEY_TO_PATH).find(
       ([, path]) => location.pathname === path,
@@ -114,8 +139,9 @@ export default function Sidebar({
       collapsed={collapsed}
       trigger={null}
       onCollapse={(value) => setCollapsed(value)}
-      theme={resolvedMode}
       className={styles.sider}
+      width={240}
+      collapsedWidth={64}
       style={{
         height: '100vh',
         position: 'sticky',
@@ -125,47 +151,37 @@ export default function Sidebar({
         scrollbarWidth: 'thin',
         scrollbarGutter: 'stable',
         borderRight: `1px solid ${token.colorBorderSecondary}`,
+        transition: 'width 200ms ease',
       }}
     >
+      {/* Logo */}
       <div
         className={styles.logoArea}
-        style={{
-          borderBottom: `1px solid ${token.colorBorderSecondary}`,
-        }}
+        style={{ borderBottom: `1px solid ${token.colorBorderSecondary}` }}
       >
-        <div
-          style={{
-            width: 28,
-            height: 28,
-            borderRadius: 6,
-            background: token.colorPrimary,
-            flex: '0 0 auto',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <CompassOutlined style={{ color: '#fff', fontSize: 14 }} />
+        <div className={styles.logoIcon}>
+          <CompassOutlined style={{ color: '#fff', fontSize: 15 }} />
         </div>
         {!collapsed && (
           <Text
             strong
             style={{
               whiteSpace: 'nowrap',
-              fontSize: 14,
+              fontSize: 15,
               letterSpacing: '-0.3px',
+              fontWeight: 600,
             }}
           >
-            Travel VN Admin
+            Travel VN
           </Text>
         )}
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 8px' }}>
+      {/* Main nav */}
+      <div className={styles.navArea}>
         <Menu
-          theme={resolvedMode}
           mode="inline"
-          items={items}
+          items={mainItems}
           selectedKeys={selectedKeys}
           onClick={(info) => {
             const key = String(info.key);
@@ -176,38 +192,75 @@ export default function Sidebar({
         />
       </div>
 
-      <div>
-        <Divider style={{ margin: 0, borderColor: token.colorBorderSecondary }} />
+      {/* Bottom section */}
+      <div className={styles.bottomSection}>
+        <div
+          className={styles.collapseRow}
+          style={{ borderTop: `1px solid ${token.colorBorderSecondary}` }}
+        >
+          <Button
+            type="text"
+            className={styles.toggleButton}
+            icon={
+              <RightOutlined
+                className={
+                  collapsed ? styles.toggleIconOpen : styles.toggleIconClose
+                }
+              />
+            }
+            onClick={() => setCollapsed(!collapsed)}
+          />
+        </div>
 
-        <Button
-          type="text"
-          size="large"
-          className={styles.toggleButton}
-          icon={
-            <RightOutlined
-              className={
-                collapsed ? styles.toggleIconOpen : styles.toggleIconClose
-              }
-            />
-          }
-          onClick={() => setCollapsed(!collapsed)}
-        />
-
-        <Menu
-          theme={resolvedMode}
-          selectedKeys={selectedKeys}
-          onClick={(info) => {
-            if (info.key === 'logout') return;
-            const path = KEY_TO_PATH[String(info.key)];
-            if (path) navigate(path);
+        {/* Account row */}
+        <div
+          className={styles.accountRow}
+          style={{
+            borderTop: `1px solid ${token.colorBorderSecondary}`,
+            cursor: 'pointer',
           }}
-          items={[
-            getItem('Account', ROUTE_KEYS.ACCOUNT, <InfoCircleFilled />),
-            getItem('Log out', 'logout', <LogoutOutlined />),
-          ]}
-          style={{ border: 'none', padding: '0 8px' }}
-        />
+          onClick={() => navigate(ROUTES.ACCOUNT)}
+        >
+          <Avatar
+            size={28}
+            icon={<UserOutlined />}
+            style={{
+              backgroundColor: token.colorPrimary,
+              color: '#fff',
+              flexShrink: 0,
+            }}
+          />
+          {!collapsed && (
+            <Text
+              ellipsis
+              style={{
+                fontSize: 13,
+                fontWeight: 500,
+                flex: 1,
+                minWidth: 0,
+              }}
+            >
+              {authUser?.username ?? '---'}
+            </Text>
+          )}
+          {!collapsed && (
+            <Tooltip title="Log out">
+              <Button
+                type="text"
+                size="small"
+                icon={<LogoutOutlined />}
+                loading={isLoggingOut}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  logout();
+                }}
+                style={{ color: token.colorTextSecondary, flexShrink: 0 }}
+              />
+            </Tooltip>
+          )}
+        </div>
 
+        {/* PHX branding */}
         <a
           href="https://www.phx-smartschool.com/"
           target="_blank"
@@ -215,18 +268,15 @@ export default function Sidebar({
         >
           <div
             className={styles.logo}
-            style={{
-              margin: 0,
-              padding: '0.4rem',
-              borderTop: `1px solid ${token.colorBorderSecondary}`,
-            }}
+            style={{ borderTop: `1px solid ${token.colorBorderSecondary}` }}
           >
             <Image
-              width={(48 / 562) * 1000}
-              height={30}
+              width={collapsed ? 32 : (48 / 562) * 1000}
+              height={collapsed ? 18 : 28}
               preview={false}
               src={LogoPHX}
               alt="LogoPHX"
+              style={{ opacity: 0.6, transition: 'opacity 150ms ease' }}
             />
           </div>
         </a>

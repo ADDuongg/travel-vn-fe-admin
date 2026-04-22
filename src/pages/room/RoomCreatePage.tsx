@@ -14,7 +14,7 @@ export default function RoomCreatePage() {
   };
 
   return (
-    <Card>
+    <Card title="Create Room" className="form-page-card">
       <RoomForm
         submitText="Create"
         loading={createMutation.isPending}

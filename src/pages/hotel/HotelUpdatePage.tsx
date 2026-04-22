@@ -18,14 +18,14 @@ export default function HotelUpdatePage() {
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="form-page-card">
         <Spin />
       </Card>
     );
   }
 
   return (
-    <Card title="Edit Hotel">
+    <Card title="Edit Hotel" className="form-page-card">
       <HotelForm
         initialValues={data}
         submitText="Update"

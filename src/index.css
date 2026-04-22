@@ -23,22 +23,24 @@
   --border-medium: rgba(38, 37, 30, 0.2);
   --border-strong: rgba(38, 37, 30, 0.55);
 
-  --shadow-ambient: rgba(0, 0, 0, 0.02) 0px 0px 16px,
-    rgba(0, 0, 0, 0.008) 0px 0px 8px;
-  --shadow-sm: rgba(0, 0, 0, 0.04) 0px 1px 3px,
-    rgba(0, 0, 0, 0.02) 0px 0px 8px;
-  --shadow-md: rgba(0, 0, 0, 0.06) 0px 4px 16px,
-    rgba(0, 0, 0, 0.03) 0px 2px 6px;
-  --shadow-lg: rgba(0, 0, 0, 0.14) 0px 28px 70px,
-    rgba(0, 0, 0, 0.1) 0px 14px 32px;
+  --shadow-ambient:
+    rgba(0, 0, 0, 0.02) 0px 0px 16px, rgba(0, 0, 0, 0.008) 0px 0px 8px;
+  --shadow-sm: rgba(0, 0, 0, 0.04) 0px 1px 3px, rgba(0, 0, 0, 0.02) 0px 0px 8px;
+  --shadow-md:
+    rgba(0, 0, 0, 0.06) 0px 4px 16px, rgba(0, 0, 0, 0.03) 0px 2px 6px;
+  --shadow-lg:
+    rgba(0, 0, 0, 0.14) 0px 28px 70px, rgba(0, 0, 0, 0.1) 0px 14px 32px;
   --shadow-focus: rgba(0, 0, 0, 0.1) 0px 4px 12px;
 
-  --font-ui: 'Geist', 'Inter', ui-sans-serif, system-ui, -apple-system,
+  --font-ui:
+    'Geist', 'Inter', ui-sans-serif, system-ui, -apple-system,
     BlinkMacSystemFont, 'Segoe UI', Roboto, Arial;
-  --font-editorial: 'Newsreader', 'Iowan Old Style', 'Palatino Linotype',
-    ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco,
-    Consolas, 'Liberation Mono', 'Courier New', monospace;
+  --font-editorial:
+    'Newsreader', 'Iowan Old Style', 'Palatino Linotype', ui-serif, Georgia,
+    Cambria, 'Times New Roman', Times, serif;
+  --font-mono:
+    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
 
   --radius-sm: 4px;
   --radius-md: 8px;
@@ -67,14 +69,12 @@
   --border-medium: rgba(230, 229, 224, 0.18);
   --border-strong: rgba(230, 229, 224, 0.4);
 
-  --shadow-ambient: rgba(0, 0, 0, 0.08) 0px 0px 16px,
-    rgba(0, 0, 0, 0.04) 0px 0px 8px;
-  --shadow-sm: rgba(0, 0, 0, 0.12) 0px 1px 3px,
-    rgba(0, 0, 0, 0.06) 0px 0px 8px;
-  --shadow-md: rgba(0, 0, 0, 0.2) 0px 4px 16px,
-    rgba(0, 0, 0, 0.1) 0px 2px 6px;
-  --shadow-lg: rgba(0, 0, 0, 0.35) 0px 28px 70px,
-    rgba(0, 0, 0, 0.25) 0px 14px 32px;
+  --shadow-ambient:
+    rgba(0, 0, 0, 0.08) 0px 0px 16px, rgba(0, 0, 0, 0.04) 0px 0px 8px;
+  --shadow-sm: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.06) 0px 0px 8px;
+  --shadow-md: rgba(0, 0, 0, 0.2) 0px 4px 16px, rgba(0, 0, 0, 0.1) 0px 2px 6px;
+  --shadow-lg:
+    rgba(0, 0, 0, 0.35) 0px 28px 70px, rgba(0, 0, 0, 0.25) 0px 14px 32px;
   --shadow-focus: rgba(0, 0, 0, 0.25) 0px 4px 12px;
 }
 
@@ -112,26 +112,245 @@ body {
   min-height: 100vh;
 }
 
-[data-theme='light'] .ant-card {
-  box-shadow: var(--shadow-sm);
-  transition: box-shadow var(--transition-shadow);
+/* ─── Card ─── */
+
+.ant-card {
+  border: 1px solid var(--border-primary);
+  transition:
+    box-shadow var(--transition-shadow),
+    border-color var(--transition-color);
 }
 
-[data-theme='light'] .ant-card:hover {
-  box-shadow: var(--shadow-md);
+[data-theme='light'] .ant-card {
+  box-shadow: var(--shadow-ambient);
+}
+
+.ant-card:hover {
+  box-shadow: var(--shadow-sm);
 }
 
 [data-theme='dark'] .ant-card {
-  transition: box-shadow var(--transition-shadow);
+  box-shadow: none;
 }
+
+[data-theme='dark'] .ant-card:hover {
+  border-color: var(--border-medium);
+}
+
+.ant-card .ant-card-head {
+  border-bottom: 1px solid var(--border-primary);
+  font-size: 14px;
+  font-weight: 500;
+  min-height: auto;
+  padding: 14px 20px;
+}
+
+.ant-card .ant-card-head-title {
+  font-weight: 500;
+}
+
+.ant-card .ant-card-body {
+  padding: 20px;
+}
+
+/* ─── Button ─── */
 
 .ant-btn {
   transition: all var(--transition-color);
+  font-weight: 450;
 }
+
+/* ─── Table ─── */
+
+.ant-table-wrapper .ant-table-thead > tr > th,
+.ant-table-wrapper .ant-table-thead > tr > td {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.ant-table-wrapper .ant-table-tbody > tr > td {
+  border-bottom: 1px solid var(--border-primary);
+  transition: background var(--transition-color);
+}
+
+.ant-table-wrapper .ant-table-tbody > tr:last-child > td {
+  border-bottom: none;
+}
+
+/* ─── Statistic ─── */
+
+.ant-statistic .ant-statistic-title {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.ant-statistic .ant-statistic-content {
+  font-family: var(--font-ui);
+  letter-spacing: -0.5px;
+}
+
+/* ─── Menu ─── */
+
+.ant-menu .ant-menu-item-group-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  padding: 16px 16px 6px;
+}
+
+/* ─── Form ─── */
+
+.ant-form-item .ant-form-item-label > label {
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--text-secondary);
+}
+
+/* ─── Modal & Drawer ─── */
+
+.ant-modal .ant-modal-content {
+  box-shadow: var(--shadow-lg);
+}
+
+.ant-drawer .ant-drawer-header {
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.ant-drawer .ant-drawer-footer {
+  border-top: 1px solid var(--border-primary);
+}
+
+/* ─── Descriptions ─── */
+
+.ant-descriptions .ant-descriptions-item-label {
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--text-muted);
+}
+
+/* ─── Tag ─── */
 
 .ant-tag {
   border-radius: var(--radius-pill);
+  font-weight: 500;
+  font-size: 12px;
 }
+
+/* ─── Skeleton warm pulse ─── */
+
+@keyframes warm-skeleton-pulse {
+  0% {
+    background: var(--warm-surface-300);
+  }
+  50% {
+    background: var(--warm-surface-400);
+  }
+  100% {
+    background: var(--warm-surface-300);
+  }
+}
+
+.ant-skeleton .ant-skeleton-content .ant-skeleton-title,
+.ant-skeleton .ant-skeleton-content .ant-skeleton-paragraph > li {
+  animation: warm-skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+/* ─── Tabs ─── */
+
+.ant-tabs .ant-tabs-tab {
+  font-weight: 450;
+  transition: color var(--transition-color);
+}
+
+/* ─── Pagination ─── */
+
+.ant-pagination .ant-pagination-item {
+  border-radius: var(--radius-md);
+  font-weight: 450;
+}
+
+/* ─── Shared Utility Classes ─── */
+
+.premium-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.premium-page-header h3,
+.premium-page-header h4 {
+  margin: 0;
+  letter-spacing: -0.5px;
+  line-height: 1.25;
+}
+
+.premium-page-subtitle {
+  margin: 4px 0 0;
+  font-family: var(--font-editorial);
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.premium-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.premium-icon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.premium-card-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: -0.1px;
+}
+
+/* ─── Jodit (light) ─── */
+
+.jodit-container .jodit-toolbar__box {
+  background-color: var(--warm-surface-300);
+  border-color: var(--border-primary);
+}
+
+.jodit-container .jodit-workplace {
+  background-color: var(--warm-surface-100);
+}
+
+.jodit-container .jodit-status-bar {
+  background-color: var(--warm-surface-300);
+  color: var(--text-muted);
+  border-color: var(--border-primary);
+}
+
+/* ─── Jodit (dark) ─── */
 
 .jodit-container.jodit-dark .jodit-toolbar__box {
   background-color: #26251e;
@@ -154,6 +373,38 @@ body {
 
 .jodit-container.jodit-dark .jodit-toolbar-button:hover {
   background-color: #2d2c25;
+}
+
+/* ─── Collapse (Accordion) ─── */
+
+.ant-collapse .ant-collapse-header {
+  font-weight: 450;
+}
+
+.ant-collapse-borderless > .ant-collapse-item {
+  border-bottom: 1px solid var(--border-primary);
+}
+
+/* ─── Upload ─── */
+
+.ant-upload-wrapper .ant-upload-drag {
+  border-color: var(--border-medium);
+  transition: border-color var(--transition-color);
+}
+
+.ant-upload-wrapper .ant-upload-drag:hover {
+  border-color: var(--accent-orange);
+}
+
+/* ─── Form create/edit page cards ─── */
+
+.form-page-card {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.form-page-card .ant-card-head {
+  border-bottom: 1px solid var(--border-primary);
 }
 
 ::-webkit-scrollbar {
