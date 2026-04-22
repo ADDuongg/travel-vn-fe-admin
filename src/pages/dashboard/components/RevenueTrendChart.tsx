@@ -1,16 +1,14 @@
+import type { AdminDashboardOverview } from '@/services/dashboard.service';
 import { Card, Empty, Grid, Skeleton, Typography } from 'antd';
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
   Area,
   AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from 'recharts';
-import type { AdminDashboardOverview } from '@/services/dashboard.service';
 
 const { useBreakpoint } = Grid;
 const { Text } = Typography;
@@ -44,7 +42,10 @@ export default function RevenueTrendChart({
       <Card title={cardTitle} style={{ height: '100%' }}>
         <Empty
           description={
-            <Text type="secondary" style={{ fontFamily: 'var(--font-editorial)' }}>
+            <Text
+              type="secondary"
+              style={{ fontFamily: 'var(--font-editorial)' }}
+            >
               Chưa có dữ liệu để hiển thị biểu đồ.
             </Text>
           }
@@ -115,7 +116,12 @@ export default function RevenueTrendChart({
               strokeWidth={2}
               fill="url(#revenueGradient)"
               dot={false}
-              activeDot={{ r: 5, fill: '#fff', stroke: '#f54e00', strokeWidth: 2 }}
+              activeDot={{
+                r: 5,
+                fill: '#fff',
+                stroke: '#f54e00',
+                strokeWidth: 2,
+              }}
             />
           </AreaChart>
         </ResponsiveContainer>

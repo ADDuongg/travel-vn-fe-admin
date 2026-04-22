@@ -1,27 +1,23 @@
-import { useState } from 'react';
-import {
-  Button,
-  Card,
-  Select,
-  Space,
-  Switch,
-  Table,
-  Typography,
-} from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import PageShell from '@/components/PageShell';
 import { useHotels } from '@/queries/hotel.queries';
 import { useProvinceDropdown } from '@/queries/province.queries';
-import PageShell from '@/components/PageShell';
+import { PlusOutlined } from '@ant-design/icons';
+import { Button, Card, Select, Switch, Table, Typography } from 'antd';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const { Text } = Typography;
 
-function getHotelName(row: { translations?: Record<string, { name?: string }> }) {
+function getHotelName(row: {
+  translations?: Record<string, { name?: string }>;
+}) {
   const t = row?.translations;
   return t?.vi?.name || t?.en?.name || '-';
 }
 
-function getProvinceName(prov: { name?: { vi?: string; en?: string } } | string) {
+function getProvinceName(
+  prov: { name?: { vi?: string; en?: string } } | string,
+) {
   if (typeof prov === 'string') return '-';
   return prov?.name?.vi || prov?.name?.en || '-';
 }
@@ -37,7 +33,11 @@ export default function HotelPage() {
       title="Hotels"
       subtitle="Quản lý danh sách khách sạn theo tỉnh/thành."
       actions={
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/dashboard/hotel/create')}>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => navigate('/dashboard/hotel/create')}
+        >
           Thêm hotel
         </Button>
       }
@@ -67,26 +67,42 @@ export default function HotelPage() {
               title: 'Name',
               key: 'name',
               render: (_, row) => (
-                <Text style={{ fontSize: 13, fontWeight: 450 }}>{getHotelName(row)}</Text>
+                <Text style={{ fontSize: 13, fontWeight: 450 }}>
+                  {getHotelName(row)}
+                </Text>
               ),
             },
             {
               title: 'Slug',
               dataIndex: 'slug',
               render: (v) => (
-                <Text style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>{v}</Text>
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontFamily: 'var(--font-mono)',
+                    color: 'var(--text-secondary)',
+                  }}
+                >
+                  {v}
+                </Text>
               ),
             },
             {
               title: 'Province',
               key: 'province',
-              render: (_, row) => <Text style={{ fontSize: 13 }}>{getProvinceName(row.provinceId)}</Text>,
+              render: (_, row) => (
+                <Text style={{ fontSize: 13 }}>
+                  {getProvinceName(row.provinceId)}
+                </Text>
+              ),
             },
             {
               title: 'Status',
               dataIndex: 'isActive',
               width: 90,
-              render: (v: boolean) => <Switch checked={v} disabled size="small" />,
+              render: (v: boolean) => (
+                <Switch checked={v} disabled size="small" />
+              ),
             },
             {
               title: 'Actions',
