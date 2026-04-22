@@ -117,7 +117,7 @@ export default function TourBookingDetailPage() {
           <Title level={5} style={{ marginBottom: 0 }}>
             Đơn tour: {booking?.bookingCode ?? id}
           </Title>
-          <div style={{ fontSize: 12, color: '#666' }}>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
             {booking?.guest?.fullName} — {booking?.guest?.email}
           </div>
         </div>

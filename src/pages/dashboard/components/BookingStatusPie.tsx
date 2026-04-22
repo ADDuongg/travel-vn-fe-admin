@@ -1,4 +1,4 @@
-import { Card, Empty, Grid, Skeleton, Typography } from 'antd';
+import { Card, Empty, Grid, Skeleton, Typography, theme } from 'antd';
 import {
   PieChart,
   Pie,
@@ -18,20 +18,20 @@ type BookingStatusPieProps = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  CONFIRMED: '#16A34A',
-  PENDING: '#F59E0B',
-  CANCELLED: '#DC2626',
-  EXPIRED: '#EA580C',
+  CONFIRMED: '#1f8a65',
+  PENDING: '#c08532',
+  CANCELLED: '#cf2d56',
+  EXPIRED: '#dfa88f',
 };
 
 export default function BookingStatusPie({ overview, loading }: BookingStatusPieProps) {
   const screens = useBreakpoint();
-
+  const { token } = theme.useToken();
   const chartHeight = screens.md ? 260 : 220;
 
   if (loading) {
     return (
-      <Card title="Phân bố trạng thái booking" style={{ borderRadius: 12, height: '100%' }}>
+      <Card title="Phân bố trạng thái booking" style={{ height: '100%' }}>
         <Skeleton active paragraph={{ rows: 6 }} />
       </Card>
     );
@@ -39,7 +39,7 @@ export default function BookingStatusPie({ overview, loading }: BookingStatusPie
 
   if (!overview) {
     return (
-      <Card title="Phân bố trạng thái booking" style={{ borderRadius: 12, height: '100%' }}>
+      <Card title="Phân bố trạng thái booking" style={{ height: '100%' }}>
         <Empty
           description={
             <Text type="secondary">Chưa có dữ liệu để hiển thị biểu đồ.</Text>
@@ -55,10 +55,7 @@ export default function BookingStatusPie({ overview, loading }: BookingStatusPie
   }));
 
   return (
-    <Card
-      title="Phân bố trạng thái booking"
-      style={{ borderRadius: 12, height: '100%' }}
-    >
+    <Card title="Phân bố trạng thái booking" style={{ height: '100%' }}>
       <div style={{ width: '100%', height: chartHeight }}>
         <ResponsiveContainer>
           <PieChart>
@@ -73,7 +70,7 @@ export default function BookingStatusPie({ overview, loading }: BookingStatusPie
               {data.map((entry) => (
                 <Cell
                   key={entry.name}
-                  fill={STATUS_COLORS[entry.name] ?? '#1677ff'}
+                  fill={STATUS_COLORS[entry.name] ?? '#9fbbe0'}
                 />
               ))}
             </Pie>
@@ -81,9 +78,15 @@ export default function BookingStatusPie({ overview, loading }: BookingStatusPie
               formatter={(value: number) =>
                 `${value.toLocaleString('vi-VN')} booking`
               }
+              contentStyle={{
+                background: token.colorBgElevated,
+                border: `1px solid ${token.colorBorderSecondary}`,
+                borderRadius: 8,
+                boxShadow: 'var(--shadow-sm)',
+              }}
             />
             <Legend
-              wrapperStyle={{ fontSize: screens.sm ? 14 : 12 }}
+              wrapperStyle={{ fontSize: screens.sm ? 13 : 12 }}
             />
           </PieChart>
         </ResponsiveContainer>

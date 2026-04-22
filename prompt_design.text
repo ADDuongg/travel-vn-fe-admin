@@ -1,0 +1,31 @@
+Redesign admin dashboard homepage.
+
+Keep Ant Design components for functionality only.
+Visually override them heavily.
+
+Style direction:
+Warm Premium Operational Dashboard for a luxury travel/hotel company.
+
+Mood:
+Elegant, trustworthy, calm, premium, efficient.
+
+References:
+Cursor warmth + Linear clarity + Stripe analytics polish.
+
+Colors:
+Warm ivory background, stone sidebar, espresso text, subtle orange accent.
+
+Improve:
+1. Sidebar hierarchy
+2. Topbar cleanliness
+3. KPI cards premium look
+4. Revenue charts modernized
+5. Table readability
+6. Better spacing and typography
+
+Avoid:
+Default AntD template feel.
+Too much orange.
+Crowded layout.
+
+Before coding, give me redesign plan page by page.

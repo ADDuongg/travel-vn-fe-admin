@@ -8,12 +8,12 @@ function hasBreadcrumb(handle: unknown): handle is BreadcrumbHandle {
     !!handle && typeof handle === 'object' && 'breadcrumb' in (handle as any)
   );
 }
+
 const CustomBreadCrumb = () => {
   const matches = useMatches() as UIMatch<
     Record<string, string>,
     BreadcrumbHandle
   >[];
-  console.log('matches', matches);
 
   const crumbMatches = useMemo(
     () => matches.filter((m) => hasBreadcrumb(m.handle)),
@@ -31,14 +31,20 @@ const CustomBreadCrumb = () => {
 
       return {
         title: isLast ? (
-          <span>{title}</span>
+          <span style={{ fontWeight: 500 }}>{title}</span>
         ) : (
           <Link to={m.pathname || ''}>{title}</Link>
         ),
       };
     });
   }, [crumbMatches]);
-  return <Breadcrumb style={{ margin: '16px 0' }} items={items} />;
+
+  return (
+    <Breadcrumb
+      style={{ margin: 0, fontSize: 13 }}
+      items={items}
+    />
+  );
 };
 
 export default CustomBreadCrumb;

@@ -51,7 +51,7 @@ export default function TourReviewSection({
       {ratingSummary != null && (
         <Space size="middle" style={{ marginBottom: 16 }}>
           <Space>
-            <StarFilled style={{ color: '#faad14' }} />
+            <StarFilled style={{ color: 'var(--accent-gold)' }} />
             <Text strong>{ratingSummary.average.toFixed(1)}</Text>
             <Text type="secondary">/ 5</Text>
           </Space>

@@ -159,7 +159,7 @@ export default function BookingPage() {
                 >
                   #{b._id.slice(-6)}
                 </a>
-                <div style={{ fontSize: 12, color: '#666' }}>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                   {b.user?.email || b.user?.name || '—'}
                 </div>
               </div>

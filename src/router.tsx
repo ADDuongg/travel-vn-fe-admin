@@ -27,6 +27,7 @@ import LoginPage from '@pages/auth/LoginPage';
 import TourGuidePage from '@pages/tour-guide/TourGuidePage';
 import ProvincePage from '@pages/province/ProvincePage';
 import FavoritesPage from '@pages/favorites/FavoritesPage';
+import AuditLogsPage from '@pages/audit-log/AuditLogsPage';
 import { EnumRole } from '@/constants/enum';
 
 export const routes = [
@@ -150,6 +151,13 @@ export const routes = [
         path: ROUTES.SYSTEM.LANGUAGES,
         element: <SystemLanguagePage />,
         handle: { breadcrumb: 'Languages' },
+      },
+
+      // ===== AUDIT LOGS =====
+      {
+        path: ROUTES.SYSTEM.AUDIT_LOGS,
+        element: <AuditLogsPage />,
+        handle: { breadcrumb: 'Audit Logs' },
       },
 
       // ===== ROLE & PERMISSION =====

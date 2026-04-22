@@ -42,6 +42,7 @@ export const ROUTES = {
   SYSTEM: {
     INDEX: '/dashboard/system',
     LANGUAGES: '/dashboard/system/languages',
+    AUDIT_LOGS: '/dashboard/system/audit-logs',
   },
   ADMIN_REVIEWS: '/dashboard/reviews',
 } as const;
@@ -62,6 +63,7 @@ export const ROUTE_KEYS = {
   ACCOUNT: 'ACCOUNT',
   ROLE_PERMISSION: 'ROLE_PERMISSION',
   SYSTEM: 'SYSTEM',
+  AUDIT_LOGS: 'AUDIT_LOGS',
   ADMIN_REVIEWS: 'ADMIN_REVIEWS',
   TOUR_REVIEWS: 'TOUR_REVIEWS',
 } as const;

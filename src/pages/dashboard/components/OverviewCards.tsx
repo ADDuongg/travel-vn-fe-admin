@@ -9,6 +9,7 @@ import {
   Statistic,
   Tag,
   Typography,
+  theme,
 } from 'antd';
 import {
   ShoppingCartOutlined,
@@ -37,6 +38,30 @@ const RANGE_LABEL: Record<DashboardRange, string> = {
   custom: 'Tùy chọn',
 };
 
+const CARDS_CONFIG = [
+  {
+    key: 'bookings' as const,
+    title: 'Bookings',
+    icon: <ShoppingCartOutlined />,
+    color: '#f54e00',
+    bg: 'rgba(245, 78, 0, 0.08)',
+  },
+  {
+    key: 'revenue' as const,
+    title: 'Doanh thu',
+    icon: <DollarOutlined />,
+    color: '#1f8a65',
+    bg: 'rgba(31, 138, 101, 0.08)',
+  },
+  {
+    key: 'users' as const,
+    title: 'Users',
+    icon: <UserAddOutlined />,
+    color: '#c08532',
+    bg: 'rgba(192, 133, 50, 0.08)',
+  },
+];
+
 export default function OverviewCards({
   range,
   overview,
@@ -44,18 +69,18 @@ export default function OverviewCards({
   isError,
 }: OverviewCardsProps) {
   const screens = useBreakpoint();
+  const { token } = theme.useToken();
 
-  const cardPadding = screens.md ? '20px 24px' : '14px 16px';
   const iconSize = screens.md ? 40 : 34;
   const iconFontSize = screens.md ? 20 : 16;
-  const titleFontSize = screens.md ? 16 : 14;
+  const titleFontSize = screens.md ? 15 : 13;
 
   if (isLoading) {
     return (
       <Row gutter={[screens.md ? 16 : 8, screens.md ? 16 : 8]}>
         {[1, 2, 3].map((i) => (
           <Col xs={24} sm={24} md={8} key={i}>
-            <Card style={{ borderRadius: 12 }}>
+            <Card>
               <Skeleton active paragraph={{ rows: 3 }} />
             </Card>
           </Col>
@@ -74,18 +99,13 @@ export default function OverviewCards({
   }
 
   const fmt = (v: number | undefined) => (v ?? 0).toLocaleString('vi-VN');
-
   const { bookings, revenue, users } = overview;
   const rangeLabel = RANGE_LABEL[range];
 
   return (
     <Row gutter={[screens.md ? 16 : 8, screens.md ? 16 : 8]}>
-      {/* Bookings Card */}
       <Col xs={24} sm={24} md={8}>
-        <Card
-          style={{ borderRadius: 12, height: '100%' }}
-          styles={{ body: { padding: cardPadding } }}
-        >
+        <Card style={{ height: '100%' }}>
           <div
             style={{
               display: 'flex',
@@ -101,16 +121,16 @@ export default function OverviewCards({
                 justifyContent: 'center',
                 width: iconSize,
                 height: iconSize,
-                borderRadius: 10,
-                background: 'rgba(22,119,255,0.1)',
-                color: '#1677ff',
+                borderRadius: 8,
+                background: CARDS_CONFIG[0].bg,
+                color: CARDS_CONFIG[0].color,
                 fontSize: iconFontSize,
               }}
             >
-              <ShoppingCartOutlined />
+              {CARDS_CONFIG[0].icon}
             </span>
             <Text strong style={{ fontSize: titleFontSize }}>
-              Bookings
+              {CARDS_CONFIG[0].title}
             </Text>
           </div>
 
@@ -123,7 +143,7 @@ export default function OverviewCards({
             </Col>
           </Row>
 
-          <Divider style={{ margin: '12px 0' }} />
+          <Divider style={{ margin: '12px 0', borderColor: token.colorBorderSecondary }} />
 
           <Text type="secondary" style={{ fontSize: 12 }}>
             Theo trạng thái
@@ -147,12 +167,8 @@ export default function OverviewCards({
         </Card>
       </Col>
 
-      {/* Revenue Card */}
       <Col xs={24} sm={12} md={8}>
-        <Card
-          style={{ borderRadius: 12, height: '100%' }}
-          styles={{ body: { padding: cardPadding } }}
-        >
+        <Card style={{ height: '100%' }}>
           <div
             style={{
               display: 'flex',
@@ -168,16 +184,16 @@ export default function OverviewCards({
                 justifyContent: 'center',
                 width: iconSize,
                 height: iconSize,
-                borderRadius: 10,
-                background: 'rgba(82,196,26,0.1)',
-                color: '#52c41a',
+                borderRadius: 8,
+                background: CARDS_CONFIG[1].bg,
+                color: CARDS_CONFIG[1].color,
                 fontSize: iconFontSize,
               }}
             >
-              <DollarOutlined />
+              {CARDS_CONFIG[1].icon}
             </span>
             <Text strong style={{ fontSize: titleFontSize }}>
-              Doanh thu
+              {CARDS_CONFIG[1].title}
             </Text>
           </div>
 
@@ -208,12 +224,8 @@ export default function OverviewCards({
         </Card>
       </Col>
 
-      {/* Users Card */}
       <Col xs={24} sm={12} md={8}>
-        <Card
-          style={{ borderRadius: 12, height: '100%' }}
-          styles={{ body: { padding: cardPadding } }}
-        >
+        <Card style={{ height: '100%' }}>
           <div
             style={{
               display: 'flex',
@@ -229,16 +241,16 @@ export default function OverviewCards({
                 justifyContent: 'center',
                 width: iconSize,
                 height: iconSize,
-                borderRadius: 10,
-                background: 'rgba(114,46,209,0.1)',
-                color: '#722ed1',
+                borderRadius: 8,
+                background: CARDS_CONFIG[2].bg,
+                color: CARDS_CONFIG[2].color,
                 fontSize: iconFontSize,
               }}
             >
-              <UserAddOutlined />
+              {CARDS_CONFIG[2].icon}
             </span>
             <Text strong style={{ fontSize: titleFontSize }}>
-              Users
+              {CARDS_CONFIG[2].title}
             </Text>
           </div>
 
@@ -251,7 +263,7 @@ export default function OverviewCards({
                 title={`Mới (${rangeLabel})`}
                 value={fmt(users?.newThisWeek)}
                 valueStyle={{
-                  color: (users?.newThisWeek ?? 0) > 0 ? '#52c41a' : undefined,
+                  color: (users?.newThisWeek ?? 0) > 0 ? '#1f8a65' : undefined,
                 }}
               />
             </Col>
@@ -273,6 +285,6 @@ function getStatusColor(status: string): string {
     case 'EXPIRED':
       return 'volcano';
     default:
-      return 'blue';
+      return 'orange';
   }
 }

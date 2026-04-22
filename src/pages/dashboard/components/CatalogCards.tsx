@@ -14,25 +14,25 @@ const CATALOG_ITEMS = [
     key: 'activeHotels' as const,
     title: 'Hotels',
     icon: <HomeOutlined />,
-    color: '#1677ff',
+    color: '#f54e00',
   },
   {
     key: 'activeRooms' as const,
     title: 'Rooms',
     icon: <AppstoreOutlined />,
-    color: '#722ed1',
+    color: '#c08532',
   },
   {
     key: 'activeTours' as const,
     title: 'Tours',
     icon: <CompassOutlined />,
-    color: '#13c2c2',
+    color: '#1f8a65',
   },
   {
     key: 'totalUsers' as const,
     title: 'Users',
     icon: <TeamOutlined />,
-    color: '#52c41a',
+    color: '#9fbbe0',
   },
 ];
 
@@ -46,7 +46,6 @@ export default function CatalogCards() {
         <Col xs={12} sm={12} md={6} key={item.key}>
           <Card
             size="small"
-            style={{ borderRadius: 12 }}
             styles={{
               body: {
                 padding: screens.md ? '16px 20px' : '12px 14px',

@@ -1,11 +1,21 @@
 import LogoPHX from '@/assets/images/logo_phx.png';
 import { useThemeMode } from '@/providers/antd-theme/context';
 import {
+  AuditOutlined,
+  BankOutlined,
+  CalendarOutlined,
+  CompassOutlined,
+  CreditCardOutlined,
   HeartOutlined,
+  HomeOutlined,
   InfoCircleFilled,
   LogoutOutlined,
   PieChartOutlined,
   RightOutlined,
+  SettingOutlined,
+  StarOutlined,
+  TeamOutlined,
+  UnorderedListOutlined,
 } from '@ant-design/icons';
 import {
   Button,
@@ -36,16 +46,6 @@ function getItem(
   return { key, icon, children, label } as MenuItem;
 }
 
-const siderStyle: React.CSSProperties = {
-  height: '100vh',
-  position: 'sticky',
-  insetInlineStart: 0,
-  top: 0,
-  bottom: 0,
-  scrollbarWidth: 'thin',
-  scrollbarGutter: 'stable',
-};
-
 const KEY_TO_PATH: Record<string, string> = {
   [ROUTE_KEYS.DASHBOARD]: ROUTES.DASHBOARD,
   [ROUTE_KEYS.FAVORITES]: ROUTES.FAVORITES,
@@ -63,27 +63,31 @@ const KEY_TO_PATH: Record<string, string> = {
   [ROUTE_KEYS.ADMIN_REVIEWS]: ROUTES.ADMIN_REVIEWS,
   [ROUTE_KEYS.ACCOUNT]: ROUTES.ACCOUNT,
   [ROUTE_KEYS.SYSTEM]: ROUTES.SYSTEM.INDEX,
+  [ROUTE_KEYS.AUDIT_LOGS]: ROUTES.SYSTEM.AUDIT_LOGS,
 };
 
 const items: MenuItem[] = [
   getItem('Dashboard', ROUTE_KEYS.DASHBOARD, <PieChartOutlined />),
   getItem('Favorites', ROUTE_KEYS.FAVORITES, <HeartOutlined />),
-  getItem('Tours', ROUTE_KEYS.TOUR, <PieChartOutlined />, [
-    getItem('Tour List', ROUTE_KEYS.TOUR, <PieChartOutlined />),
-    getItem('Tour Inventory', ROUTE_KEYS.TOUR_INVENTORY, <PieChartOutlined />),
-    getItem('Tour Bookings', ROUTE_KEYS.TOUR_BOOKING, <PieChartOutlined />),
-    getItem('Tour Reviews', ROUTE_KEYS.TOUR_REVIEWS, <PieChartOutlined />),
-    getItem('Tour Guides', ROUTE_KEYS.TOUR_GUIDE, <PieChartOutlined />),
+  getItem('Tours', ROUTE_KEYS.TOUR, <CompassOutlined />, [
+    getItem('Tour List', ROUTE_KEYS.TOUR, <UnorderedListOutlined />),
+    getItem('Tour Inventory', ROUTE_KEYS.TOUR_INVENTORY, <CalendarOutlined />),
+    getItem('Tour Bookings', ROUTE_KEYS.TOUR_BOOKING, <CreditCardOutlined />),
+    getItem('Tour Reviews', ROUTE_KEYS.TOUR_REVIEWS, <StarOutlined />),
+    getItem('Tour Guides', ROUTE_KEYS.TOUR_GUIDE, <TeamOutlined />),
   ]),
-  getItem('Provinces', ROUTE_KEYS.PROVINCE, <PieChartOutlined />),
-  getItem('Hotels', ROUTE_KEYS.HOTEL, <PieChartOutlined />),
-  getItem('Room', ROUTE_KEYS.ROOM, <PieChartOutlined />, [
-    getItem('Room List', ROUTE_KEYS.ROOM, <PieChartOutlined />),
-    getItem('Amenities', ROUTE_KEYS.ROOM_AMENITIES, <PieChartOutlined />),
+  getItem('Provinces', ROUTE_KEYS.PROVINCE, <HomeOutlined />),
+  getItem('Hotels', ROUTE_KEYS.HOTEL, <BankOutlined />),
+  getItem('Room', ROUTE_KEYS.ROOM, <HomeOutlined />, [
+    getItem('Room List', ROUTE_KEYS.ROOM, <UnorderedListOutlined />),
+    getItem('Amenities', ROUTE_KEYS.ROOM_AMENITIES, <StarOutlined />),
   ]),
-  getItem('Bookings', ROUTE_KEYS.BOOKING, <PieChartOutlined />),
-  getItem('Reviews', ROUTE_KEYS.ADMIN_REVIEWS, <PieChartOutlined />),
-  getItem('System', ROUTE_KEYS.SYSTEM, <PieChartOutlined />),
+  getItem('Bookings', ROUTE_KEYS.BOOKING, <CreditCardOutlined />),
+  getItem('Reviews', ROUTE_KEYS.ADMIN_REVIEWS, <StarOutlined />),
+  getItem('System', 'SYSTEM_GROUP', <SettingOutlined />, [
+    getItem('System', ROUTE_KEYS.SYSTEM, <SettingOutlined />),
+    getItem('Audit Logs', ROUTE_KEYS.AUDIT_LOGS, <AuditOutlined />),
+  ]),
 ];
 
 export default function Sidebar({
@@ -111,39 +115,53 @@ export default function Sidebar({
       trigger={null}
       onCollapse={(value) => setCollapsed(value)}
       theme={resolvedMode}
-      style={siderStyle}
+      className={styles.sider}
+      style={{
+        height: '100vh',
+        position: 'sticky',
+        insetInlineStart: 0,
+        top: 0,
+        bottom: 0,
+        scrollbarWidth: 'thin',
+        scrollbarGutter: 'stable',
+        borderRight: `1px solid ${token.colorBorderSecondary}`,
+      }}
     >
       <div
+        className={styles.logoArea}
         style={{
-          height: 56,
-          position: 'sticky',
-          top: 0,
-          display: 'flex',
-          alignItems: 'center',
-          paddingInline: 16,
           borderBottom: `1px solid ${token.colorBorderSecondary}`,
-          borderRight: `1px solid ${token.colorBorderSecondary}`,
-          gap: 8,
-          overflow: 'hidden',
         }}
       >
         <div
           style={{
-            width: !collapsed ? 28 : '100%',
+            width: 28,
             height: 28,
             borderRadius: 6,
             background: token.colorPrimary,
             flex: '0 0 auto',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
-        />
+        >
+          <CompassOutlined style={{ color: '#fff', fontSize: 14 }} />
+        </div>
         {!collapsed && (
-          <Text strong style={{ whiteSpace: 'nowrap' }}>
-            My Commerce Admin
+          <Text
+            strong
+            style={{
+              whiteSpace: 'nowrap',
+              fontSize: 14,
+              letterSpacing: '-0.3px',
+            }}
+          >
+            Travel VN Admin
           </Text>
         )}
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 8px' }}>
         <Menu
           theme={resolvedMode}
           mode="inline"
@@ -154,11 +172,12 @@ export default function Sidebar({
             const path = KEY_TO_PATH[key];
             if (path) navigate(path);
           }}
+          style={{ border: 'none' }}
         />
       </div>
 
       <div>
-        <Divider style={{ margin: 0 }} />
+        <Divider style={{ margin: 0, borderColor: token.colorBorderSecondary }} />
 
         <Button
           type="text"
@@ -179,7 +198,6 @@ export default function Sidebar({
           selectedKeys={selectedKeys}
           onClick={(info) => {
             if (info.key === 'logout') return;
-
             const path = KEY_TO_PATH[String(info.key)];
             if (path) navigate(path);
           }}
@@ -187,6 +205,7 @@ export default function Sidebar({
             getItem('Account', ROUTE_KEYS.ACCOUNT, <InfoCircleFilled />),
             getItem('Log out', 'logout', <LogoutOutlined />),
           ]}
+          style={{ border: 'none', padding: '0 8px' }}
         />
 
         <a
@@ -199,7 +218,7 @@ export default function Sidebar({
             style={{
               margin: 0,
               padding: '0.4rem',
-              borderTop: `solid 1px ${token.colorPrimaryBorder}`,
+              borderTop: `1px solid ${token.colorBorderSecondary}`,
             }}
           >
             <Image

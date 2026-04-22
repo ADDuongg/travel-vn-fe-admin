@@ -1,0 +1,16 @@
+.card {
+  cursor: pointer;
+  transition: border-color var(--transition-color, 200ms ease),
+    box-shadow var(--transition-shadow, 200ms ease);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--accent-orange);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+}

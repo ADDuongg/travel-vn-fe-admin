@@ -1,32 +1,24 @@
-.sider-drag-handle {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 6px;
-  height: 100%;
-  cursor: col-resize;
-  background: linear-gradient(
-    to right,
-    transparent,
-    transparent 4px,
-    rgba(0, 0, 0, 0.06) 4px
-  );
-}
 :global(.ant-layout-sider-children) {
   display: flex;
   flex-direction: column;
   position: relative;
   justify-content: space-between;
 }
-.sider {
-  height: 100vh;
-  width: 100% !important;
-  position: fixed !important;
-  left: 0;
+
+.sider :global(.ant-menu) {
+  background: transparent;
+}
+
+.logoArea {
+  height: 56;
+  position: sticky;
   top: 0;
-  bottom: 0;
-  background-color: #fff !important;
-  border-right: solid 1px #d7d7d7;
+  display: flex;
+  align-items: center;
+  padding-inline: 16px;
+  gap: 10px;
+  overflow: hidden;
+  height: 56px;
 }
 
 .logo {
@@ -46,6 +38,6 @@
 }
 
 .toggleButton {
-  width: calc(100% - 8px) !important;
-  margin: 4px;
+  width: calc(100% - 16px) !important;
+  margin: 4px 8px;
 }

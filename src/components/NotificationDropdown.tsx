@@ -204,7 +204,7 @@ export default function NotificationDropdown() {
                             </Text>
                             {!item.isRead && (
                               <Badge
-                                color="blue"
+                                color={token.colorPrimary}
                                 style={{ marginLeft: 8 }}
                                 status="processing"
                               />

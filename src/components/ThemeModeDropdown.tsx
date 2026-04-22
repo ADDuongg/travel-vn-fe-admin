@@ -1,12 +1,10 @@
-// components/ThemeModeDropdown.tsx
 import { useThemeMode } from '@/providers/antd-theme/context';
 import { LaptopOutlined, MoonOutlined, SunOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Space, Typography } from 'antd';
-
-const { Text } = Typography;
+import { Button, Dropdown, theme } from 'antd';
 
 export default function ThemeModeDropdown() {
   const { preference, setPreference } = useThemeMode();
+  const { token } = theme.useToken();
 
   const items = [
     {
@@ -29,22 +27,22 @@ export default function ThemeModeDropdown() {
     },
   ];
 
-  const currentLabel = {
-    light: 'Light',
-    dark: 'Dark',
-    system: 'System',
-  }[preference];
+  const icon =
+    preference === 'light' ? (
+      <SunOutlined />
+    ) : preference === 'dark' ? (
+      <MoonOutlined />
+    ) : (
+      <LaptopOutlined />
+    );
 
   return (
-    <Dropdown menu={{ items }} trigger={['click']}>
-      <Button size="small">
-        <Space>
-          {preference === 'light' && <SunOutlined />}
-          {preference === 'dark' && <MoonOutlined />}
-          {preference === 'system' && <LaptopOutlined />}
-          <Text>{currentLabel}</Text>
-        </Space>
-      </Button>
+    <Dropdown menu={{ items, selectedKeys: [preference] }} trigger={['click']}>
+      <Button
+        type="text"
+        icon={icon}
+        style={{ color: token.colorTextSecondary }}
+      />
     </Dropdown>
   );
 }

@@ -51,7 +51,7 @@ export default function BookingDetailPage() {
           <Title level={5} style={{ marginBottom: 0 }}>
             Booking #{id?.slice(-6)}
           </Title>
-          <div style={{ fontSize: 12, color: '#666' }}>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
             {booking?.user?.email || booking?.user?.name || '—'}
           </div>
         </div>

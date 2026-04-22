@@ -63,7 +63,6 @@ export default function RecentBookingsTable() {
 
   return (
     <Card
-      style={{ marginTop: 16, borderRadius: 12 }}
       title={
         <Space direction="vertical" size={0}>
           <Text strong>Recent Bookings</Text>

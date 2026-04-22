@@ -12,7 +12,8 @@
 }
 
 .mainCard {
-  border-radius: 12px !important;
+  border-radius: var(--radius-lg, 10px) !important;
+  border: 1px solid var(--border-primary);
 }
 
 .mainCard :global(.ant-card-body) {
@@ -22,7 +23,8 @@
 .filtersCard {
   position: sticky;
   top: 12px;
-  border-radius: 12px !important;
+  border-radius: var(--radius-lg, 10px) !important;
+  border: 1px solid var(--border-primary);
 }
 
 .filtersTitle {
@@ -59,9 +61,6 @@
   gap: 10px;
 }
 
-/* Note: do not customize zebra/hover here.
-   Keep AntD Table styling defaults to avoid fixed-column background artifacts. */
-
 @media (max-width: 1024px) {
   .content {
     grid-template-columns: 1fr;
@@ -73,4 +72,3 @@
     align-items: flex-start;
   }
 }
-

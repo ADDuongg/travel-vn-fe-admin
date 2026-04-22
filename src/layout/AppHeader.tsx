@@ -57,12 +57,14 @@ export default function AppHeader({
         paddingInline: 16,
         background: token.colorBgContainer,
         borderBottom: `1px solid ${token.colorBorderSecondary}`,
+        backdropFilter: 'blur(8px)',
       }}
     >
       <Button
         type="text"
         onClick={onToggleCollapsed}
         icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+        style={{ color: token.colorTextSecondary }}
       />
       <CustomBreadCrumb />
       <div
@@ -70,7 +72,7 @@ export default function AppHeader({
           marginLeft: 'auto',
           display: 'flex',
           alignItems: 'center',
-          gap: 12,
+          gap: 8,
         }}
       >
         <ThemeModeDropdown />
@@ -78,9 +80,31 @@ export default function AppHeader({
         <NotificationDropdown />
 
         <Dropdown menu={userMenu} trigger={['click']}>
-          <Space style={{ cursor: 'pointer' }}>
-            <Avatar size="small" icon={<UserOutlined />} />
-            <Text ellipsis style={{ display: 'inline-block', maxWidth: 160 }}>
+          <Space
+            style={{
+              cursor: 'pointer',
+              padding: '4px 8px',
+              borderRadius: 8,
+              transition: 'background 150ms ease',
+            }}
+          >
+            <Avatar
+              size="small"
+              icon={<UserOutlined />}
+              style={{
+                backgroundColor: token.colorPrimary,
+                color: '#fff',
+              }}
+            />
+            <Text
+              ellipsis
+              style={{
+                display: 'inline-block',
+                maxWidth: 160,
+                fontSize: 13,
+                fontWeight: 500,
+              }}
+            >
               {authUser?.username ?? '—'}
             </Text>
           </Space>
