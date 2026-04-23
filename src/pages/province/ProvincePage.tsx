@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Button,
-  Card,
   Collapse,
+  Card,
   Drawer,
   Empty,
   Grid,
@@ -20,7 +20,11 @@ import {
   message,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { FilterOutlined, ReloadOutlined } from '@ant-design/icons';
+import type { UploadFile } from 'antd/es/upload/interface';
+import {
+  FilterOutlined,
+  ReloadOutlined,
+} from '@ant-design/icons';
 import {
   useProvinces,
   useProvince,
@@ -31,6 +35,10 @@ import {
 } from '@/queries/province.queries';
 import type {
   Province,
+  ProvinceHighlight,
+  ProvinceLocalizedText,
+  ProvinceHighlightThumbnail,
+  ProvinceThumbnail,
   ProvinceQueryParams,
   ProvinceRegion,
   ProvinceTranslation,
@@ -38,6 +46,8 @@ import type {
   ProvinceWard,
 } from '@/interface/province';
 import tableStyles from '@/styles/promax-table.module.css';
+import ProvinceHighlightsEditor from '@/pages/province/components/ProvinceHighlightsEditor';
+import ProvinceMediaEditor from '@/pages/province/components/ProvinceMediaEditor';
 
 const { Title, Text } = Typography;
 const { useBreakpoint } = Grid;
@@ -50,9 +60,42 @@ type ProvinceFormValues = {
   isActive?: boolean;
   displayOrder?: number;
   region?: ProvinceRegion;
+  population?: number;
+  area?: number;
+  bestTimeToVisit?: ProvinceLocalizedText;
+  highlights?: ProvinceHighlight[];
+  thumbnail?: ProvinceThumbnail;
   gallery?: ProvinceGalleryItem[];
-  thumbnailFile?: File | null;
-  galleryFiles?: File[];
+};
+
+const mapUrlToUploadFile = (url: string, key: string): UploadFile => ({
+  uid: key,
+  name: url.split('/').pop() || 'image',
+  status: 'done',
+  url,
+});
+
+const normalizeLocalizedText = (value?: ProvinceLocalizedText) => {
+  if (!value) return undefined;
+  const vi = value.vi?.trim();
+  const en = value.en?.trim();
+  if (!vi && !en) return undefined;
+  return {
+    ...(vi ? { vi } : {}),
+    ...(en ? { en } : {}),
+  };
+};
+
+const normalizeHighlightThumbnail = (value?: ProvinceHighlightThumbnail) => {
+  if (!value?.url?.trim()) return undefined;
+  const url = value.url.trim();
+  const alt = value.alt?.trim();
+  return {
+    url,
+    ...(value.publicId ? { publicId: value.publicId } : {}),
+    ...(alt ? { alt } : {}),
+    ...(value.order != null ? { order: value.order } : {}),
+  };
 };
 
 export default function ProvincePage() {
@@ -66,6 +109,11 @@ export default function ProvincePage() {
   const [editSlug, setEditSlug] = useState<string | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [wardSearch, setWardSearch] = useState('');
+  const [thumbnailFileList, setThumbnailFileList] = useState<UploadFile[]>([]);
+  const [galleryFileList, setGalleryFileList] = useState<UploadFile[]>([]);
+  const [highlightUploadMap, setHighlightUploadMap] = useState<
+    Record<number, UploadFile[]>
+  >({});
 
   const [form] = Form.useForm<ProvinceFormValues>();
   const [modal, contextHolder] = Modal.useModal();
@@ -112,7 +160,24 @@ export default function ProvincePage() {
       isActive: provinceDetail.isActive ?? true,
       displayOrder: provinceDetail.displayOrder ?? 0,
       region: provinceDetail.region,
+      population: provinceDetail.population,
+      area: provinceDetail.area,
+      bestTimeToVisit: provinceDetail.bestTimeToVisit,
+      highlights: provinceDetail.highlights || [],
+      thumbnail: provinceDetail.thumbnail,
+      gallery: provinceDetail.gallery || [],
     });
+    setThumbnailFileList(
+      provinceDetail.thumbnail?.url
+        ? [mapUrlToUploadFile(provinceDetail.thumbnail.url, 'province-thumbnail')]
+        : [],
+    );
+    setGalleryFileList(
+      (provinceDetail.gallery || []).map((img, index) =>
+        mapUrlToUploadFile(img.url, `province-gallery-${index}`),
+      ),
+    );
+    setHighlightUploadMap({});
   }, [provinceDetail, form]);
 
   const handleOpenEdit = (row: ProvinceRow) => {
@@ -125,6 +190,9 @@ export default function ProvincePage() {
     setEditSlug(null);
     form.resetFields();
     setWardSearch('');
+    setThumbnailFileList([]);
+    setGalleryFileList([]);
+    setHighlightUploadMap({});
   };
 
   const handleSubmitEdit = async () => {
@@ -159,6 +227,72 @@ export default function ProvincePage() {
         }
       });
 
+      const bestTimeToVisit = normalizeLocalizedText(values.bestTimeToVisit);
+
+      const existingHighlights = provinceDetail.highlights || [];
+      const validHighlightIndexes = new Set<number>();
+      const highlights = (values.highlights || []).flatMap((item, index) => {
+        const name = normalizeLocalizedText(item?.name);
+        const hasValidName = !!(name?.vi && name?.en);
+        const description = normalizeLocalizedText(item?.description);
+        const thumbnail = normalizeHighlightThumbnail(item?.thumbnail);
+        const existingThumbnail = existingHighlights[index]?.thumbnail;
+        const hasNewFile =
+          !!highlightUploadMap[index]?.[0]?.originFileObj;
+        const mergedThumbnail =
+          thumbnail || existingThumbnail
+            ? {
+                ...(thumbnail || existingThumbnail || {}),
+                ...(item?.thumbnail?.alt?.trim()
+                  ? { alt: item.thumbnail.alt.trim() }
+                  : {}),
+                ...(item?.thumbnail?.order != null
+                  ? { order: item.thumbnail.order }
+                  : {}),
+              }
+            : undefined;
+
+        if (!hasValidName) return [];
+        if (!description && !mergedThumbnail && !hasNewFile) return [];
+        validHighlightIndexes.add(index);
+
+        return [
+          {
+            ...(name ? { name } : {}),
+            ...(description ? { description } : {}),
+            ...(mergedThumbnail?.url ? { thumbnail: mergedThumbnail } : {}),
+          } as ProvinceHighlight,
+        ];
+      });
+
+      const provinceThumbnail = values.thumbnail?.url
+        ? {
+            url: values.thumbnail.url,
+            ...(values.thumbnail.publicId
+              ? { publicId: values.thumbnail.publicId }
+              : {}),
+            ...(values.thumbnail.alt?.trim()
+              ? { alt: values.thumbnail.alt.trim() }
+              : {}),
+          }
+        : provinceDetail.thumbnail;
+
+      const existingGalleryByUrl = new Map(
+        (provinceDetail.gallery || []).map((item) => [item.url, item]),
+      );
+      const gallery = galleryFileList
+        .map((file, index) => {
+          if (!file.url) return null;
+          const old = existingGalleryByUrl.get(file.url);
+          return {
+            url: file.url,
+            ...(old?.publicId ? { publicId: old.publicId } : {}),
+            ...(old?.alt ? { alt: old.alt } : {}),
+            order: index,
+          };
+        })
+        .filter(Boolean);
+
       const formData = new FormData();
       formData.append('translations', JSON.stringify(translations ?? {}));
       if (values.isPopular != null) {
@@ -173,16 +307,46 @@ export default function ProvincePage() {
       if (values.region) {
         formData.append('region', values.region);
       }
-      if (values.gallery && values.gallery.length > 0) {
-        formData.append('gallery', JSON.stringify(values.gallery));
+      if (values.population != null) {
+        formData.append('population', String(values.population));
       }
-      if (values.thumbnailFile) {
-        formData.append('thumbnail', values.thumbnailFile);
+      if (values.area != null) {
+        formData.append('area', String(values.area));
       }
-      if (values.galleryFiles && values.galleryFiles.length > 0) {
-        values.galleryFiles.forEach((file) => {
-          formData.append('gallery', file);
-        });
+      if (bestTimeToVisit) {
+        formData.append('bestTimeToVisit', JSON.stringify(bestTimeToVisit));
+      }
+      if (highlights.length > 0) {
+        formData.append('highlights', JSON.stringify(highlights));
+      }
+      if (provinceThumbnail?.url) {
+        formData.append('thumbnail', JSON.stringify(provinceThumbnail));
+      }
+      if (gallery.length > 0) {
+        formData.append('gallery', JSON.stringify(gallery));
+      }
+
+      const thumbnailUploadFile = thumbnailFileList[0]?.originFileObj as
+        | File
+        | undefined;
+      if (thumbnailUploadFile) {
+        formData.append('thumbnail', thumbnailUploadFile);
+      }
+      galleryFileList.forEach((file) => {
+        if (file.originFileObj) {
+          formData.append('gallery', file.originFileObj as File);
+        }
+      });
+      Object.entries(highlightUploadMap).forEach(([index, files]) => {
+        if (!validHighlightIndexes.has(Number(index))) return;
+        const firstFile = files?.[0]?.originFileObj as File | undefined;
+        if (firstFile) {
+          formData.append(`highlightsThumbnail_${index}`, firstFile);
+        }
+      });
+
+      if (highlights.length === 0) {
+        formData.append('highlights', JSON.stringify([]));
       }
 
       await updateMetadataMutation.mutateAsync({
@@ -191,8 +355,20 @@ export default function ProvincePage() {
       });
       message.success('Đã cập nhật thông tin tỉnh/thành');
       handleCloseEdit();
-    } catch {
-      // validation error
+    } catch (error) {
+      if (
+        typeof error === 'object' &&
+        error != null &&
+        'errorFields' in error &&
+        Array.isArray((error as { errorFields?: unknown[] }).errorFields)
+      ) {
+        return;
+      }
+      message.error(
+        error instanceof Error
+          ? error.message
+          : 'Không thể cập nhật tỉnh/thành. Vui lòng thử lại.',
+      );
     }
   };
 
@@ -285,9 +461,38 @@ export default function ProvincePage() {
       render: (v: number | undefined) => (v != null ? v : '—'),
     },
     {
+      title: 'Population',
+      dataIndex: 'population',
+      width: 140,
+      responsive: ['lg', 'xl'],
+      render: (v: number | undefined) =>
+        v != null ? v.toLocaleString('vi-VN') : '—',
+    },
+    {
+      title: 'Area (km2)',
+      dataIndex: 'area',
+      width: 130,
+      responsive: ['lg', 'xl'],
+      render: (v: number | undefined) =>
+        v != null ? v.toLocaleString('vi-VN') : '—',
+    },
+    {
+      title: 'Counts',
+      key: 'counts',
+      width: 220,
+      responsive: ['md', 'lg', 'xl'],
+      render: (_, row) => (
+        <Space size={4} wrap>
+          <Tag>Hotels: {row.totalHotels ?? 0}</Tag>
+          <Tag>Tours: {row.totalTours ?? 0}</Tag>
+          <Tag>Guides: {row.totalTourGuides ?? 0}</Tag>
+        </Space>
+      ),
+    },
+    {
       title: 'Actions',
       key: 'actions',
-      width: 300,
+      width: 320,
       fixed: 'right',
       render: (_, row) => (
         <Space>
@@ -471,7 +676,7 @@ export default function ProvincePage() {
           dataSource={provinces?.items ?? []}
           columns={columns}
           size={screens.md ? 'middle' : 'small'}
-          scroll={{ x: 900 }}
+          scroll={{ x: 1300 }}
           locale={{
             emptyText: (
               <Empty description="Không có tỉnh/thành phù hợp với điều kiện lọc." />
@@ -489,7 +694,9 @@ export default function ProvincePage() {
         open={editModalOpen}
         onCancel={handleCloseEdit}
         onOk={handleSubmitEdit}
-        confirmLoading={updateMetadataMutation.isPending}
+        confirmLoading={
+          updateMetadataMutation.isPending
+        }
         width={900}
       >
         <Space
@@ -552,7 +759,74 @@ export default function ProvincePage() {
                 ]}
               />
             </Form.Item>
+            <Form.Item
+              name="population"
+              label="Dân số"
+              style={{ minWidth: 180 }}
+            >
+              <InputNumber min={0} style={{ width: '100%' }} />
+            </Form.Item>
+            <Form.Item
+              name="area"
+              label="Diện tích (km2)"
+              style={{ minWidth: 180 }}
+            >
+              <InputNumber min={0} step={0.1} style={{ width: '100%' }} />
+            </Form.Item>
           </Space>
+
+          <Form.Item label="Thời gian du lịch tốt nhất" style={{ marginBottom: 0 }}>
+            <Space style={{ width: '100%' }} wrap>
+              <Form.Item
+                name={['bestTimeToVisit', 'vi']}
+                label="VI"
+                style={{ minWidth: 320, flex: 1 }}
+              >
+                <Input placeholder="VD: Tháng 10 đến tháng 4" />
+              </Form.Item>
+              <Form.Item
+                name={['bestTimeToVisit', 'en']}
+                label="EN"
+                style={{ minWidth: 320, flex: 1 }}
+              >
+                <Input placeholder="Ex: October to April" />
+              </Form.Item>
+            </Space>
+          </Form.Item>
+
+          <Collapse
+            items={[
+              {
+                key: 'highlights',
+                label: 'Điểm nổi bật du lịch',
+                children: (
+                  <ProvinceHighlightsEditor
+                    form={form}
+                    highlightUploadMap={highlightUploadMap}
+                    setHighlightUploadMap={setHighlightUploadMap}
+                    mapUrlToUploadFile={mapUrlToUploadFile}
+                  />
+                ),
+              },
+            ]}
+          />
+
+          <Collapse
+            items={[
+              {
+                key: 'media',
+                label: 'Media',
+                children: (
+                  <ProvinceMediaEditor
+                    thumbnailFileList={thumbnailFileList}
+                    setThumbnailFileList={setThumbnailFileList}
+                    galleryFileList={galleryFileList}
+                    setGalleryFileList={setGalleryFileList}
+                  />
+                ),
+              },
+            ]}
+          />
 
           <Form.Item
             label="Nội dung & SEO theo ngôn ngữ"

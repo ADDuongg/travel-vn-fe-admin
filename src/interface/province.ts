@@ -32,6 +32,24 @@ export interface ProvinceWard {
   fullName?: { vi?: string; en?: string };
 }
 
+export interface ProvinceLocalizedText {
+  vi?: string;
+  en?: string;
+}
+
+export interface ProvinceHighlightThumbnail {
+  url: string;
+  publicId?: string;
+  alt?: string;
+  order?: number;
+}
+
+export interface ProvinceHighlight {
+  name?: ProvinceLocalizedText;
+  thumbnail?: ProvinceHighlightThumbnail;
+  description?: ProvinceLocalizedText;
+}
+
 export interface Province {
   _id: string;
   type?: 'province';
@@ -45,6 +63,13 @@ export interface Province {
   displayOrder?: number;
   isActive?: boolean;
   region?: ProvinceRegion;
+  population?: number;
+  area?: number;
+  bestTimeToVisit?: ProvinceLocalizedText;
+  highlights?: ProvinceHighlight[];
+  totalHotels?: number;
+  totalTours?: number;
+  totalTourGuides?: number;
 }
 
 export interface ProvinceListResponse {
@@ -78,6 +103,10 @@ export interface ProvinceMetadataUpdatePayload {
   displayOrder?: number;
   isActive?: boolean;
   region?: ProvinceRegion;
+  population?: number;
+  area?: number;
+  bestTimeToVisit?: ProvinceLocalizedText;
+  highlights?: ProvinceHighlight[];
   gallery?: ProvinceGalleryItem[];
   thumbnail?: ProvinceThumbnail;
 }
