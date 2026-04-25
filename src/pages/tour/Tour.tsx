@@ -22,6 +22,8 @@ import {
 import { useProvinceDropdown } from '@/queries/province.queries';
 import { useDeleteTour, useTours } from '@/queries/tour.queries';
 import type { Tour } from '@/interface/tour';
+import { getProvinceLabel } from '@/lib/dynamic-localized';
+import type { DynamicLocalized } from '@/lib/dynamic-localized';
 import styles from './tour-list.module.css';
 
 const { Title, Text } = Typography;
@@ -32,10 +34,13 @@ function getTourName(row: Pick<Tour, 'translations'>) {
   return t?.vi?.name || t?.en?.name || '-';
 }
 
-function getProvinceName(prov: any) {
+function formatProvinceCell(prov: {
+  name?: DynamicLocalized;
+  code?: string;
+} | null) {
   if (!prov) return '-';
   if (typeof prov === 'string') return '-';
-  return prov?.name?.vi || prov?.name?.en || prov?.code || '-';
+  return getProvinceLabel({ name: prov.name, code: prov.code });
 }
 
 export default function TourPage() {
@@ -134,7 +139,7 @@ export default function TourPage() {
           setDestinationId(v);
         }}
         options={provinces.map((p) => ({
-          label: p.name?.vi || p.name?.en || p.code,
+          label: getProvinceLabel({ name: p.name, code: p.code }),
           value: p._id,
         }))}
       />
@@ -149,7 +154,7 @@ export default function TourPage() {
           setDepartureProvinceId(v);
         }}
         options={provinces.map((p) => ({
-          label: p.name?.vi || p.name?.en || p.code,
+          label: getProvinceLabel({ name: p.name, code: p.code }),
           value: p._id,
         }))}
       />
@@ -275,7 +280,10 @@ export default function TourPage() {
               ellipsis: true,
               responsive: ['md', 'lg', 'xl'],
               render: (_, row) =>
-                getProvinceName((row as any).departureProvinceId),
+                formatProvinceCell(
+                  (row as { departureProvinceId?: { name?: DynamicLocalized; code?: string } })
+                    .departureProvinceId ?? null,
+                ),
             },
             {
               title: 'Active',

@@ -51,7 +51,7 @@ export const useUpdateProvinceMetadata = () => {
       payload,
     }: {
       id: string;
-      payload: ProvinceMetadataUpdatePayload | FormData;
+      payload: ProvinceMetadataUpdatePayload;
     }) => updateProvinceMetadata(id, payload),
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: PROVINCE_KEYS.all });

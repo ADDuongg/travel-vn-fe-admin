@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Button,
   Collapse,
@@ -21,10 +21,7 @@ import {
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { UploadFile } from 'antd/es/upload/interface';
-import {
-  FilterOutlined,
-  ReloadOutlined,
-} from '@ant-design/icons';
+import { FilterOutlined, ReloadOutlined } from '@ant-design/icons';
 import {
   useProvinces,
   useProvince,
@@ -33,18 +30,28 @@ import {
   useUpdateProvinceMetadata,
   useRestoreProvince,
 } from '@/queries/province.queries';
-import type {
-  Province,
-  ProvinceHighlight,
-  ProvinceLocalizedText,
-  ProvinceHighlightThumbnail,
-  ProvinceThumbnail,
-  ProvinceQueryParams,
-  ProvinceRegion,
-  ProvinceTranslation,
-  ProvinceGalleryItem,
-  ProvinceWard,
+import {
+  type Province,
+  type ProvinceDetail,
+  type ProvinceHighlight,
+  type ProvinceHighlightTranslation,
+  type ProvinceThumbnail,
+  type ProvinceQueryParams,
+  type ProvinceRegion,
+  type ProvinceTranslation,
+  type ProvinceGalleryItem,
+  type ProvinceWard,
+  type ProvinceMetadataUpdatePayload,
+  highlightsForForm,
 } from '@/interface/province';
+import {
+  getProvinceLabel,
+  localizedSearchHaystack,
+  pickDynamicLocalized,
+  pickSecondaryLocalized,
+} from '@/lib/dynamic-localized';
+import { useLanguages } from '@/queries/language.queries';
+import { uploadMedia, uploadMediaMultiple } from '@/services/media.service';
 import tableStyles from '@/styles/promax-table.module.css';
 import ProvinceHighlightsEditor from '@/pages/province/components/ProvinceHighlightsEditor';
 import ProvinceMediaEditor from '@/pages/province/components/ProvinceMediaEditor';
@@ -62,7 +69,6 @@ type ProvinceFormValues = {
   region?: ProvinceRegion;
   population?: number;
   area?: number;
-  bestTimeToVisit?: ProvinceLocalizedText;
   highlights?: ProvinceHighlight[];
   thumbnail?: ProvinceThumbnail;
   gallery?: ProvinceGalleryItem[];
@@ -75,28 +81,14 @@ const mapUrlToUploadFile = (url: string, key: string): UploadFile => ({
   url,
 });
 
-const normalizeLocalizedText = (value?: ProvinceLocalizedText) => {
-  if (!value) return undefined;
-  const vi = value.vi?.trim();
-  const en = value.en?.trim();
-  if (!vi && !en) return undefined;
-  return {
-    ...(vi ? { vi } : {}),
-    ...(en ? { en } : {}),
-  };
-};
-
-const normalizeHighlightThumbnail = (value?: ProvinceHighlightThumbnail) => {
-  if (!value?.url?.trim()) return undefined;
-  const url = value.url.trim();
-  const alt = value.alt?.trim();
-  return {
-    url,
-    ...(value.publicId ? { publicId: value.publicId } : {}),
-    ...(alt ? { alt } : {}),
-    ...(value.order != null ? { order: value.order } : {}),
-  };
-};
+function errMessage(e: unknown, fallback: string): string {
+  if (e && typeof e === 'object' && 'message' in e) {
+    const m = (e as { message?: unknown }).message;
+    if (typeof m === 'string' && m) return m;
+  }
+  if (e instanceof Error && e.message) return e.message;
+  return fallback;
+}
 
 export default function ProvincePage() {
   const screens = useBreakpoint();
@@ -115,8 +107,58 @@ export default function ProvincePage() {
     Record<number, UploadFile[]>
   >({});
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [form] = Form.useForm<ProvinceFormValues>();
   const [modal, contextHolder] = Modal.useModal();
+
+  const { data: languages = [] } = useLanguages();
+  const activeLangCodes = useMemo((): string[] => {
+    const codes = languages
+      .filter((l) => l.isActive)
+      .map((l) => l.code.toLowerCase());
+    return codes.length > 0 ? codes : ['vi', 'en'];
+  }, [languages]);
+
+  const languageTabs = useMemo(
+    () =>
+      activeLangCodes.map((code) => {
+        const meta = languages.find(
+          (l) => l.code.toLowerCase() === code,
+        );
+        return {
+          code,
+          label: meta?.name
+            ? `${meta.name} (${code.toUpperCase()})`
+            : code.toUpperCase(),
+        };
+      }),
+    [activeLangCodes, languages],
+  );
+
+  /** Merges legacy root `bestTimeToVisit` into per-lang translations when API not migrated yet. */
+  const translationsForForm = useCallback(
+    (detail: ProvinceDetail): Record<string, ProvinceTranslation> => {
+      const base: Record<string, ProvinceTranslation> = {
+        ...(detail.translations || {}),
+      };
+      activeLangCodes.forEach((code) => {
+        if (!base[code]) base[code] = {};
+      });
+      const legacy = detail.bestTimeToVisit;
+      if (legacy) {
+        (['vi', 'en'] as const).forEach((lang) => {
+          const v = legacy[lang]?.trim();
+          if (!v) return;
+          const cur = base[lang] || {};
+          if (!cur.bestTimeToVisit?.trim()) {
+            base[lang] = { ...cur, bestTimeToVisit: v };
+          }
+        });
+      }
+      return base;
+    },
+    [activeLangCodes],
+  );
 
   const params: ProvinceQueryParams = useMemo(
     () => ({
@@ -155,21 +197,25 @@ export default function ProvincePage() {
     if (!provinceDetail) return;
 
     form.setFieldsValue({
-      translations: provinceDetail.translations || {},
+      translations: translationsForForm(provinceDetail),
       isPopular: provinceDetail.isPopular ?? false,
       isActive: provinceDetail.isActive ?? true,
       displayOrder: provinceDetail.displayOrder ?? 0,
       region: provinceDetail.region,
       population: provinceDetail.population,
       area: provinceDetail.area,
-      bestTimeToVisit: provinceDetail.bestTimeToVisit,
-      highlights: provinceDetail.highlights || [],
+      highlights: highlightsForForm(provinceDetail.highlights),
       thumbnail: provinceDetail.thumbnail,
       gallery: provinceDetail.gallery || [],
     });
     setThumbnailFileList(
       provinceDetail.thumbnail?.url
-        ? [mapUrlToUploadFile(provinceDetail.thumbnail.url, 'province-thumbnail')]
+        ? [
+            mapUrlToUploadFile(
+              provinceDetail.thumbnail.url,
+              'province-thumbnail',
+            ),
+          ]
         : [],
     );
     setGalleryFileList(
@@ -178,7 +224,7 @@ export default function ProvincePage() {
       ),
     );
     setHighlightUploadMap({});
-  }, [provinceDetail, form]);
+  }, [provinceDetail, form, translationsForForm]);
 
   const handleOpenEdit = (row: ProvinceRow) => {
     setEditSlug(row.slug);
@@ -186,6 +232,7 @@ export default function ProvincePage() {
   };
 
   const handleCloseEdit = () => {
+    setIsSubmitting(false);
     setEditModalOpen(false);
     setEditSlug(null);
     form.resetFields();
@@ -197,6 +244,7 @@ export default function ProvincePage() {
 
   const handleSubmitEdit = async () => {
     if (!provinceDetail) return;
+    setIsSubmitting(true);
     try {
       const values = await form.validateFields();
 
@@ -204,9 +252,11 @@ export default function ProvincePage() {
       Object.entries(values.translations || {}).forEach(([lang, raw]) => {
         if (!raw || typeof raw !== 'object') return;
         const t = raw as ProvinceTranslation;
+        const bestTime = t.bestTimeToVisit?.trim();
         const hasContent =
           t.description ||
           t.shortDescription ||
+          bestTime ||
           t.seo?.title ||
           t.seo?.description ||
           (t.seo?.keywords && t.seo.keywords.length > 0);
@@ -214,6 +264,7 @@ export default function ProvincePage() {
           translations[lang] = {
             ...(t.description && { description: t.description }),
             ...(t.shortDescription && { shortDescription: t.shortDescription }),
+            ...(bestTime && { bestTimeToVisit: bestTime }),
             ...(t.seo && {
               seo: {
                 ...(t.seo.title && { title: t.seo.title }),
@@ -227,132 +278,219 @@ export default function ProvincePage() {
         }
       });
 
-      const bestTimeToVisit = normalizeLocalizedText(values.bestTimeToVisit);
-
       const existingHighlights = provinceDetail.highlights || [];
+      const rowHasContent = (item: ProvinceHighlight | undefined) => {
+        const tr = item?.translations || {};
+        return activeLangCodes.some(
+          (code) =>
+            tr[code]?.name?.trim() || tr[code]?.description?.trim(),
+        );
+      };
+      for (let index = 0; index < (values.highlights?.length || 0); index++) {
+        const item = values.highlights?.[index];
+        if (!rowHasContent(item)) continue;
+        for (const code of activeLangCodes) {
+          if (!item?.translations?.[code]?.name?.trim()) {
+            message.error(
+              `Highlight #${index + 1}: cần nhập tên cho ngôn ngữ "${code.toUpperCase()}"`,
+            );
+            return;
+          }
+        }
+      }
+
       const validHighlightIndexes = new Set<number>();
-      const highlights = (values.highlights || []).flatMap((item, index) => {
-        const name = normalizeLocalizedText(item?.name);
-        const hasValidName = !!(name?.vi && name?.en);
-        const description = normalizeLocalizedText(item?.description);
-        const thumbnail = normalizeHighlightThumbnail(item?.thumbnail);
-        const existingThumbnail = existingHighlights[index]?.thumbnail;
-        const hasNewFile =
-          !!highlightUploadMap[index]?.[0]?.originFileObj;
-        const mergedThumbnail =
-          thumbnail || existingThumbnail
-            ? {
-                ...(thumbnail || existingThumbnail || {}),
-                ...(item?.thumbnail?.alt?.trim()
-                  ? { alt: item.thumbnail.alt.trim() }
-                  : {}),
-                ...(item?.thumbnail?.order != null
-                  ? { order: item.thumbnail.order }
-                  : {}),
-              }
-            : undefined;
-
-        if (!hasValidName) return [];
-        if (!description && !mergedThumbnail && !hasNewFile) return [];
+      (values.highlights || []).forEach((item, index) => {
+        if (!rowHasContent(item)) return;
         validHighlightIndexes.add(index);
-
-        return [
-          {
-            ...(name ? { name } : {}),
-            ...(description ? { description } : {}),
-            ...(mergedThumbnail?.url ? { thumbnail: mergedThumbnail } : {}),
-          } as ProvinceHighlight,
-        ];
       });
 
-      const provinceThumbnail = values.thumbnail?.url
-        ? {
-            url: values.thumbnail.url,
-            ...(values.thumbnail.publicId
-              ? { publicId: values.thumbnail.publicId }
-              : {}),
-            ...(values.thumbnail.alt?.trim()
-              ? { alt: values.thumbnail.alt.trim() }
-              : {}),
-          }
-        : provinceDetail.thumbnail;
+      const highlightUploadResults = new Map<
+        number,
+        { url: string; publicId?: string }
+      >();
+      for (const index of validHighlightIndexes) {
+        const newHighlightFile = highlightUploadMap[index]?.[0]
+          ?.originFileObj as File | undefined;
+        if (!newHighlightFile) continue;
+        try {
+          const up = await uploadMedia(newHighlightFile);
+          highlightUploadResults.set(index, {
+            url: up.url,
+            publicId: up.publicId,
+          });
+        } catch (e) {
+          message.error(
+            `Không thể tải ảnh lên (highlight #${index + 1}): ${errMessage(e, 'Lỗi không xác định')}`,
+          );
+          return;
+        }
+      }
+
+      const thumbFile = thumbnailFileList[0]?.originFileObj as
+        | File
+        | undefined;
+
+      let provinceThumbnail: ProvinceThumbnail | undefined;
+      if (thumbFile) {
+        try {
+          const upT = await uploadMedia(thumbFile);
+          const altT = values.thumbnail?.alt?.trim();
+          provinceThumbnail = {
+            url: upT.url,
+            ...(upT.publicId ? { publicId: upT.publicId } : {}),
+            ...(altT ? { alt: altT } : {}),
+          };
+        } catch (e) {
+          message.error(
+            `Không thể tải ảnh đại diện tỉnh/thành: ${errMessage(e, 'Lỗi không xác định')}`,
+          );
+          return;
+        }
+      } else if (values.thumbnail?.url) {
+        provinceThumbnail = {
+          url: values.thumbnail.url,
+          ...(values.thumbnail.publicId
+            ? { publicId: values.thumbnail.publicId }
+            : {}),
+          ...(values.thumbnail.alt?.trim()
+            ? { alt: values.thumbnail.alt.trim() }
+            : {}),
+        };
+      } else {
+        provinceThumbnail = provinceDetail.thumbnail;
+      }
 
       const existingGalleryByUrl = new Map(
         (provinceDetail.gallery || []).map((item) => [item.url, item]),
       );
-      const gallery = galleryFileList
-        .map((file, index) => {
-          if (!file.url) return null;
+      const newGalleryOnlyFiles: File[] = [];
+      galleryFileList.forEach((f) => {
+        if (f.originFileObj) {
+          newGalleryOnlyFiles.push(f.originFileObj as File);
+        }
+      });
+      let galleryBatch: Awaited<ReturnType<typeof uploadMediaMultiple>> = [];
+      if (newGalleryOnlyFiles.length > 0) {
+        try {
+          galleryBatch = await uploadMediaMultiple(newGalleryOnlyFiles);
+        } catch (e) {
+          message.error(
+            `Không thể tải ảnh gallery: ${errMessage(e, 'Lỗi không xác định')}`,
+          );
+          return;
+        }
+      }
+      let galleryBatchIdx = 0;
+      const galleryItems: NonNullable<ProvinceDetail['gallery']> = [];
+      for (let index = 0; index < galleryFileList.length; index++) {
+        const file = galleryFileList[index];
+        if (file.originFileObj) {
+          const up = galleryBatch[galleryBatchIdx];
+          galleryBatchIdx += 1;
+          const old = file.url
+            ? existingGalleryByUrl.get(file.url)
+            : undefined;
+          const altFromOld = old?.alt;
+          galleryItems.push({
+            url: up.url,
+            ...(up.publicId
+              ? { publicId: up.publicId }
+              : old?.publicId
+                ? { publicId: old.publicId }
+                : {}),
+            ...(altFromOld ? { alt: altFromOld } : {}),
+            order: index,
+          });
+        } else if (file.url) {
           const old = existingGalleryByUrl.get(file.url);
-          return {
+          galleryItems.push({
             url: file.url,
             ...(old?.publicId ? { publicId: old.publicId } : {}),
             ...(old?.alt ? { alt: old.alt } : {}),
             order: index,
+          });
+        }
+      }
+
+      const highlights: ProvinceHighlight[] = [];
+      for (let index = 0; index < (values.highlights?.length || 0); index++) {
+        if (!validHighlightIndexes.has(index)) continue;
+        const item = values.highlights![index];
+        const tr = item?.translations || {};
+        const hlTranslations: Record<string, ProvinceHighlightTranslation> =
+          {};
+        for (const code of activeLangCodes) {
+          const name = tr[code]?.name?.trim();
+          if (!name) continue;
+          hlTranslations[code] = {
+            name,
+            ...(tr[code]?.description?.trim() && {
+              description: tr[code]!.description!.trim(),
+            }),
           };
-        })
-        .filter(Boolean);
-
-      const formData = new FormData();
-      formData.append('translations', JSON.stringify(translations ?? {}));
-      if (values.isPopular != null) {
-        formData.append('isPopular', String(values.isPopular));
-      }
-      if (values.isActive != null) {
-        formData.append('isActive', String(values.isActive));
-      }
-      if (values.displayOrder != null) {
-        formData.append('displayOrder', String(values.displayOrder));
-      }
-      if (values.region) {
-        formData.append('region', values.region);
-      }
-      if (values.population != null) {
-        formData.append('population', String(values.population));
-      }
-      if (values.area != null) {
-        formData.append('area', String(values.area));
-      }
-      if (bestTimeToVisit) {
-        formData.append('bestTimeToVisit', JSON.stringify(bestTimeToVisit));
-      }
-      if (highlights.length > 0) {
-        formData.append('highlights', JSON.stringify(highlights));
-      }
-      if (provinceThumbnail?.url) {
-        formData.append('thumbnail', JSON.stringify(provinceThumbnail));
-      }
-      if (gallery.length > 0) {
-        formData.append('gallery', JSON.stringify(gallery));
-      }
-
-      const thumbnailUploadFile = thumbnailFileList[0]?.originFileObj as
-        | File
-        | undefined;
-      if (thumbnailUploadFile) {
-        formData.append('thumbnail', thumbnailUploadFile);
-      }
-      galleryFileList.forEach((file) => {
-        if (file.originFileObj) {
-          formData.append('gallery', file.originFileObj as File);
         }
-      });
-      Object.entries(highlightUploadMap).forEach(([index, files]) => {
-        if (!validHighlightIndexes.has(Number(index))) return;
-        const firstFile = files?.[0]?.originFileObj as File | undefined;
-        if (firstFile) {
-          formData.append(`highlightsThumbnail_${index}`, firstFile);
+        const formThumb = item?.thumbnail;
+        const prevThumb = existingHighlights[index]?.thumbnail;
+        const upRes = highlightUploadResults.get(index);
+        let hlThumb: ProvinceHighlight['thumbnail'] | undefined;
+        if (upRes) {
+          hlThumb = {
+            url: upRes.url,
+            ...(upRes.publicId ? { publicId: upRes.publicId } : {}),
+            ...(formThumb?.alt?.trim() ? { alt: formThumb.alt.trim() } : {}),
+            ...(formThumb?.order != null ? { order: formThumb.order } : {}),
+          };
+        } else {
+          const url = formThumb?.url?.trim() || prevThumb?.url;
+          if (url) {
+            const alt = formThumb?.alt?.trim() || prevThumb?.alt;
+            hlThumb = {
+              url,
+              ...(prevThumb?.publicId
+                ? { publicId: prevThumb.publicId }
+                : formThumb?.publicId
+                  ? { publicId: formThumb.publicId }
+                  : {}),
+              ...(alt ? { alt } : {}),
+              ...(formThumb?.order != null
+                ? { order: formThumb.order }
+                : prevThumb?.order != null
+                  ? { order: prevThumb.order }
+                  : {}),
+            };
+          }
         }
-      });
-
-      if (highlights.length === 0) {
-        formData.append('highlights', JSON.stringify([]));
+        highlights.push({
+          translations: hlTranslations,
+          ...(hlThumb ? { thumbnail: hlThumb } : {}),
+        });
       }
 
-      await updateMetadataMutation.mutateAsync({
-        id: provinceDetail._id,
-        payload: formData,
-      });
+      const payload: ProvinceMetadataUpdatePayload = {
+          ...(Object.keys(translations).length > 0 ? { translations } : {}),
+          isPopular: values.isPopular,
+          isActive: values.isActive,
+          displayOrder: values.displayOrder,
+          region: values.region,
+          population: values.population,
+          area: values.area,
+          ...(highlights.length > 0 ? { highlights } : {}),
+          ...(galleryItems.length > 0 ? { gallery: galleryItems } : {}),
+          ...(provinceThumbnail?.url ? { thumbnail: provinceThumbnail } : {}),
+        };
+
+      try {
+        await updateMetadataMutation.mutateAsync({
+          id: provinceDetail._id,
+          payload,
+        });
+      } catch (e) {
+        message.error(
+          `Không thể cập nhật tỉnh/thành: ${errMessage(e, 'Vui lòng thử lại.')}`,
+        );
+        return;
+      }
       message.success('Đã cập nhật thông tin tỉnh/thành');
       handleCloseEdit();
     } catch (error) {
@@ -365,10 +503,13 @@ export default function ProvincePage() {
         return;
       }
       message.error(
-        error instanceof Error
-          ? error.message
-          : 'Không thể cập nhật tỉnh/thành. Vui lòng thử lại.',
+        errMessage(
+          error,
+          'Không thể cập nhật tỉnh/thành. Vui lòng thử lại.',
+        ),
       );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -410,16 +551,20 @@ export default function ProvincePage() {
       title: 'Tên',
       key: 'name',
       width: 280,
-      render: (_, row) => (
-        <div>
-          <div>{row.name?.vi || row.name?.en || '-'}</div>
-          {(row.name?.en || row.fullName?.vi || row.fullName?.en) && (
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              {row.name?.en || row.fullName?.vi || row.fullName?.en}
-            </Text>
-          )}
-        </div>
-      ),
+      render: (_, row) => {
+        const primary = getProvinceLabel({ name: row.name, code: row.code });
+        const sub = pickSecondaryLocalized(row.name, row.fullName);
+        return (
+          <div>
+            <div>{primary}</div>
+            {sub && (
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                {sub}
+              </Text>
+            )}
+          </div>
+        );
+      },
     },
     {
       title: 'Code',
@@ -540,41 +685,22 @@ export default function ProvincePage() {
     if (!wardSearch) return wards;
     const q = wardSearch.toLowerCase();
     return wards.filter((w) => {
-      const nameVi = w.name?.vi?.toLowerCase() || '';
-      const nameEn = w.name?.en?.toLowerCase() || '';
-      const fullVi = w.fullName?.vi?.toLowerCase() || '';
-      const fullEn = w.fullName?.en?.toLowerCase() || '';
-      return (
-        w.code.toLowerCase().includes(q) ||
-        nameVi.includes(q) ||
-        nameEn.includes(q) ||
-        fullVi.includes(q) ||
-        fullEn.includes(q)
-      );
+      const hay = localizedSearchHaystack(w.name, w.fullName);
+      return w.code.toLowerCase().includes(q) || hay.includes(q);
     });
   }, [wards, wardSearch]);
 
   const wardColumns: ColumnsType<ProvinceWard> = [
     { title: 'Code', dataIndex: 'code', width: 100 },
     {
-      title: 'Name (VI)',
-      key: 'nameVi',
-      render: (_, w) => w.name?.vi || '—',
+      title: 'Name',
+      key: 'name',
+      render: (_, w) => pickDynamicLocalized(w.name),
     },
     {
-      title: 'Name (EN)',
-      key: 'nameEn',
-      render: (_, w) => w.name?.en || '—',
-    },
-    {
-      title: 'Full name (VI)',
-      key: 'fullNameVi',
-      render: (_, w) => w.fullName?.vi || '—',
-    },
-    {
-      title: 'Full name (EN)',
-      key: 'fullNameEn',
-      render: (_, w) => w.fullName?.en || '—',
+      title: 'Full name',
+      key: 'fullName',
+      render: (_, w) => pickDynamicLocalized(w.fullName),
     },
   ];
 
@@ -688,15 +814,16 @@ export default function ProvincePage() {
       <Modal
         title={
           provinceDetail
-            ? `Chỉnh sửa tỉnh/thành: ${provinceDetail.name?.vi || provinceDetail.code}`
+            ? `Chỉnh sửa tỉnh/thành: ${getProvinceLabel({
+                name: provinceDetail.name,
+                code: provinceDetail.code,
+              })}`
             : 'Chỉnh sửa tỉnh/thành'
         }
         open={editModalOpen}
         onCancel={handleCloseEdit}
         onOk={handleSubmitEdit}
-        confirmLoading={
-          updateMetadataMutation.isPending
-        }
+        confirmLoading={isSubmitting}
         width={900}
       >
         <Space
@@ -775,25 +902,6 @@ export default function ProvincePage() {
             </Form.Item>
           </Space>
 
-          <Form.Item label="Thời gian du lịch tốt nhất" style={{ marginBottom: 0 }}>
-            <Space style={{ width: '100%' }} wrap>
-              <Form.Item
-                name={['bestTimeToVisit', 'vi']}
-                label="VI"
-                style={{ minWidth: 320, flex: 1 }}
-              >
-                <Input placeholder="VD: Tháng 10 đến tháng 4" />
-              </Form.Item>
-              <Form.Item
-                name={['bestTimeToVisit', 'en']}
-                label="EN"
-                style={{ minWidth: 320, flex: 1 }}
-              >
-                <Input placeholder="Ex: October to April" />
-              </Form.Item>
-            </Space>
-          </Form.Item>
-
           <Collapse
             items={[
               {
@@ -802,6 +910,7 @@ export default function ProvincePage() {
                 children: (
                   <ProvinceHighlightsEditor
                     form={form}
+                    activeLanguages={languageTabs}
                     highlightUploadMap={highlightUploadMap}
                     setHighlightUploadMap={setHighlightUploadMap}
                     mapUrlToUploadFile={mapUrlToUploadFile}
@@ -833,19 +942,31 @@ export default function ProvincePage() {
             style={{ marginBottom: 0 }}
           >
             <Tabs
-              items={['vi', 'en'].map((code) => ({
-                key: code,
-                label: code.toUpperCase(),
+              items={languageTabs.map((lang) => ({
+                key: lang.code,
+                label: lang.label,
                 children: (
                   <>
                     <Form.Item
-                      name={['translations', code, 'shortDescription']}
+                      name={['translations', lang.code, 'bestTimeToVisit']}
+                      label="Thời gian du lịch tốt nhất"
+                    >
+                      <Input
+                        placeholder={
+                          lang.code === 'vi'
+                            ? 'VD: Tháng 10 đến tháng 4'
+                            : 'Ex: October to April'
+                        }
+                      />
+                    </Form.Item>
+                    <Form.Item
+                      name={['translations', lang.code, 'shortDescription']}
                       label="Mô tả ngắn"
                     >
                       <Input.TextArea rows={2} />
                     </Form.Item>
                     <Form.Item
-                      name={['translations', code, 'description']}
+                      name={['translations', lang.code, 'description']}
                       label="Mô tả chi tiết"
                     >
                       <Input.TextArea rows={4} />
@@ -858,7 +979,12 @@ export default function ProvincePage() {
                           children: (
                             <>
                               <Form.Item
-                                name={['translations', code, 'seo', 'title']}
+                                name={[
+                                  'translations',
+                                  lang.code,
+                                  'seo',
+                                  'title',
+                                ]}
                                 label="SEO Title"
                               >
                                 <Input />
@@ -866,7 +992,7 @@ export default function ProvincePage() {
                               <Form.Item
                                 name={[
                                   'translations',
-                                  code,
+                                  lang.code,
                                   'seo',
                                   'description',
                                 ]}
@@ -875,7 +1001,12 @@ export default function ProvincePage() {
                                 <Input.TextArea rows={2} />
                               </Form.Item>
                               <Form.Item
-                                name={['translations', code, 'seo', 'keywords']}
+                                name={[
+                                  'translations',
+                                  lang.code,
+                                  'seo',
+                                  'keywords',
+                                ]}
                                 label="SEO Keywords"
                               >
                                 <Select

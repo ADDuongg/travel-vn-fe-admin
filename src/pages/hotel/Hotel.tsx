@@ -5,6 +5,8 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Button, Card, Select, Switch, Table, Typography } from 'antd';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getProvinceLabel } from '@/lib/dynamic-localized';
+import type { DynamicLocalized } from '@/lib/dynamic-localized';
 
 const { Text } = Typography;
 
@@ -15,11 +17,11 @@ function getHotelName(row: {
   return t?.vi?.name || t?.en?.name || '-';
 }
 
-function getProvinceName(
-  prov: { name?: { vi?: string; en?: string } } | string,
+function formatProvinceFromRow(
+  prov: { name?: DynamicLocalized; code?: string } | string | undefined,
 ) {
-  if (typeof prov === 'string') return '-';
-  return prov?.name?.vi || prov?.name?.en || '-';
+  if (!prov || typeof prov === 'string') return '-';
+  return getProvinceLabel({ name: prov.name, code: prov.code });
 }
 
 export default function HotelPage() {
@@ -51,7 +53,7 @@ export default function HotelPage() {
             value={provinceId}
             onChange={setProvinceId}
             options={provinces.map((p) => ({
-              label: p.name?.vi || p.name?.en || p.code,
+              label: getProvinceLabel({ name: p.name, code: p.code }),
               value: p._id,
             }))}
           />
@@ -92,7 +94,7 @@ export default function HotelPage() {
               key: 'province',
               render: (_, row) => (
                 <Text style={{ fontSize: 13 }}>
-                  {getProvinceName(row.provinceId)}
+                  {formatProvinceFromRow(row.provinceId)}
                 </Text>
               ),
             },

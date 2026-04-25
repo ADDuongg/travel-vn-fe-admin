@@ -1,0 +1,88 @@
+/* Editor.js: chữ theo token Ant (dark mode) + bảo đảm vùng soạn thảo có chiều cao, tương tác */
+.block-editor-wrap {
+  position: relative;
+  z-index: 0;
+  /* Nút + bên trái block + menu toolbox thường tràn sang trái — tránh bị cắt bởi Card/Form */
+  overflow: visible;
+}
+
+/* Inline toolbar (+ bôi chọn) / popover link: tránh nằm dưới input Ant hoặc stacking context khác */
+.block-editor-wrap .ce-inline-toolbar,
+.block-editor-wrap .ce-toolbox,
+.block-editor-wrap .ce-toolbar,
+.block-editor-wrap .ce-popover,
+.block-editor-wrap .ce-settings,
+.block-editor-wrap .ct {
+  z-index: 20;
+}
+
+.block-editor-wrap .block-editor-holder {
+  min-height: inherit;
+}
+
+/* Editor.js tạo .codex-editor bên trong holder */
+.block-editor-wrap .codex-editor {
+  min-height: 120px;
+  z-index: 0;
+}
+
+.block-editor-wrap .ce-block__content,
+.block-editor-wrap .ce-paragraph,
+.block-editor-wrap .ce-paragraph [contenteditable='true'] {
+  color: var(--ant-color-text, var(--text-primary, #26251e));
+  outline: none;
+}
+
+/* Placeholder dòng đầu (paragraph tool) */
+.block-editor-wrap .ce-paragraph[data-placeholder-active][data-empty='true'] {
+  min-height: 1.5em;
+}
+
+.block-editor-wrap .cdx-input,
+.block-editor-wrap .ce-header {
+  color: var(--ant-color-text, var(--text-primary, #26251e));
+}
+
+/* Dark mode: tăng tương phản cho dấu +, menu block, placeholder */
+.block-editor-wrap .ce-toolbar__plus,
+.block-editor-wrap .ce-toolbar__settings-btn,
+.block-editor-wrap .ce-toolbar__plus svg,
+.block-editor-wrap .ce-toolbar__settings-btn svg,
+.block-editor-wrap .ce-inline-toolbar__dropdown,
+.block-editor-wrap .ce-inline-toolbar__dropdown svg {
+  color: var(--ant-color-text, #f5f5f5);
+  fill: currentColor;
+  opacity: 1;
+}
+
+.block-editor-wrap .ce-toolbar__plus:hover,
+.block-editor-wrap .ce-toolbar__settings-btn:hover,
+.block-editor-wrap .ce-inline-toolbar__dropdown:hover {
+  background: var(--ant-color-fill-secondary, rgba(255, 255, 255, 0.12));
+}
+
+.block-editor-wrap .ce-popover,
+.block-editor-wrap .ce-popover__container,
+.block-editor-wrap .ce-toolbar__actions,
+.block-editor-wrap .ce-conversion-toolbar,
+.block-editor-wrap .ce-inline-toolbar {
+  background: var(--ant-color-bg-elevated, #1f1f1f);
+  border-color: var(--ant-color-border-secondary, rgba(255, 255, 255, 0.16));
+}
+
+.block-editor-wrap .ce-popover-item,
+.block-editor-wrap .ce-popover-item__title,
+.block-editor-wrap .ce-conversion-tool,
+.block-editor-wrap .ce-conversion-tool__title {
+  color: var(--ant-color-text, #f5f5f5);
+}
+
+.block-editor-wrap .ce-popover-item:hover,
+.block-editor-wrap .ce-conversion-tool:hover {
+  background: var(--ant-color-fill-secondary, rgba(255, 255, 255, 0.12));
+}
+
+.block-editor-wrap .ce-paragraph[data-placeholder]:empty::before,
+.block-editor-wrap .ce-paragraph.cdx-block:empty::before {
+  color: var(--ant-color-text-secondary, rgba(255, 255, 255, 0.6));
+}

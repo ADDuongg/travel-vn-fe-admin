@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -14,6 +17,19 @@
     "uipro:uninstall": "uipro uninstall --ai cursor"
   },
   "dependencies": {
+    "@editorjs/checklist": "^1.6.0",
+    "@editorjs/code": "^2.9.4",
+    "@editorjs/delimiter": "^1.4.2",
+    "@editorjs/editorjs": "^2.31.6",
+    "@editorjs/embed": "^2.8.0",
+    "@editorjs/header": "^2.8.8",
+    "@editorjs/image": "^2.10.3",
+    "@editorjs/list": "^2.0.9",
+    "@editorjs/paragraph": "^2.11.7",
+    "@editorjs/quote": "^2.7.6",
+    "@editorjs/raw": "^2.5.1",
+    "@editorjs/table": "^2.4.5",
+    "@editorjs/warning": "^1.4.1",
     "@tanstack/react-query": "^5.90.12",
     "antd": "^5.27.1",
     "axios": "^1.11.0",

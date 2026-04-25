@@ -21,6 +21,12 @@ export const ROUTES = {
   TOUR_GUIDE: {
     INDEX: '/dashboard/tour-guides',
   },
+  BLOG: {
+    CATEGORIES_TAGS: '/dashboard/blog/categories-tags',
+    POSTS: '/dashboard/blog/posts',
+    CREATE: '/dashboard/blog/posts/create',
+    EDIT: (id: string | number = ':id') => `/dashboard/blog/posts/${id}/edit`,
+  },
   HOTEL: {
     INDEX: '/dashboard/hotel',
     CREATE: '/dashboard/hotel/create',
@@ -55,6 +61,8 @@ export const ROUTE_KEYS = {
   TOUR_BOOKING: 'TOUR_BOOKING_LIST',
   PROVINCE: 'PROVINCE_LIST',
   TOUR_GUIDE: 'TOUR_GUIDE_LIST',
+  BLOG_CATEGORIES_TAGS: 'BLOG_CATEGORIES_TAGS',
+  BLOG_POSTS: 'BLOG_POSTS',
   HOTEL: 'HOTEL_LIST',
   ROOM: 'ROOM_LIST',
   ROOM_CREATE: 'ROOM_CREATE',

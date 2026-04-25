@@ -17,6 +17,8 @@ import { useProvinceDropdown } from '@/queries/province.queries';
 import { useHotelOptions } from '@/queries/hotel.queries';
 import api from '@/lib/axios';
 import PageShell from '@/components/PageShell';
+import { getProvinceLabel } from '@/lib/dynamic-localized';
+import type { DynamicLocalized } from '@/lib/dynamic-localized';
 
 const { Text } = Typography;
 
@@ -30,12 +32,11 @@ function getHotelName(room: { hotelId?: unknown }) {
 function getProvinceName(room: { hotelId?: unknown }) {
   const hotel = room?.hotelId;
   if (!hotel || typeof hotel === 'string') return '-';
-  const prov = (hotel as { provinceId?: { name?: { vi?: string; en?: string } } | string })
+  const prov = (hotel as { provinceId?: { name?: DynamicLocalized; code?: string } | string })
     ?.provinceId;
   if (!prov || typeof prov === 'string') return '-';
-  return (prov as { name?: { vi?: string; en?: string } })?.name?.vi
-    || (prov as { name?: { vi?: string; en?: string } })?.name?.en
-    || '-';
+  const p = prov as { name?: DynamicLocalized; code?: string };
+  return getProvinceLabel({ name: p.name, code: p.code });
 }
 
 function formatDateYMD(date: Date) {
@@ -107,7 +108,7 @@ export default function RoomPage() {
             value={provinceId}
             onChange={setProvinceId}
             options={provinces.map((p) => ({
-              label: p.name?.vi || p.name?.en || p.code,
+              label: getProvinceLabel({ name: p.name, code: p.code }),
               value: p._id,
             }))}
           />

@@ -20,21 +20,12 @@ export const getProvinceBySlug = (slug: string): Promise<ProvinceDetail> =>
 
 export const updateProvinceMetadata = (
   id: string,
-  payload: ProvinceMetadataUpdatePayload | FormData,
-): Promise<ProvinceDetail> => {
-  if (payload instanceof FormData) {
-    return api.patch<ProvinceDetail>(`/api/v1/provinces/${id}`, payload, {
-      headers: { 'Content-Type': undefined } as unknown as Record<
-        string,
-        string
-      >,
-    });
-  }
-  return api.patch<ProvinceDetail, ProvinceMetadataUpdatePayload>(
+  payload: ProvinceMetadataUpdatePayload,
+): Promise<ProvinceDetail> =>
+  api.patch<ProvinceDetail, ProvinceMetadataUpdatePayload>(
     `/api/v1/provinces/${id}`,
     payload,
   );
-};
 
 export const toggleProvincePopular = (id: string): Promise<ProvinceDetail> =>
   api.patch<ProvinceDetail>(`/api/v1/provinces/${id}/toggle-popular`);

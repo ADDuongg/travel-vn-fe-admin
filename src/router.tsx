@@ -28,6 +28,10 @@ import TourGuidePage from '@pages/tour-guide/TourGuidePage';
 import ProvincePage from '@pages/province/ProvincePage';
 import FavoritesPage from '@pages/favorites/FavoritesPage';
 import AuditLogsPage from '@pages/audit-log/AuditLogsPage';
+import BlogCategoryTagPage from '@pages/blog/BlogCategoryTagPage';
+import BlogPostListPage from '@pages/blog/BlogPostListPage';
+import BlogPostCreatePage from '@pages/blog/BlogPostCreatePage';
+import BlogPostUpdatePage from '@pages/blog/BlogPostUpdatePage';
 import { EnumRole } from '@/constants/enum';
 
 export const routes = [
@@ -87,6 +91,28 @@ export const routes = [
         path: 'tour-bookings/:id',
         element: <TourBookingDetailPage />,
         handle: { breadcrumb: 'Tour Booking Detail' },
+      },
+
+      // ===== BLOG =====
+      {
+        path: ROUTES.BLOG.CATEGORIES_TAGS,
+        element: <BlogCategoryTagPage />,
+        handle: { breadcrumb: 'Blog categories & tags' },
+      },
+      {
+        path: ROUTES.BLOG.POSTS,
+        element: <BlogPostListPage />,
+        handle: { breadcrumb: 'Blog posts' },
+      },
+      {
+        path: ROUTES.BLOG.CREATE,
+        element: <BlogPostCreatePage />,
+        handle: { breadcrumb: 'Create blog post' },
+      },
+      {
+        path: 'blog/posts/:id/edit',
+        element: <BlogPostUpdatePage />,
+        handle: { breadcrumb: 'Edit blog post' },
       },
 
       // ===== PROVINCES =====

@@ -8,6 +8,7 @@ import {
   CalendarOutlined,
   CompassOutlined,
   CreditCardOutlined,
+  FileTextOutlined,
   HeartOutlined,
   HomeOutlined,
   LogoutOutlined,
@@ -56,6 +57,8 @@ const KEY_TO_PATH: Record<string, string> = {
   [ROUTE_KEYS.TOUR_BOOKING]: ROUTES.TOUR_BOOKING.INDEX,
   [ROUTE_KEYS.TOUR_REVIEWS]: ROUTES.TOUR.REVIEWS,
   [ROUTE_KEYS.TOUR_GUIDE]: ROUTES.TOUR_GUIDE.INDEX,
+  [ROUTE_KEYS.BLOG_CATEGORIES_TAGS]: ROUTES.BLOG.CATEGORIES_TAGS,
+  [ROUTE_KEYS.BLOG_POSTS]: ROUTES.BLOG.POSTS,
   [ROUTE_KEYS.PROVINCE]: ROUTES.PROVINCE.INDEX,
   [ROUTE_KEYS.HOTEL]: ROUTES.HOTEL.INDEX,
   [ROUTE_KEYS.ROOM as string]: '',
@@ -92,6 +95,14 @@ const mainItems: MenuItem[] = [
         getItem('Reviews', ROUTE_KEYS.TOUR_REVIEWS, <StarOutlined />),
         getItem('Guides', ROUTE_KEYS.TOUR_GUIDE, <TeamOutlined />),
       ]),
+      getItem('Blog', ROUTE_KEYS.BLOG_POSTS, <FileTextOutlined />, [
+        getItem('Bài viết', ROUTE_KEYS.BLOG_POSTS, <UnorderedListOutlined />),
+        getItem(
+          'Danh mục & tag',
+          ROUTE_KEYS.BLOG_CATEGORIES_TAGS,
+          <UnorderedListOutlined />,
+        ),
+      ]),
       getItem('Hotels', ROUTE_KEYS.HOTEL, <BankOutlined />),
       getItem('Rooms', ROUTE_KEYS.ROOM, <HomeOutlined />, [
         getItem('Room List', ROUTE_KEYS.ROOM, <UnorderedListOutlined />),
@@ -127,10 +138,22 @@ export default function Sidebar({
   const { logout, isPending: isLoggingOut } = useLogout();
 
   const selectedKeys = React.useMemo(() => {
-    const found = Object.entries(KEY_TO_PATH).find(
-      ([, path]) => location.pathname === path,
+    const exact = Object.entries(KEY_TO_PATH).find(
+      ([, p]) => p && location.pathname === p,
     );
-    return found ? [found[0]] : [];
+    if (exact) {
+      return [exact[0]];
+    }
+    const withPrefix = Object.entries(KEY_TO_PATH)
+      .filter(
+        ([, p]) =>
+          p && p.length > 1 && p !== ROUTES.DASHBOARD,
+      )
+      .sort((a, b) => b[1].length - a[1].length);
+    const byPrefix = withPrefix.find(([, p]) =>
+      location.pathname.startsWith(`${p}/`),
+    );
+    return byPrefix ? [byPrefix[0]] : [];
   }, [location.pathname]);
 
   return (

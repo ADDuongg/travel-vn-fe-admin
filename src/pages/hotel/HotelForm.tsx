@@ -17,10 +17,7 @@ import { useAmenities } from '@/queries/amenities.queries';
 import { useLanguages } from '@/queries/language.queries';
 import { EnumLanguage } from '@/constants/enum';
 import type { Hotel } from '@/interface/hotel';
-
-function getProvinceName(prov: { name?: { vi?: string; en?: string } }) {
-  return prov?.name?.vi || prov?.name?.en || '-';
-}
+import { getProvinceLabel } from '@/lib/dynamic-localized';
 
 type Props = {
   initialValues?: Hotel;
@@ -116,7 +113,7 @@ export default function HotelForm({
         <Select
           placeholder="Select province"
           options={provinces.map((p) => ({
-            label: getProvinceName(p),
+            label: getProvinceLabel({ name: p.name, code: p.code }),
             value: p._id,
           }))}
         />

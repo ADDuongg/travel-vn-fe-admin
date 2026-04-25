@@ -28,6 +28,7 @@ import {
 } from '@ant-design/icons';
 import type { UploadFile } from 'antd/es/upload/interface';
 import { useProvinceDropdown } from '@/queries/province.queries';
+import { getProvinceLabel } from '@/lib/dynamic-localized';
 import { useUsers } from '@/queries/user.queries';
 import { useLanguages } from '@/queries/language.queries';
 import {
@@ -497,7 +498,7 @@ export default function TourGuidePage() {
           setProvinceId(v);
         }}
         options={provinces.map((p) => ({
-          label: p.name?.vi || p.name?.en || p.code,
+          label: getProvinceLabel({ name: p.name, code: p.code }),
           value: p._id,
         }))}
       />
@@ -913,7 +914,7 @@ export default function TourGuidePage() {
                         mode="multiple"
                         placeholder="Chọn tỉnh"
                         options={provinces.map((p) => ({
-                          label: p.name?.vi || p.name?.en || p.code,
+                          label: getProvinceLabel({ name: p.name, code: p.code }),
                           value: p._id,
                         }))}
                       />
@@ -1202,7 +1203,7 @@ export default function TourGuidePage() {
                         mode="multiple"
                         placeholder="Chọn tỉnh"
                         options={provinces.map((p) => ({
-                          label: p.name?.vi || p.name?.en || p.code,
+                          label: getProvinceLabel({ name: p.name, code: p.code }),
                           value: p._id,
                         }))}
                       />

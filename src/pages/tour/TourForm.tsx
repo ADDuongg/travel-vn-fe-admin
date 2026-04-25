@@ -23,6 +23,7 @@ import { useAmenities } from '@/queries/amenities.queries';
 import { useLanguages } from '@/queries/language.queries';
 import { useProvinceDropdown } from '@/queries/province.queries';
 import type { Tour, TourUpsertPayload } from '@/interface/tour';
+import { getProvinceLabel } from '@/lib/dynamic-localized';
 
 const GALLERY_MAX_FILES = 10;
 
@@ -33,13 +34,6 @@ type Props = {
   onSubmit: (payload: FormData) => void;
   onCancel: () => void;
 };
-
-function getProvinceLabel(p: {
-  name?: { vi?: string; en?: string };
-  code?: string;
-}) {
-  return p?.name?.vi || p?.name?.en || p?.code || '-';
-}
 
 export default function TourForm({
   initialValues,
@@ -280,7 +274,7 @@ export default function TourForm({
         <Select
           placeholder="Select departure province"
           options={provinces.map((p) => ({
-            label: getProvinceLabel(p),
+            label: getProvinceLabel({ name: p.name, code: p.code }),
             value: p._id,
           }))}
         />
@@ -304,7 +298,7 @@ export default function TourForm({
                   <Select
                     placeholder="Province"
                     options={provinces.map((p) => ({
-                      label: getProvinceLabel(p),
+                      label: getProvinceLabel({ name: p.name, code: p.code }),
                       value: p._id,
                     }))}
                   />

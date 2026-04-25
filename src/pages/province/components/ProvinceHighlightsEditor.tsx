@@ -6,8 +6,11 @@ import type React from 'react';
 
 const { Text } = Typography;
 
+export type ActiveLanguageTab = { code: string; label: string };
+
 type Props = {
   form: FormInstance;
+  activeLanguages: ActiveLanguageTab[];
   highlightUploadMap: Record<number, UploadFile[]>;
   setHighlightUploadMap: React.Dispatch<
     React.SetStateAction<Record<number, UploadFile[]>>
@@ -17,6 +20,7 @@ type Props = {
 
 export default function ProvinceHighlightsEditor({
   form,
+  activeLanguages,
   highlightUploadMap,
   setHighlightUploadMap,
   mapUrlToUploadFile,
@@ -29,42 +33,42 @@ export default function ProvinceHighlightsEditor({
               <Card key={field.key} size="small">
                 <Space direction="vertical" style={{ width: '100%' }} size={8}>
                   <Tabs
-                    items={[
-                      {
-                        key: 'vi',
-                        label: 'VI',
-                        children: (
-                          <>
-                            <Form.Item name={[field.name, 'name', 'vi']} label="Tên highlight">
-                              <Input placeholder="Tên điểm nổi bật" />
-                            </Form.Item>
-                            <Form.Item name={[field.name, 'description', 'vi']} label="Mô tả">
-                              <Input.TextArea rows={2} />
-                            </Form.Item>
-                          </>
-                        ),
-                      },
-                      {
-                        key: 'en',
-                        label: 'EN',
-                        children: (
-                          <>
-                            <Form.Item
-                              name={[field.name, 'name', 'en']}
-                              label="Highlight name"
-                            >
-                              <Input placeholder="Highlight name" />
-                            </Form.Item>
-                            <Form.Item
-                              name={[field.name, 'description', 'en']}
-                              label="Description"
-                            >
-                              <Input.TextArea rows={2} />
-                            </Form.Item>
-                          </>
-                        ),
-                      },
-                    ]}
+                    items={activeLanguages.map((lang) => ({
+                      key: lang.code,
+                      label: lang.label,
+                      children: (
+                        <>
+                          <Form.Item
+                            name={[
+                              field.name,
+                              'translations',
+                              lang.code,
+                              'name',
+                            ]}
+                            label="Tên highlight"
+                          >
+                            <Input
+                              placeholder={
+                                lang.code === 'vi'
+                                  ? 'Tên điểm nổi bật'
+                                  : 'Highlight name'
+                              }
+                            />
+                          </Form.Item>
+                          <Form.Item
+                            name={[
+                              field.name,
+                              'translations',
+                              lang.code,
+                              'description',
+                            ]}
+                            label="Mô tả"
+                          >
+                            <Input.TextArea rows={2} />
+                          </Form.Item>
+                        </>
+                      ),
+                    }))}
                   />
                   <Divider style={{ margin: 0 }} />
                   <Form.Item label="Thumbnail" style={{ marginBottom: 0 }}>
