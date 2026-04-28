@@ -1,14 +1,22 @@
 import LogoPHX from '@/assets/images/logo_phx.png';
 import { ROUTE_KEYS, ROUTES } from '@/constants/route.constant';
+import {
+  ROUTE_KEY_TO_ALL_PERMISSIONS,
+  ROUTE_KEY_TO_PERMISSION,
+} from '@/constants/menu-rbac-map';
+import { useRbac } from '@/hooks/useRbac';
 import { useLogout } from '@/queries/auth.queries';
 import { useAuthStore } from '@/stores/useAuthStore';
 import {
   AuditOutlined,
   BankOutlined,
+  IdcardOutlined,
+  SafetyCertificateOutlined,
   CalendarOutlined,
   CompassOutlined,
   CreditCardOutlined,
   FileTextOutlined,
+  GlobalOutlined,
   HeartOutlined,
   HomeOutlined,
   LogoutOutlined,
@@ -68,7 +76,11 @@ const KEY_TO_PATH: Record<string, string> = {
   [ROUTE_KEYS.ADMIN_REVIEWS]: ROUTES.ADMIN_REVIEWS,
   [ROUTE_KEYS.ACCOUNT]: ROUTES.ACCOUNT,
   [ROUTE_KEYS.SYSTEM]: ROUTES.SYSTEM.INDEX,
+  [ROUTE_KEYS.ROLES]: ROUTES.SYSTEM.ROLES,
+  [ROUTE_KEYS.USERS]: ROUTES.SYSTEM.USERS,
+  [ROUTE_KEYS.RBAC_PERMISSIONS]: ROUTES.SYSTEM.RBAC,
   [ROUTE_KEYS.AUDIT_LOGS]: ROUTES.SYSTEM.AUDIT_LOGS,
+  [ROUTE_KEYS.LANGUAGES]: ROUTES.SYSTEM.LANGUAGES,
 };
 
 const mainItems: MenuItem[] = [
@@ -118,10 +130,58 @@ const mainItems: MenuItem[] = [
     label: 'System',
     children: [
       getItem('Settings', ROUTE_KEYS.SYSTEM, <SettingOutlined />),
+      getItem('Roles', ROUTE_KEYS.ROLES, <IdcardOutlined />),
+      getItem('Users', ROUTE_KEYS.USERS, <TeamOutlined />),
+      getItem(
+        'Role permissions',
+        ROUTE_KEYS.RBAC_PERMISSIONS,
+        <SafetyCertificateOutlined />,
+      ),
       getItem('Audit Logs', ROUTE_KEYS.AUDIT_LOGS, <AuditOutlined />),
+      getItem('Languages', ROUTE_KEYS.LANGUAGES, <GlobalOutlined />),
     ],
   },
 ];
+
+function filterMenuByRbac(
+  items: MenuItem[],
+  can: (p: string) => boolean,
+): MenuItem[] {
+  const out: MenuItem[] = [];
+  for (const raw of items) {
+    if (!raw) continue;
+    const item = raw as MenuItem & {
+      children?: MenuItem[];
+      type?: string;
+      key?: React.Key;
+    };
+
+    if (item.type === 'group' && item.children) {
+      const nextChildren = filterMenuByRbac(item.children, can);
+      if (nextChildren.length === 0) continue;
+      out.push({ ...item, children: nextChildren } as MenuItem);
+      continue;
+    }
+
+    if (item.children?.length) {
+      const nextChildren = filterMenuByRbac(item.children, can);
+      if (nextChildren.length === 0) continue;
+      out.push({ ...item, children: nextChildren } as MenuItem);
+      continue;
+    }
+
+    const key = String(item.key ?? '');
+    const requiredAll = ROUTE_KEY_TO_ALL_PERMISSIONS[key];
+    if (requiredAll?.length) {
+      if (requiredAll.every((p) => can(p))) out.push(item as MenuItem);
+      continue;
+    }
+    const perm = ROUTE_KEY_TO_PERMISSION[key];
+    if (perm === undefined) continue;
+    if (perm === null || can(perm)) out.push(item as MenuItem);
+  }
+  return out;
+}
 
 export default function Sidebar({
   collapsed,
@@ -136,6 +196,12 @@ export default function Sidebar({
   const location = useLocation();
   const authUser = useAuthStore((s) => s.authUser);
   const { logout, isPending: isLoggingOut } = useLogout();
+  const { can } = useRbac();
+
+  const menuItems = React.useMemo(
+    () => filterMenuByRbac(mainItems, can),
+    [can],
+  );
 
   const selectedKeys = React.useMemo(() => {
     const exact = Object.entries(KEY_TO_PATH).find(
@@ -145,10 +211,7 @@ export default function Sidebar({
       return [exact[0]];
     }
     const withPrefix = Object.entries(KEY_TO_PATH)
-      .filter(
-        ([, p]) =>
-          p && p.length > 1 && p !== ROUTES.DASHBOARD,
-      )
+      .filter(([, p]) => p && p.length > 1 && p !== ROUTES.DASHBOARD)
       .sort((a, b) => b[1].length - a[1].length);
     const byPrefix = withPrefix.find(([, p]) =>
       location.pathname.startsWith(`${p}/`),
@@ -204,7 +267,7 @@ export default function Sidebar({
       <div className={styles.navArea}>
         <Menu
           mode="inline"
-          items={mainItems}
+          items={menuItems}
           selectedKeys={selectedKeys}
           onClick={(info) => {
             const key = String(info.key);

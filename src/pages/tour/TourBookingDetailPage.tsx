@@ -24,6 +24,8 @@ import {
 } from '@/queries/tour-booking.queries';
 import { useTourGuides } from '@/queries/tour-guide.queries';
 import type { TourBooking } from '@/interface/tour-booking';
+import { RBAC } from '@/constants/rbac-keys';
+import { useRbac } from '@/hooks/useRbac';
 
 const { Title } = Typography;
 
@@ -44,6 +46,7 @@ const statusColor: Record<string, string> = {
 export default function TourBookingDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { can } = useRbac();
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentForm] = Form.useForm();
   const [selectedGuideId, setSelectedGuideId] = useState<string | undefined>();
@@ -123,7 +126,7 @@ export default function TourBookingDetailPage() {
         </div>
         <Space>
           <Button onClick={() => navigate('/dashboard/tour-bookings')}>Quay lại</Button>
-          {canConfirm && (
+          {canConfirm && can(RBAC.booking.update) && (
             <Popconfirm
               title="Xác nhận đơn này?"
               onConfirm={handleConfirm}
@@ -138,7 +141,7 @@ export default function TourBookingDetailPage() {
               </Button>
             </Popconfirm>
           )}
-          {canCancel && (
+          {canCancel && can(RBAC.booking.cancel) && (
             <Popconfirm
               title="Hủy đơn? Số chỗ sẽ được trả lại."
               onConfirm={handleCancel}
@@ -150,7 +153,7 @@ export default function TourBookingDetailPage() {
               </Button>
             </Popconfirm>
           )}
-          {canRecordPayment && (
+          {canRecordPayment && can(RBAC.booking.update) && (
             <Button type="primary" onClick={() => setPaymentModalOpen(true)}>
               Ghi nhận thanh toán
             </Button>
@@ -196,30 +199,34 @@ export default function TourBookingDetailPage() {
         title="Hướng dẫn viên"
       >
         <Space align="center">
-          <Select
-            showSearch
-            allowClear
-            placeholder="Chọn hướng dẫn viên"
-            style={{ minWidth: 260 }}
-            value={selectedGuideId}
-            onChange={setSelectedGuideId}
-            options={(guideList?.items ?? []).map((g) => ({
-              label: g.user?.fullName || g.user?.username || '—',
-              value: g._id,
-            }))}
-            filterOption={(input, option) =>
-              (option?.label as string)
-                ?.toLowerCase()
-                .includes(input.toLowerCase())
-            }
-          />
-          <Button
-            type="primary"
-            onClick={handleAssignGuide}
-            loading={assignGuideMutation.isPending}
-          >
-            Gán HDV
-          </Button>
+          {can(RBAC.booking.update) ? (
+            <>
+              <Select
+                showSearch
+                allowClear
+                placeholder="Chọn hướng dẫn viên"
+                style={{ minWidth: 260 }}
+                value={selectedGuideId}
+                onChange={setSelectedGuideId}
+                options={(guideList?.items ?? []).map((g) => ({
+                  label: g.user?.fullName || g.user?.username || '—',
+                  value: g._id,
+                }))}
+                filterOption={(input, option) =>
+                  (option?.label as string)
+                    ?.toLowerCase()
+                    .includes(input.toLowerCase())
+                }
+              />
+              <Button
+                type="primary"
+                onClick={handleAssignGuide}
+                loading={assignGuideMutation.isPending}
+              >
+                Gán HDV
+              </Button>
+            </>
+          ) : null}
           {booking?.guideId && (
             <span style={{ marginLeft: 12, fontSize: 12 }}>
               HDV hiện tại: {String(booking.guideId)}

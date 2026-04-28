@@ -55,6 +55,8 @@ import { uploadMedia, uploadMediaMultiple } from '@/services/media.service';
 import tableStyles from '@/styles/promax-table.module.css';
 import ProvinceHighlightsEditor from '@/pages/province/components/ProvinceHighlightsEditor';
 import ProvinceMediaEditor from '@/pages/province/components/ProvinceMediaEditor';
+import { RBAC } from '@/constants/rbac-keys';
+import { useRbac } from '@/hooks/useRbac';
 
 const { Title, Text } = Typography;
 const { useBreakpoint } = Grid;
@@ -91,6 +93,7 @@ function errMessage(e: unknown, fallback: string): string {
 }
 
 export default function ProvincePage() {
+  const { can } = useRbac();
   const screens = useBreakpoint();
   const [search, setSearch] = useState('');
   const [region, setRegion] = useState<string | undefined>();
@@ -639,40 +642,41 @@ export default function ProvincePage() {
       key: 'actions',
       width: 320,
       fixed: 'right',
-      render: (_, row) => (
-        <Space>
-          <Button size="small" onClick={() => handleOpenEdit(row)}>
-            Edit
-          </Button>
-          <Button
-            size="small"
-            loading={togglePopularMutation.isPending}
-            onClick={() => handleTogglePopular(row)}
-          >
-            {row.isPopular ? 'Unmark popular' : 'Mark popular'}
-          </Button>
-          {row.isActive ? (
+      render: (_, row) =>
+        can(RBAC.province.update) ? (
+          <Space>
+            <Button size="small" onClick={() => handleOpenEdit(row)}>
+              Edit
+            </Button>
             <Button
               size="small"
-              danger
-              loading={softDeleteMutation.isPending}
-              onClick={() => handleSoftDelete(row)}
+              loading={togglePopularMutation.isPending}
+              onClick={() => handleTogglePopular(row)}
             >
-              Ẩn
+              {row.isPopular ? 'Unmark popular' : 'Mark popular'}
             </Button>
-          ) : (
-            <Button
-              size="small"
-              type="primary"
-              ghost
-              loading={restoreMutation.isPending}
-              onClick={() => handleRestore(row)}
-            >
-              Khôi phục
-            </Button>
-          )}
-        </Space>
-      ),
+            {row.isActive ? (
+              <Button
+                size="small"
+                danger
+                loading={softDeleteMutation.isPending}
+                onClick={() => handleSoftDelete(row)}
+              >
+                Ẩn
+              </Button>
+            ) : (
+              <Button
+                size="small"
+                type="primary"
+                ghost
+                loading={restoreMutation.isPending}
+                onClick={() => handleRestore(row)}
+              >
+                Khôi phục
+              </Button>
+            )}
+          </Space>
+        ) : null,
     },
   ];
 

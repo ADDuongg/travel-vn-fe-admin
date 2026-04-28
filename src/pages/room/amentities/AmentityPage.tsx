@@ -9,8 +9,11 @@ import {
 } from '@/queries/amenities.queries';
 import { AmenityForm } from './AmenityForm';
 import { EnumLanguage } from '@/constants/enum';
+import { RBAC } from '@/constants/rbac-keys';
+import { useRbac } from '@/hooks/useRbac';
 
 export default function AmenitiesPage() {
+  const { can } = useRbac();
   const { data, isLoading } = useAmenities();
 
   const createMutation = useCreateAmenity();
@@ -23,15 +26,17 @@ export default function AmenitiesPage() {
   return (
     <>
       <Space style={{ marginBottom: 16 }}>
-        <Button
-          type="primary"
-          onClick={() => {
-            setEditing(null);
-            setOpen(true);
-          }}
-        >
-          Create Amenity
-        </Button>
+        {can(RBAC.amenity.create) ? (
+          <Button
+            type="primary"
+            onClick={() => {
+              setEditing(null);
+              setOpen(true);
+            }}
+          >
+            Create Amenity
+          </Button>
+        ) : null}
       </Space>
 
       <Table
@@ -53,6 +58,7 @@ export default function AmenitiesPage() {
             render: (icon) =>
               icon?.url ? (
                 <img
+                  alt=""
                   src={icon.url}
                   style={{ width: 80, height: 80, objectFit: 'contain' }}
                 />
@@ -66,31 +72,38 @@ export default function AmenitiesPage() {
             dataIndex: 'isActive',
             render: (v) => <Switch checked={v} disabled />,
           },
-          {
-            title: 'Action',
-            render: (_, record) => (
-              <Space>
-                <Button
-                  size="small"
-                  onClick={() => {
-                    setEditing(record);
-                    setOpen(true);
-                  }}
-                >
-                  Edit
-                </Button>
-
-                <Popconfirm
-                  title="Delete this amenity?"
-                  onConfirm={() => deleteMutation.mutate(record._id)}
-                >
-                  <Button size="small" danger>
-                    Delete
-                  </Button>
-                </Popconfirm>
-              </Space>
-            ),
-          },
+          ...(can(RBAC.amenity.update) || can(RBAC.amenity.delete)
+            ? [
+                {
+                  title: 'Action',
+                  render: (_: unknown, record: { _id: string }) => (
+                    <Space>
+                      {can(RBAC.amenity.update) ? (
+                        <Button
+                          size="small"
+                          onClick={() => {
+                            setEditing(record);
+                            setOpen(true);
+                          }}
+                        >
+                          Edit
+                        </Button>
+                      ) : null}
+                      {can(RBAC.amenity.delete) ? (
+                        <Popconfirm
+                          title="Delete this amenity?"
+                          onConfirm={() => deleteMutation.mutate(record._id)}
+                        >
+                          <Button size="small" danger>
+                            Delete
+                          </Button>
+                        </Popconfirm>
+                      ) : null}
+                    </Space>
+                  ),
+                },
+              ]
+            : []),
         ]}
       />
 

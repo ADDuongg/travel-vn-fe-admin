@@ -5,19 +5,21 @@ import type {
   AuditLogQueryParams,
 } from '@/interface/audit-log';
 
+/** docs/MODULES-12-15-FE-API.md §4 admin audit-logs */
+
 export const getAuditLogs = (
   params?: AuditLogQueryParams,
 ): Promise<AuditLogListResponse> =>
-  api.get<AuditLogListResponse>('/api/v1/audit-logs', { params });
+  api.get<AuditLogListResponse>('/api/v1/admin/audit-logs', { params });
 
 export const getAuditLogById = (id: string): Promise<AuditLog> =>
-  api.get<AuditLog>(`/api/v1/audit-logs/${id}`);
+  api.get<AuditLog>(`/api/v1/admin/audit-logs/${id}`);
 
 export const exportAuditLogs = async (
   params: Omit<AuditLogQueryParams, 'page' | 'limit'>,
   format: 'csv' | 'xlsx',
 ): Promise<void> => {
-  const res = await api.getRaw<Blob>('/api/v1/audit-logs/export', {
+  const res = await api.getRaw<Blob>('/api/v1/admin/audit-logs/export', {
     params: { ...params, format },
     responseType: 'blob',
   });

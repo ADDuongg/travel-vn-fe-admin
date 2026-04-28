@@ -21,10 +21,16 @@ import {
   useDeleteReview,
   useUpdateReviewStatus,
 } from '@/queries/review.queries';
-import type { ReviewEntityType, ReviewStatus } from '@/services/review.service';
+import type {
+  Review,
+  ReviewEntityType,
+  ReviewStatus,
+} from '@/services/review.service';
 import tableStyles from '@/styles/promax-table.module.css';
 import ReviewAdminActions from './ReviewAdminActions';
 import { ReviewStatusTag } from './ReviewStatusTag';
+import { RBAC } from '@/constants/rbac-keys';
+import { useRbac } from '@/hooks/useRbac';
 
 const { Title, Text } = Typography;
 const { useBreakpoint } = Grid;
@@ -45,6 +51,7 @@ const STATUS_FILTER_OPTIONS: { label: string; value: ReviewStatus }[] = [
 ];
 
 export default function AdminReviewPage() {
+  const { can } = useRbac();
   const screens = useBreakpoint();
   const [searchParams] = useSearchParams();
   const [page, setPage] = useState(1);
@@ -237,24 +244,28 @@ export default function AdminReviewPage() {
             render: (v: string | undefined) =>
               v ? new Date(v).toLocaleString() : '—',
           },
-          {
-            title: 'Actions',
-            width: 280,
-            fixed: 'right',
-            render: (_, r) => (
-              <ReviewAdminActions
-                review={r}
-                approvePending={approveMutation.isPending}
-                updateStatusPending={updateStatusMutation.isPending}
-                deletePending={deleteMutation.isPending}
-                onApprove={() => approveMutation.mutateAsync(r._id)}
-                onUpdateStatus={(payload) =>
-                  updateStatusMutation.mutateAsync({ id: r._id, payload })
-                }
-                onDelete={() => deleteMutation.mutateAsync(r._id)}
-              />
-            ),
-          },
+          ...(can(RBAC.review.update)
+            ? [
+                {
+                  title: 'Actions',
+                  width: 280,
+                  fixed: 'right' as const,
+                  render: (_: unknown, r: Review) => (
+                    <ReviewAdminActions
+                      review={r}
+                      approvePending={approveMutation.isPending}
+                      updateStatusPending={updateStatusMutation.isPending}
+                      deletePending={deleteMutation.isPending}
+                      onApprove={() => approveMutation.mutateAsync(r._id)}
+                      onUpdateStatus={(payload) =>
+                        updateStatusMutation.mutateAsync({ id: r._id, payload })
+                      }
+                      onDelete={() => deleteMutation.mutateAsync(r._id)}
+                    />
+                  ),
+                },
+              ]
+            : []),
             ]}
           />
       </Card>

@@ -3,11 +3,14 @@ import {
   createRole,
   deleteRole,
   getRoles,
-  updateRole,
+  patchRole,
+  type CreateRoleBody,
+  type UpdateRoleBody,
 } from '@/services/role.service';
 
 export const ROLE_QUERY_KEYS = {
   LIST: ['roles'] as const,
+  DETAIL: (id: string) => ['roles', id] as const,
 };
 
 export const useRoles = () =>
@@ -19,7 +22,7 @@ export const useRoles = () =>
 export const useCreateRole = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: createRole,
+    mutationFn: (data: CreateRoleBody) => createRole(data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ROLE_QUERY_KEYS.LIST }),
   });
 };
@@ -27,16 +30,19 @@ export const useCreateRole = () => {
 export const useUpdateRole = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ code, name }: { code: string; name: string }) =>
-      updateRole(code, { name }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ROLE_QUERY_KEYS.LIST }),
+    mutationFn: ({ id, data }: { id: string; data: UpdateRoleBody }) =>
+      patchRole(id, data),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ROLE_QUERY_KEYS.LIST });
+      qc.invalidateQueries({ queryKey: ROLE_QUERY_KEYS.DETAIL(variables.id) });
+    },
   });
 };
 
 export const useDeleteRole = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: deleteRole,
+    mutationFn: (id: string) => deleteRole(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ROLE_QUERY_KEYS.LIST }),
   });
 };

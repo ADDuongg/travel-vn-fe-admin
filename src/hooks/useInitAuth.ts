@@ -2,9 +2,6 @@ import { useEffect } from 'react';
 import { useRefresh } from '@/queries/auth.queries';
 import { useAuthStore } from '@/stores/useAuthStore';
 
-/**
- * Gọi khi app load: refresh token (cookie gửi kèm) để khôi phục session.
- */
 export function useInitAuth() {
   const clearUser = useAuthStore((s) => s.clearUser);
   const { refreshAsync } = useRefresh();

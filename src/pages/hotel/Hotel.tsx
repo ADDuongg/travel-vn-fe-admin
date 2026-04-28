@@ -1,4 +1,6 @@
 import PageShell from '@/components/PageShell';
+import { RBAC } from '@/constants/rbac-keys';
+import { useRbac } from '@/hooks/useRbac';
 import { useHotels } from '@/queries/hotel.queries';
 import { useProvinceDropdown } from '@/queries/province.queries';
 import { PlusOutlined } from '@ant-design/icons';
@@ -26,22 +28,31 @@ function formatProvinceFromRow(
 
 export default function HotelPage() {
   const navigate = useNavigate();
+  const { can } = useRbac();
   const [provinceId, setProvinceId] = useState<string | undefined>();
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const { data: provinces = [] } = useProvinceDropdown();
-  const { data: hotels = [], isLoading } = useHotels({ provinceId });
+  const { data, isLoading } = useHotels({ provinceId, page, pageSize });
+  const hotels = Array.isArray(data?.items) ? data.items : [];
+  const total = data?.pagination?.total ?? 0;
+  const current = data?.pagination?.page ?? page;
+  const currentPageSize = data?.pagination?.limit ?? pageSize;
 
   return (
     <PageShell
       title="Hotels"
       subtitle="Quản lý danh sách khách sạn theo tỉnh/thành."
       actions={
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => navigate('/dashboard/hotel/create')}
-        >
-          Thêm hotel
-        </Button>
+        can(RBAC.hotel.create) ? (
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => navigate('/dashboard/hotel/create')}
+          >
+            Thêm hotel
+          </Button>
+        ) : null
       }
     >
       <Card>
@@ -51,7 +62,10 @@ export default function HotelPage() {
             allowClear
             style={{ width: 240 }}
             value={provinceId}
-            onChange={setProvinceId}
+            onChange={(value) => {
+              setProvinceId(value);
+              setPage(1);
+            }}
             options={provinces.map((p) => ({
               label: getProvinceLabel({ name: p.name, code: p.code }),
               value: p._id,
@@ -62,8 +76,19 @@ export default function HotelPage() {
         <Table
           rowKey="_id"
           loading={isLoading}
-          dataSource={Array.isArray(hotels) ? hotels : []}
+          dataSource={hotels}
           size="middle"
+          pagination={{
+            current,
+            pageSize: currentPageSize,
+            total,
+            showSizeChanger: true,
+            pageSizeOptions: [10, 20, 50, 100],
+            onChange: (nextPage, nextPageSize) => {
+              setPage(nextPage);
+              setPageSize(nextPageSize);
+            },
+          }}
           columns={[
             {
               title: 'Name',
@@ -106,19 +131,23 @@ export default function HotelPage() {
                 <Switch checked={v} disabled size="small" />
               ),
             },
-            {
-              title: 'Actions',
-              key: 'actions',
-              width: 100,
-              render: (_, row) => (
-                <Button
-                  size="small"
-                  onClick={() => navigate(`/dashboard/hotel/${row._id}/edit`)}
-                >
-                  Edit
-                </Button>
-              ),
-            },
+            ...(can(RBAC.hotel.update)
+              ? [
+                  {
+                    title: 'Actions',
+                    key: 'actions',
+                    width: 100,
+                    render: (_: unknown, row: { _id: string }) => (
+                      <Button
+                        size="small"
+                        onClick={() => navigate(`/dashboard/hotel/${row._id}/edit`)}
+                      >
+                        Edit
+                      </Button>
+                    ),
+                  },
+                ]
+              : []),
           ]}
         />
       </Card>

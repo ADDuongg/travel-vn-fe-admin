@@ -1,5 +1,7 @@
 import api from '@/lib/axios';
 
+/** FE Admin list — docs/MODULES-1-4-FE-API.md §3.2. */
+
 export type FavoriteEntityType = 'TOUR' | 'ROOM' | 'HOTEL' | 'GUIDE';
 
 export type Favorite = {
@@ -29,5 +31,6 @@ export type GetAdminFavoritesParams = {
 };
 
 export const getAdminFavorites = (params: GetAdminFavoritesParams) =>
-  api.get<AdminFavoritesListResponse>('/api/v1/favorites/admin', { params });
-
+  api.get<AdminFavoritesListResponse>('/api/v1/admin/favorites', {
+    params,
+  });

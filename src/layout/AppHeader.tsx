@@ -1,4 +1,3 @@
-import { ROUTES } from '@/constants/route.constant';
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -9,7 +8,6 @@ import CustomBreadCrumb from '@components/CustomBreadCrumb';
 import ThemeModeDropdown from '@components/ThemeModeDropdown';
 import NotificationDropdown from '@components/NotificationDropdown';
 import { Avatar, Button, Dropdown, Space, theme, Typography } from 'antd';
-import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useLogout } from '@/queries/auth.queries';
 
@@ -23,7 +21,6 @@ export default function AppHeader({
   onToggleCollapsed: () => void;
 }) {
   const { token } = theme.useToken();
-  const navigate = useNavigate();
   const authUser = useAuthStore((s) => s.authUser);
   const { logout, isPending: isLoggingOut } = useLogout();
 
@@ -32,11 +29,6 @@ export default function AppHeader({
       {
         key: 'profile',
         label: 'Profile',
-      },
-      {
-        key: 'role-permission',
-        label: 'Role & Permissions',
-        onClick: () => navigate(ROUTES.ROLE_PERMISSION),
       },
       { type: 'divider' as const },
       {

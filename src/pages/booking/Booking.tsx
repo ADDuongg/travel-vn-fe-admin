@@ -23,6 +23,8 @@ import type {
   BookingType,
 } from '@/services/booking.service';
 import PageShell from '@/components/PageShell';
+import { RBAC } from '@/constants/rbac-keys';
+import { useRbac } from '@/hooks/useRbac';
 
 const { Text } = Typography;
 
@@ -61,6 +63,7 @@ function StatusPill({ value, map }: { value: string; map: Record<string, { bg: s
 
 export default function BookingPage() {
   const navigate = useNavigate();
+  const { can } = useRbac();
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize] = useState(10);
   const [q, setQ] = useState<string>('');
@@ -222,44 +225,71 @@ export default function BookingPage() {
                   <Text type="secondary" style={{ fontSize: 12 }}>---</Text>
                 ),
             },
-            {
-              title: 'Actions',
-              width: 200,
-              render: (_: unknown, b: AdminBooking) => (
-                <Space size={4}>
-                  {b.paymentStatus === 'UNPAID' && (
-                    <>
-                      <Popconfirm
-                        title="Mark this booking as PAID?"
-                        onConfirm={() => markPaidMutation.mutate(b._id)}
-                      >
-                        <Button size="small" type="primary" loading={markPaidMutation.isPending}>
-                          Paid
-                        </Button>
-                      </Popconfirm>
-                      <Popconfirm
-                        title="Cancel this unpaid booking?"
-                        onConfirm={() => cancelMutation.mutate(b._id)}
-                      >
-                        <Button size="small" danger loading={cancelMutation.isPending}>
-                          Cancel
-                        </Button>
-                      </Popconfirm>
-                    </>
-                  )}
-                  {b.paymentStatus === 'PAID' && (
-                    <Popconfirm
-                      title="Refund this paid booking?"
-                      onConfirm={() => refundMutation.mutate({ id: b._id, fullyRefunded: true })}
-                    >
-                      <Button size="small" danger loading={refundMutation.isPending}>
-                        Refund
-                      </Button>
-                    </Popconfirm>
-                  )}
-                </Space>
-              ),
-            },
+            ...(can(RBAC.booking.update) ||
+            can(RBAC.booking.cancel) ||
+            can(RBAC.booking.refund)
+              ? [
+                  {
+                    title: 'Actions',
+                    width: 200,
+                    render: (_: unknown, b: AdminBooking) => (
+                      <Space size={4}>
+                        {b.paymentStatus === 'UNPAID' && (
+                          <>
+                            {can(RBAC.booking.update) ? (
+                              <Popconfirm
+                                title="Mark this booking as PAID?"
+                                onConfirm={() => markPaidMutation.mutate(b._id)}
+                              >
+                                <Button
+                                  size="small"
+                                  type="primary"
+                                  loading={markPaidMutation.isPending}
+                                >
+                                  Paid
+                                </Button>
+                              </Popconfirm>
+                            ) : null}
+                            {can(RBAC.booking.cancel) ? (
+                              <Popconfirm
+                                title="Cancel this unpaid booking?"
+                                onConfirm={() => cancelMutation.mutate(b._id)}
+                              >
+                                <Button
+                                  size="small"
+                                  danger
+                                  loading={cancelMutation.isPending}
+                                >
+                                  Cancel
+                                </Button>
+                              </Popconfirm>
+                            ) : null}
+                          </>
+                        )}
+                        {b.paymentStatus === 'PAID' && can(RBAC.booking.refund) ? (
+                          <Popconfirm
+                            title="Refund this paid booking?"
+                            onConfirm={() =>
+                              refundMutation.mutate({
+                                id: b._id,
+                                fullyRefunded: true,
+                              })
+                            }
+                          >
+                            <Button
+                              size="small"
+                              danger
+                              loading={refundMutation.isPending}
+                            >
+                              Refund
+                            </Button>
+                          </Popconfirm>
+                        ) : null}
+                      </Space>
+                    ),
+                  },
+                ]
+              : []),
           ]}
         />
       </Card>

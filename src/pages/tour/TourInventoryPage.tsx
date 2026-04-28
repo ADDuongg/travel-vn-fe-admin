@@ -22,6 +22,8 @@ import { useEnsureTourInventory } from '@/queries/tour-inventory.queries';
 import type { Tour } from '@/interface/tour';
 import type { TourAvailabilityItem } from '@/interface/tour-booking';
 import tableStyles from '@/styles/promax-table.module.css';
+import { RBAC } from '@/constants/rbac-keys';
+import { useRbac } from '@/hooks/useRbac';
 
 const { Title, Text } = Typography;
 const { useBreakpoint } = Grid;
@@ -48,6 +50,7 @@ const statusColor: Record<string, string> = {
 };
 
 export default function TourInventoryPage() {
+  const { can } = useRbac();
   const screens = useBreakpoint();
   const [tourId, setTourId] = useState<string | undefined>();
   const [month, setMonth] = useState<string>(currentMonth());
@@ -87,20 +90,22 @@ export default function TourInventoryPage() {
         value={month}
         onChange={(e) => setMonth(e.target.value || currentMonth())}
       />
-      <Button
-        type="primary"
-        disabled={!tourId}
-        onClick={() => {
-          form.setFieldsValue({
-            departureDate: null,
-            totalSlots: 20,
-            specialPrice: undefined,
-          });
-          setModalOpen(true);
-        }}
-      >
-        Thêm / Cập nhật slots
-      </Button>
+      {can(RBAC.inventory.manage) ? (
+        <Button
+          type="primary"
+          disabled={!tourId}
+          onClick={() => {
+            form.setFieldsValue({
+              departureDate: null,
+              totalSlots: 20,
+              specialPrice: undefined,
+            });
+            setModalOpen(true);
+          }}
+        >
+          Thêm / Cập nhật slots
+        </Button>
+      ) : null}
     </div>
   );
 

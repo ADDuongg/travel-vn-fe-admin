@@ -22,6 +22,8 @@ import type { TableColumnsType } from 'antd';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageShell from '@/components/PageShell';
+import { RBAC } from '@/constants/rbac-keys';
+import { useRbac } from '@/hooks/useRbac';
 
 const defaultPageSize = 20;
 
@@ -55,6 +57,7 @@ function authorName(p: BlogPost) {
 
 export default function BlogPostListPage() {
   const nav = useNavigate();
+  const { can } = useRbac();
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(defaultPageSize);
   const [search, setSearch] = useState('');
@@ -90,8 +93,8 @@ export default function BlogPostListPage() {
     setSearchDebounced(search.trim());
   };
 
-  const columns: TableColumnsType<BlogPost> = useMemo(
-    () => [
+  const columns: TableColumnsType<BlogPost> = useMemo(() => {
+    return [
       {
         title: 'Ảnh',
         dataIndex: 'thumbnail',
@@ -127,60 +130,85 @@ export default function BlogPostListPage() {
         width: 160,
         render: (d: string | undefined) => (d ? new Date(d).toLocaleString() : '—'),
       },
-      {
-        title: '',
-        key: 'actions',
-        width: 220,
-        render: (_: unknown, row) => (
-          <Space>
-            <Button
-              type="link"
-              size="small"
-              icon={<EditOutlined />}
-              onClick={() => nav(ROUTES.BLOG.EDIT(row._id))}
-            >
-              Sửa
-            </Button>
-            {row.status === 'draft' ? (
-              <Button
-                type="link"
-                size="small"
-                onClick={() => void publishM.mutateAsync(row._id).then(() => refetch())}
-                loading={publishM.isPending}
-              >
-                Publish
-              </Button>
-            ) : (
-              <Button
-                type="link"
-                size="small"
-                onClick={() => void unpublishM.mutateAsync(row._id).then(() => refetch())}
-                loading={unpublishM.isPending}
-              >
-                Unpublish
-              </Button>
-            )}
-            <Popconfirm
-              title="Xoá bài viết?"
-              onConfirm={() => void deleteM.mutateAsync(String(row._id))}
-            >
-              <Button type="text" danger size="small" icon={<DeleteOutlined />} />
-            </Popconfirm>
-          </Space>
-        ),
-      },
-    ],
-    [nav, deleteM, publishM, unpublishM, refetch],
-  );
+      ...(can(RBAC.blog.update) ||
+      can(RBAC.blog.publish) ||
+      can(RBAC.blog.delete)
+        ? [
+            {
+              title: '',
+              key: 'actions',
+              width: 220,
+              render: (_: unknown, row: BlogPost) => (
+                <Space>
+                  {can(RBAC.blog.update) ? (
+                    <Button
+                      type="link"
+                      size="small"
+                      icon={<EditOutlined />}
+                      onClick={() => nav(ROUTES.BLOG.EDIT(row._id))}
+                    >
+                      Sửa
+                    </Button>
+                  ) : null}
+                  {can(RBAC.blog.publish) &&
+                    (row.status === 'draft' ? (
+                      <Button
+                        type="link"
+                        size="small"
+                        onClick={() =>
+                          void publishM.mutateAsync(row._id).then(() => refetch())
+                        }
+                        loading={publishM.isPending}
+                      >
+                        Publish
+                      </Button>
+                    ) : (
+                      <Button
+                        type="link"
+                        size="small"
+                        onClick={() =>
+                          void unpublishM.mutateAsync(row._id).then(() => refetch())
+                        }
+                        loading={unpublishM.isPending}
+                      >
+                        Unpublish
+                      </Button>
+                    ))}
+                  {can(RBAC.blog.delete) ? (
+                    <Popconfirm
+                      title="Xoá bài viết?"
+                      onConfirm={() => void deleteM.mutateAsync(String(row._id))}
+                    >
+                      <Button
+                        type="text"
+                        danger
+                        size="small"
+                        icon={<DeleteOutlined />}
+                      />
+                    </Popconfirm>
+                  ) : null}
+                </Space>
+              ),
+            } as TableColumnsType<BlogPost>[number],
+          ]
+        : []),
+    ];
+  }, [nav, deleteM, publishM, unpublishM, refetch, can]);
 
   return (
     <PageShell
       title="Blog — Bài viết"
       subtitle="Tạo, chỉnh sửa và xuất bản bài viết"
       actions={
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => nav(ROUTES.BLOG.CREATE)}>
-          Thêm bài
-        </Button>
+        can(RBAC.blog.create) ? (
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => nav(ROUTES.BLOG.CREATE)}
+          >
+            Thêm bài
+          </Button>
+        ) : null
       }
     >
       <div

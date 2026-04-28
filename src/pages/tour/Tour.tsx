@@ -25,6 +25,8 @@ import type { Tour } from '@/interface/tour';
 import { getProvinceLabel } from '@/lib/dynamic-localized';
 import type { DynamicLocalized } from '@/lib/dynamic-localized';
 import styles from './tour-list.module.css';
+import { RBAC } from '@/constants/rbac-keys';
+import { useRbac } from '@/hooks/useRbac';
 
 const { Title, Text } = Typography;
 const { useBreakpoint } = Grid;
@@ -45,6 +47,7 @@ function formatProvinceCell(prov: {
 
 export default function TourPage() {
   const navigate = useNavigate();
+  const { can } = useRbac();
   const { data: provinces = [] } = useProvinceDropdown();
   const deleteMutation = useDeleteTour();
   const screens = useBreakpoint();
@@ -191,13 +194,15 @@ export default function TourPage() {
             >
               Làm mới
             </Button>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => navigate('/dashboard/tour/create')}
-            >
-              Thêm tour
-            </Button>
+            {can(RBAC.tour.create) ? (
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => navigate('/dashboard/tour/create')}
+              >
+                Thêm tour
+              </Button>
+            ) : null}
           </div>
         </div>
 
@@ -294,33 +299,43 @@ export default function TourPage() {
                 <Switch checked={v} disabled size="small" />
               ),
             },
-            {
-              title: 'Actions',
-              key: 'actions',
-              width: 150,
-              fixed: 'right',
-              render: (_, row) => (
-                <Space>
-                  <Button
-                    size="small"
-                    onClick={() => navigate(`/dashboard/tour/${row._id}/edit`)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    size="small"
-                    danger
-                    loading={deleteMutation.isPending}
-                    onClick={async () => {
-                      await deleteMutation.mutateAsync(row._id);
-                      message.success('Tour deleted');
-                    }}
-                  >
-                    Delete
-                  </Button>
-                </Space>
-              ),
-            },
+            ...(can(RBAC.tour.update) || can(RBAC.tour.delete)
+              ? [
+                  {
+                    title: 'Actions',
+                    key: 'actions',
+                    width: 150,
+                    fixed: 'right' as const,
+                    render: (_: unknown, row: Tour) => (
+                      <Space>
+                        {can(RBAC.tour.update) ? (
+                          <Button
+                            size="small"
+                            onClick={() =>
+                              navigate(`/dashboard/tour/${row._id}/edit`)
+                            }
+                          >
+                            Edit
+                          </Button>
+                        ) : null}
+                        {can(RBAC.tour.delete) ? (
+                          <Button
+                            size="small"
+                            danger
+                            loading={deleteMutation.isPending}
+                            onClick={async () => {
+                              await deleteMutation.mutateAsync(row._id);
+                              message.success('Tour deleted');
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        ) : null}
+                      </Space>
+                    ),
+                  },
+                ]
+              : []),
           ]}
         />
       </Card>

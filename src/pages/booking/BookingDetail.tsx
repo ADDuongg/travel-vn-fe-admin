@@ -7,6 +7,8 @@ import {
   useMarkBookingPaid,
   useRefundBooking,
 } from '@/queries/booking.queries';
+import { RBAC } from '@/constants/rbac-keys';
+import { useRbac } from '@/hooks/useRbac';
 
 const { Text } = Typography;
 
@@ -45,6 +47,7 @@ function LargePill({ value, map }: { value: string; map: Record<string, { bg: st
 export default function BookingDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { can } = useRbac();
 
   const { data: booking, isLoading } = useAdminBooking(id);
   const markPaidMutation = useMarkBookingPaid();
@@ -75,17 +78,17 @@ export default function BookingDetailPage() {
           </div>
           <Space>
             <Button onClick={() => navigate('/dashboard/bookings')}>Back</Button>
-            {booking?.paymentStatus === 'UNPAID' && (
+            {booking?.paymentStatus === 'UNPAID' && can(RBAC.booking.update) && (
               <Popconfirm title="Mark as PAID?" onConfirm={() => id && markPaidMutation.mutate(id)}>
                 <Button type="primary" loading={markPaidMutation.isPending}>Mark as paid</Button>
               </Popconfirm>
             )}
-            {booking?.paymentStatus === 'UNPAID' && (
+            {booking?.paymentStatus === 'UNPAID' && can(RBAC.booking.cancel) && (
               <Popconfirm title="Cancel booking?" onConfirm={() => id && cancelMutation.mutate(id)}>
                 <Button danger loading={cancelMutation.isPending}>Cancel</Button>
               </Popconfirm>
             )}
-            {booking?.paymentStatus === 'PAID' && (
+            {booking?.paymentStatus === 'PAID' && can(RBAC.booking.refund) && (
               <Popconfirm title="Refund booking?" onConfirm={() => id && refundMutation.mutate({ id, fullyRefunded: true })}>
                 <Button danger loading={refundMutation.isPending}>Refund</Button>
               </Popconfirm>

@@ -43,12 +43,15 @@ export const ROUTES = {
     INDEX: '/dashboard/bookings',
   },
   ACCOUNT: '/dashboard/account',
-
-  ROLE_PERMISSION: '/dashboard/role-permission',
+  /** Insufficient RBAC — logged-in users only meaningful. */
+  FORBIDDEN: '/dashboard/forbidden',
   SYSTEM: {
     INDEX: '/dashboard/system',
     LANGUAGES: '/dashboard/system/languages',
     AUDIT_LOGS: '/dashboard/system/audit-logs',
+    ROLES: '/dashboard/system/roles',
+    RBAC: '/dashboard/system/rbac',
+    USERS: '/dashboard/system/users',
   },
   ADMIN_REVIEWS: '/dashboard/reviews',
 } as const;
@@ -69,9 +72,12 @@ export const ROUTE_KEYS = {
   ROOM_AMENITIES: 'ROOM_AMENITIES',
   BOOKING: 'BOOKING_LIST',
   ACCOUNT: 'ACCOUNT',
-  ROLE_PERMISSION: 'ROLE_PERMISSION',
   SYSTEM: 'SYSTEM',
   AUDIT_LOGS: 'AUDIT_LOGS',
   ADMIN_REVIEWS: 'ADMIN_REVIEWS',
   TOUR_REVIEWS: 'TOUR_REVIEWS',
+  LANGUAGES: 'LANGUAGES',
+  RBAC_PERMISSIONS: 'RBAC_PERMISSIONS',
+  ROLES: 'ROLES',
+  USERS: 'USERS',
 } as const;

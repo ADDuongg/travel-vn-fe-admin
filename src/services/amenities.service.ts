@@ -1,6 +1,7 @@
-// services/amenities.ts
 import api from '@/lib/axios';
 import type { Amenity } from '@interface/commons';
+
+/** docs/MODULES-12-15-FE-API.md — GET public, mutations admin */
 
 export type AmenityPayload = {
   /** Unique code for filtering (e.g. wifi, air_condition, pool) */
@@ -15,7 +16,8 @@ export type AmenityPayload = {
   icon?: File | null;
 };
 
-export const getAmenities = () => api.get<Amenity[]>('/api/v1/amenities');
+export const getAmenities = () =>
+  api.get<Amenity[]>('/api/v1/public/amenities');
 
 export const createAmenity = (data: AmenityPayload) => {
   const form = new FormData();
@@ -34,7 +36,7 @@ export const createAmenity = (data: AmenityPayload) => {
     form.append('icon', data.icon);
   }
 
-  return api.post('/api/v1/amenities', form, {
+  return api.post('/api/v1/admin/amenities', form, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 };
@@ -62,10 +64,10 @@ export const updateAmenity = (id: string, data: AmenityPayload) => {
     form.append('removeIcon', 'true');
   }
 
-  return api.patch(`/api/v1/amenities/${id}`, form, {
+  return api.patch(`/api/v1/admin/amenities/${id}`, form, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 };
 
 export const deleteAmenity = (id: string) =>
-  api.delete(`/api/v1/amenities/${id}`);
+  api.delete(`/api/v1/admin/amenities/${id}`);

@@ -7,7 +7,14 @@ export interface RouteConfig {
   index?: boolean;
   element: React.ReactElement;
   children?: RouteConfig[];
+  /** @deprecated Prefer requiredPermission + RBAC. */
   rolesAllowed?: EnumRole[];
+  /** Minimum RBAC key to render this route (see rbac-keys). */
+  requiredPermission?: string;
+  /** User must have every key (or super admin). Use for routes that need multiple API scopes. */
+  requiredAllPermissions?: string[];
+  /** Shell routes: require login without a specific permission key. */
+  requiresAuth?: boolean;
   handle?: BreadcrumbHandle;
 }
 

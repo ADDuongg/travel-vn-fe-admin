@@ -43,26 +43,26 @@ export const getRooms = (params?: GetRoomsParams): Promise<RoomListResponse> => 
 
   const query = searchParams.toString();
   return api.get<RoomListResponse>(
-    query ? `/api/v1/rooms?${query}` : '/api/v1/rooms',
+    query ? `/api/v1/public/rooms?${query}` : '/api/v1/public/rooms',
   );
 };
 
 export const getRoom = (id: string): Promise<Room> => {
-  return api.get<Room>(`/api/v1/rooms/${id}`);
+  return api.get<Room>(`/api/v1/public/rooms/${id}`);
 };
 
 export const createRoom = (data: FormData): Promise<Room> => {
-  return api.post<Room>('/api/v1/rooms', data, {
+  return api.post<Room>('/api/v1/admin/rooms', data, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 };
 
 export const updateRoom = (id: string, data: FormData): Promise<Room> => {
-  return api.patch<Room>(`/api/v1/rooms/${id}`, data, {
+  return api.patch<Room>(`/api/v1/admin/rooms/${id}`, data, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 };
 
 export const deleteRoom = (id: string): Promise<boolean> => {
-  return api.delete<boolean>(`/api/v1/rooms/${id}`);
+  return api.delete<boolean>(`/api/v1/admin/rooms/${id}`);
 };

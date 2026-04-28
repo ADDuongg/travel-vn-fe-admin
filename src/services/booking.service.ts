@@ -1,5 +1,7 @@
 import api from '@/lib/axios';
 
+/** FE Admin + client cancel — docs/MODULES-9-11-FE-API.md */
+
 export type BookingType = 'ROOM' | 'TOUR';
 export type BookingStatus =
   | 'PENDING'
@@ -85,7 +87,7 @@ export const getAdminBookings = (params: {
   paymentStatus?: BookingPaymentStatus;
   q?: string;
 }) =>
-  api.get<AdminBookingListResponse>('/api/v1/bookings', {
+  api.get<AdminBookingListResponse>('/api/v1/admin/bookings', {
     params: {
       bookingType: params.bookingType ?? 'ROOM',
       pageIndex: params.pageIndex,
@@ -97,14 +99,14 @@ export const getAdminBookings = (params: {
   });
 
 export const getAdminBookingById = (id: string) =>
-  api.get<AdminBooking>(`/api/v1/bookings/${id}`);
+  api.get<AdminBooking>(`/api/v1/admin/bookings/${id}`);
 
 export const markBookingPaid = (id: string) =>
-  api.patch(`/api/v1/bookings/${id}/mark-paid`);
+  api.patch(`/api/v1/admin/bookings/${id}/mark-paid`);
 
+/** Owner flow on BE; admin UI calls with staff JWT per product policy. */
 export const cancelBooking = (id: string) =>
-  api.patch(`/api/v1/bookings/${id}/cancel`);
+  api.patch(`/api/v1/client/bookings/${id}/cancel`);
 
 export const refundBooking = (id: string, fullyRefunded = true) =>
-  api.patch(`/api/v1/bookings/${id}/refund`, { fullyRefunded });
-
+  api.patch(`/api/v1/admin/bookings/${id}/refund`, { fullyRefunded });

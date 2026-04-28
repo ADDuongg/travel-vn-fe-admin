@@ -43,6 +43,8 @@ import type { TourGuide, TourGuideQueryParams } from '@/interface/tour-guide';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/constants/route.constant';
 import tableStyles from '@/styles/promax-table.module.css';
+import { RBAC } from '@/constants/rbac-keys';
+import { useRbac } from '@/hooks/useRbac';
 
 const { Title, Text } = Typography;
 const { useBreakpoint } = Grid;
@@ -95,6 +97,7 @@ function getGuideName(guide: TourGuide) {
 }
 
 export default function TourGuidePage() {
+  const { can } = useRbac();
   const { data: provinces = [] } = useProvinceDropdown();
   const { data: users = [] } = useUsers();
   const { data: languages = [] } = useLanguages();
@@ -598,13 +601,15 @@ export default function TourGuidePage() {
             >
               Làm mới
             </Button>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={handleOpenCreate}
-            >
-              Tạo hồ sơ HDV
-            </Button>
+            {can(RBAC.tour_guide.create) ? (
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={handleOpenCreate}
+              >
+                Tạo hồ sơ HDV
+              </Button>
+            ) : null}
           </div>
         </div>
 
@@ -698,17 +703,20 @@ export default function TourGuidePage() {
               dataIndex: 'isAvailable',
               width: 120,
               responsive: ['md', 'lg', 'xl'],
-              render: (v: boolean, row) => (
-                <Switch
-                  checked={v}
-                  size="small"
-                  loading={toggleAvailabilityMutation.isPending}
-                  onChange={async () => {
-                    await toggleAvailabilityMutation.mutateAsync(row._id);
-                    message.success('Đã cập nhật trạng thái nhận tour');
-                  }}
-                />
-              ),
+              render: (v: boolean, row) =>
+                can(RBAC.tour_guide.update) ? (
+                  <Switch
+                    checked={v}
+                    size="small"
+                    loading={toggleAvailabilityMutation.isPending}
+                    onChange={async () => {
+                      await toggleAvailabilityMutation.mutateAsync(row._id);
+                      message.success('Đã cập nhật trạng thái nhận tour');
+                    }}
+                  />
+                ) : (
+                  <Switch checked={v} disabled size="small" />
+                ),
             },
             {
               title: 'Giá / ngày',
@@ -727,42 +735,50 @@ export default function TourGuidePage() {
               fixed: 'right',
               render: (_, row) => (
                 <Space wrap>
-                  <Button size="small" onClick={() => handleOpenEdit(row)}>
-                    Sửa
-                  </Button>
-                  <Button
-                    size="small"
-                    onClick={() =>
-                      navigate(`${ROUTES.ADMIN_REVIEWS}?entityType=GUIDE`)
-                    }
-                  >
-                    Reviews
-                  </Button>
-                  <Button
-                    size="small"
-                    onClick={async () => {
-                      await verifyMutation.mutateAsync({
-                        id: row._id,
-                        isVerified: !row.isVerified,
-                      });
-                      message.success(
-                        !row.isVerified
-                          ? 'Đã verify hướng dẫn viên'
-                          : 'Đã bỏ verify',
-                      );
-                    }}
-                    loading={verifyMutation.isPending}
-                  >
-                    {row.isVerified ? 'Unverify' : 'Verify'}
-                  </Button>
-                  <Button
-                    size="small"
-                    danger
-                    loading={deleteMutation.isPending}
-                    onClick={() => handleDelete(row)}
-                  >
-                    Xoá / Vô hiệu
-                  </Button>
+                  {can(RBAC.tour_guide.update) ? (
+                    <Button size="small" onClick={() => handleOpenEdit(row)}>
+                      Sửa
+                    </Button>
+                  ) : null}
+                  {can(RBAC.review.view) ? (
+                    <Button
+                      size="small"
+                      onClick={() =>
+                        navigate(`${ROUTES.ADMIN_REVIEWS}?entityType=GUIDE`)
+                      }
+                    >
+                      Reviews
+                    </Button>
+                  ) : null}
+                  {can(RBAC.tour_guide.update) ? (
+                    <Button
+                      size="small"
+                      onClick={async () => {
+                        await verifyMutation.mutateAsync({
+                          id: row._id,
+                          isVerified: !row.isVerified,
+                        });
+                        message.success(
+                          !row.isVerified
+                            ? 'Đã verify hướng dẫn viên'
+                            : 'Đã bỏ verify',
+                        );
+                      }}
+                      loading={verifyMutation.isPending}
+                    >
+                      {row.isVerified ? 'Unverify' : 'Verify'}
+                    </Button>
+                  ) : null}
+                  {can(RBAC.tour_guide.delete) ? (
+                    <Button
+                      size="small"
+                      danger
+                      loading={deleteMutation.isPending}
+                      onClick={() => handleDelete(row)}
+                    >
+                      Xoá / Vô hiệu
+                    </Button>
+                  ) : null}
                 </Space>
               ),
             },

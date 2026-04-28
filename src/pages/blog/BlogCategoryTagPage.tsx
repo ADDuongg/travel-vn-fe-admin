@@ -1,4 +1,6 @@
 import PageShell from '@/components/PageShell';
+import { RBAC } from '@/constants/rbac-keys';
+import { useRbac } from '@/hooks/useRbac';
 import { pickDynamicLocalized, type DynamicLocalized } from '@/lib/dynamic-localized';
 import { slugify } from '@/lib/slugify';
 import { uploadMedia } from '@/services/media.service';
@@ -365,6 +367,7 @@ function TagModal({
 }
 
 export default function BlogCategoryTagPage() {
+  const { can } = useRbac();
   const [catPage, setCatPage] = useState(1);
   const [catSearch, setCatSearch] = useState('');
   const [catSearchDeb, setCatSearchDeb] = useState('');
@@ -429,36 +432,49 @@ export default function BlogCategoryTagPage() {
         width: 80,
         render: (_, r) => (r.isActive ? 'Yes' : 'No'),
       },
-      {
-        title: '',
-        key: 'a',
-        width: 120,
-        render: (_, r) => (
-          <Space>
-            <Button
-              type="link"
-              size="small"
-              icon={<EditOutlined />}
-              onClick={() => {
-                setCatEdit(r);
-                setCatModal(true);
-              }}
-            />
-            <Popconfirm
-              title="Xoá category?"
-              onConfirm={() =>
-                void deleteCat
-                  .mutateAsync(r._id)
-                  .then(() => message.success('Đã xoá'))
-              }
-            >
-              <Button type="text" danger size="small" icon={<DeleteOutlined />} />
-            </Popconfirm>
-          </Space>
-        ),
-      },
+      ...(can(RBAC.blog.update) || can(RBAC.blog.delete)
+        ? [
+            {
+              title: '',
+              key: 'a',
+              width: 120,
+              render: (_: unknown, r: BlogCategory) => (
+                <Space>
+                  {can(RBAC.blog.update) ? (
+                    <Button
+                      type="link"
+                      size="small"
+                      icon={<EditOutlined />}
+                      onClick={() => {
+                        setCatEdit(r);
+                        setCatModal(true);
+                      }}
+                    />
+                  ) : null}
+                  {can(RBAC.blog.delete) ? (
+                    <Popconfirm
+                      title="Xoá category?"
+                      onConfirm={() =>
+                        void deleteCat
+                          .mutateAsync(r._id)
+                          .then(() => message.success('Đã xoá'))
+                      }
+                    >
+                      <Button
+                        type="text"
+                        danger
+                        size="small"
+                        icon={<DeleteOutlined />}
+                      />
+                    </Popconfirm>
+                  ) : null}
+                </Space>
+              ),
+            } as TableColumnsType<BlogCategory>[number],
+          ]
+        : []),
     ],
-    [deleteCat],
+    [deleteCat, can],
   );
 
   const tagColumns: TableColumnsType<BlogTag> = useMemo(
@@ -471,36 +487,49 @@ export default function BlogCategoryTagPage() {
         width: 80,
         render: (_, r) => (r.isActive ? 'Yes' : 'No'),
       },
-      {
-        title: '',
-        key: 'a',
-        width: 120,
-        render: (_, r) => (
-          <Space>
-            <Button
-              type="link"
-              size="small"
-              icon={<EditOutlined />}
-              onClick={() => {
-                setTagEdit(r);
-                setTagModal(true);
-              }}
-            />
-            <Popconfirm
-              title="Xoá tag?"
-              onConfirm={() =>
-                void deleteTag
-                  .mutateAsync(r._id)
-                  .then(() => message.success('Đã xoá'))
-              }
-            >
-              <Button type="text" danger size="small" icon={<DeleteOutlined />} />
-            </Popconfirm>
-          </Space>
-        ),
-      },
+      ...(can(RBAC.blog.update) || can(RBAC.blog.delete)
+        ? [
+            {
+              title: '',
+              key: 'a',
+              width: 120,
+              render: (_: unknown, r: BlogTag) => (
+                <Space>
+                  {can(RBAC.blog.update) ? (
+                    <Button
+                      type="link"
+                      size="small"
+                      icon={<EditOutlined />}
+                      onClick={() => {
+                        setTagEdit(r);
+                        setTagModal(true);
+                      }}
+                    />
+                  ) : null}
+                  {can(RBAC.blog.delete) ? (
+                    <Popconfirm
+                      title="Xoá tag?"
+                      onConfirm={() =>
+                        void deleteTag
+                          .mutateAsync(r._id)
+                          .then(() => message.success('Đã xoá'))
+                      }
+                    >
+                      <Button
+                        type="text"
+                        danger
+                        size="small"
+                        icon={<DeleteOutlined />}
+                      />
+                    </Popconfirm>
+                  ) : null}
+                </Space>
+              ),
+            } as TableColumnsType<BlogTag>[number],
+          ]
+        : []),
     ],
-    [deleteTag],
+    [deleteTag, can],
   );
 
   const onSaveCategory = async (v: Record<string, unknown>) => {
@@ -586,16 +615,18 @@ export default function BlogCategoryTagPage() {
                     onChange={(e) => setCatSearch(e.target.value)}
                     enterButton
                   />
-                  <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={() => {
-                      setCatEdit(null);
-                      setCatModal(true);
-                    }}
-                  >
-                    Thêm category
-                  </Button>
+                  {can(RBAC.blog.create) ? (
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
+                      onClick={() => {
+                        setCatEdit(null);
+                        setCatModal(true);
+                      }}
+                    >
+                      Thêm category
+                    </Button>
+                  ) : null}
                 </Space>
                 <Table<BlogCategory>
                   rowKey="_id"
@@ -629,16 +660,18 @@ export default function BlogCategoryTagPage() {
                     onChange={(e) => setTagSearch(e.target.value)}
                     enterButton
                   />
-                  <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={() => {
-                      setTagEdit(null);
-                      setTagModal(true);
-                    }}
-                  >
-                    Thêm tag
-                  </Button>
+                  {can(RBAC.blog.create) ? (
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
+                      onClick={() => {
+                        setTagEdit(null);
+                        setTagModal(true);
+                      }}
+                    >
+                      Thêm tag
+                    </Button>
+                  ) : null}
                 </Space>
                 <Table<BlogTag>
                   rowKey="_id"

@@ -44,7 +44,7 @@ export function normalizeMediaUploadResponse(
 export const uploadMedia = async (file: File): Promise<NormalizedMediaUpload> => {
   const formData = new FormData();
   formData.append('file', file);
-  const raw = await api.post<unknown>('/api/v1/media/upload', formData, {
+  const raw = await api.post<unknown>('/api/v1/admin/media/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
   return normalizeMediaUploadResponse(raw);
@@ -60,7 +60,7 @@ export const uploadMediaMultiple = async (
   const formData = new FormData();
   files.forEach((f) => formData.append('files', f));
   const raw = await api.post<unknown>(
-    '/api/v1/media/upload-multiple',
+    '/api/v1/admin/media/upload-multiple',
     formData,
     {
       headers: { 'Content-Type': 'multipart/form-data' },

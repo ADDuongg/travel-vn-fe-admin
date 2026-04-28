@@ -12,7 +12,7 @@ export const ensureTourInventory = (
   payload: TourInventoryEnsurePayload
 ): Promise<TourInventoryDocument> => {
   return api.post<TourInventoryDocument, TourInventoryEnsurePayload>(
-    '/api/v1/tour-inventory/ensure',
+    '/api/v1/admin/tour-inventory/ensure',
     payload
   );
 };

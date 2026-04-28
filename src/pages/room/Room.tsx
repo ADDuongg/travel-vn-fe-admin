@@ -16,7 +16,10 @@ import { useRooms, useDeleteRoom } from '@/queries/room.queries';
 import { useProvinceDropdown } from '@/queries/province.queries';
 import { useHotelOptions } from '@/queries/hotel.queries';
 import api from '@/lib/axios';
+import type { Room } from '@/interface/room';
 import PageShell from '@/components/PageShell';
+import { RBAC } from '@/constants/rbac-keys';
+import { useRbac } from '@/hooks/useRbac';
 import { getProvinceLabel } from '@/lib/dynamic-localized';
 import type { DynamicLocalized } from '@/lib/dynamic-localized';
 
@@ -54,6 +57,7 @@ function addDays(date: Date, days: number) {
 
 export default function RoomPage() {
   const navigate = useNavigate();
+  const { can } = useRbac();
   const [provinceId, setProvinceId] = useState<string | undefined>();
   const [hotelIds, setHotelIds] = useState<string[] | undefined>();
   const { data: provinces = [] } = useProvinceDropdown();
@@ -77,7 +81,7 @@ export default function RoomPage() {
     setGeneratingRoomId(roomId);
     try {
       await api.post(
-        `/api/v1/room-inventories/ensure/${roomId}`,
+        `/api/v1/admin/room-inventories/ensure/${roomId}`,
         undefined,
         { params: { from, to } },
       );
@@ -94,9 +98,15 @@ export default function RoomPage() {
       title="Rooms"
       subtitle="Quản lý phòng theo khách sạn và tỉnh/thành."
       actions={
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/dashboard/room/create')}>
-          Tạo phòng
-        </Button>
+        can(RBAC.room.create) ? (
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => navigate('/dashboard/room/create')}
+          >
+            Tạo phòng
+          </Button>
+        ) : null
       }
     >
       <Card>
@@ -169,36 +179,50 @@ export default function RoomPage() {
               width: 80,
               render: (v) => <Switch checked={v} disabled size="small" />,
             },
-            {
-              title: 'Actions',
-              width: 240,
-              render: (_, room) => (
-                <Space size={4}>
-                  <Button
-                    size="small"
-                    onClick={() => navigate(`/dashboard/room/${room._id}/edit`)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    size="small"
-                    loading={generatingRoomId === room._id}
-                    disabled={generatingRoomId === room._id}
-                    onClick={() => handleGenerateInventory(room._id)}
-                  >
-                    Gen inventory
-                  </Button>
-                  <Popconfirm
-                    title="Delete this room?"
-                    onConfirm={() => deleteMutation.mutate(room._id)}
-                  >
-                    <Button size="small" danger>
-                      Delete
-                    </Button>
-                  </Popconfirm>
-                </Space>
-              ),
-            },
+            ...(can(RBAC.room.update) ||
+            can(RBAC.inventory.manage) ||
+            can(RBAC.room.delete)
+              ? [
+                  {
+                    title: 'Actions',
+                    width: 240,
+                    render: (_: unknown, room: Room & { childrenCount?: number }) => (
+                      <Space size={4}>
+                        {can(RBAC.room.update) ? (
+                          <Button
+                            size="small"
+                            onClick={() =>
+                              navigate(`/dashboard/room/${room._id}/edit`)
+                            }
+                          >
+                            Edit
+                          </Button>
+                        ) : null}
+                        {can(RBAC.inventory.manage) ? (
+                          <Button
+                            size="small"
+                            loading={generatingRoomId === room._id}
+                            disabled={generatingRoomId === room._id}
+                            onClick={() => handleGenerateInventory(room._id)}
+                          >
+                            Gen inventory
+                          </Button>
+                        ) : null}
+                        {can(RBAC.room.delete) ? (
+                          <Popconfirm
+                            title="Delete this room?"
+                            onConfirm={() => deleteMutation.mutate(room._id)}
+                          >
+                            <Button size="small" danger>
+                              Delete
+                            </Button>
+                          </Popconfirm>
+                        ) : null}
+                      </Space>
+                    ),
+                  },
+                ]
+              : []),
           ]}
         />
       </Card>

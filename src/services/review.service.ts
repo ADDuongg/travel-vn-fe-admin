@@ -1,5 +1,7 @@
 import api from '@/lib/axios';
 
+/** Moderation FE Admin — docs/MODULES-1-4-FE-API.md §2.2. */
+
 export type ReviewEntityType = 'ROOM' | 'HOTEL' | 'TOUR' | 'BLOG' | 'GUIDE';
 
 export type ReviewStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'HIDDEN';
@@ -69,16 +71,18 @@ function buildAdminReviewsQueryParams(params: GetAdminReviewsParams) {
 }
 
 export const getAdminReviews = (params: GetAdminReviewsParams) =>
-  api.get<AdminReviewListResponse>('/api/v1/reviews/admin', {
+  api.get<AdminReviewListResponse>('/api/v1/admin/reviews', {
     params: buildAdminReviewsQueryParams(params),
   });
 
 export const approveReview = (id: string) =>
-  api.patch(`/api/v1/reviews/${id}/approve`);
+  api.patch(`/api/v1/admin/reviews/${id}/approve`);
 
 export const updateReviewStatus = (
   id: string,
   payload: UpdateReviewStatusPayload,
-) => api.patch(`/api/v1/reviews/${id}/status`, payload);
+) => api.patch(`/api/v1/admin/reviews/${id}/status`, payload);
 
-export const deleteReview = (id: string) => api.delete(`/api/v1/reviews/${id}`);
+/** Soft-delete from moderation UI; confirm on BE Swagger if differs. */
+export const deleteReview = (id: string) =>
+  api.delete(`/api/v1/admin/reviews/${id}`);

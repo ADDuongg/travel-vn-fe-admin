@@ -39,6 +39,7 @@ export interface HotelOption {
   slug: string;
   translations: Record<string, HotelTranslation>;
   provinceId: ProvinceRef | string;
+  isActive?: boolean;
 }
 
 /** Full detail response */
@@ -54,6 +55,16 @@ export interface Hotel {
   thumbnail?: { url: string; publicId?: string; alt?: string };
   gallery?: HotelImage[];
   amenities?: Array<{ _id: string; [key: string]: unknown }>;
+}
+
+export interface HotelListResponse {
+  items: HotelOption[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 export interface HotelCreateUpdateBody {

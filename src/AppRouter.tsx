@@ -15,17 +15,26 @@ import { useInitAuth } from '@/hooks/useInitAuth';
 import { useAuthStore } from '@/stores/useAuthStore';
 
 const useUserRoles = (): string[] | undefined => {
-  const authUser = useAuthStore((s) => s.authUser as any);
+  const authUser = useAuthStore((s) => s.authUser as { roles?: string[] });
   if (!Array.isArray(authUser?.roles)) return undefined;
   return authUser.roles.map((r: string) => r.toLowerCase());
 };
 
 const wrap = (
   element: React.ReactElement,
-  rolesAllowed: EnumRole[] | undefined,
+  opts: Pick<
+    RouteConfig,
+    'rolesAllowed' | 'requiredPermission' | 'requiredAllPermissions' | 'requiresAuth'
+  >,
   userRoles: string[] | undefined,
 ) => (
-  <ProtectedRoute rolesAllowed={rolesAllowed} userRoles={userRoles}>
+  <ProtectedRoute
+    rolesAllowed={opts.rolesAllowed as EnumRole[] | undefined}
+    userRoles={userRoles}
+    requiredPermission={opts.requiredPermission}
+    requiredAllPermissions={opts.requiredAllPermissions}
+    requiresAuth={opts.requiresAuth}
+  >
     {element}
   </ProtectedRoute>
 );
@@ -35,21 +44,36 @@ const transformRoutes = (
   userRoles: string[] | undefined,
 ): RouteObject[] => {
   return configs.map<RouteObject>((cfg) => {
-    const { index, path, element, rolesAllowed, children, handle } = cfg;
+    const {
+      index,
+      path,
+      element,
+      rolesAllowed,
+      requiredPermission,
+      requiredAllPermissions,
+      requiresAuth,
+      children,
+      handle,
+    } = cfg;
+    const routeOpts = {
+      rolesAllowed,
+      requiredPermission,
+      requiredAllPermissions,
+      requiresAuth,
+    };
 
     if (index) {
       const node: IndexRouteObject = {
         index: true,
-        element: wrap(element, rolesAllowed, userRoles),
+        element: wrap(element, routeOpts, userRoles),
         handle,
       };
       return node;
     }
 
-    // NonIndexRouteObject: has path, may have children
     const node: NonIndexRouteObject = {
-      path, // do not leave undefined for non-index route
-      element: wrap(element, rolesAllowed, userRoles),
+      path,
+      element: wrap(element, routeOpts, userRoles),
       handle,
       children: children ? transformRoutes(children, userRoles) : undefined,
     };

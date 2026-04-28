@@ -6,25 +6,35 @@ import type {
   TourGuideUpsertPayload,
 } from '@/interface/tour-guide';
 
+/**
+ * Reads: public catalog per MODULES-9-11.
+ * Mutations: admin routes.
+ */
+
 export const getTourGuides = (
   params?: TourGuideQueryParams,
 ): Promise<TourGuidePaginatedResponse> => {
-  return api.get<TourGuidePaginatedResponse>('/api/v1/tour-guides', { params });
+  return api.get<TourGuidePaginatedResponse>('/api/v1/public/tour-guides', {
+    params,
+  });
 };
 
 export const getTourGuideById = (id: string): Promise<TourGuide> => {
-  return api.get<TourGuide>(`/api/v1/tour-guides/${id}`);
+  return api.get<TourGuide>(`/api/v1/public/tour-guides/${id}`);
 };
 
 export const createTourGuide = (
   payload: TourGuideUpsertPayload | FormData,
 ): Promise<TourGuide> => {
   if (payload instanceof FormData) {
-    return api.post<TourGuide>('/api/v1/tour-guides', payload, {
+    return api.post<TourGuide>('/api/v1/admin/tour-guides', payload, {
       headers: { 'Content-Type': undefined } as unknown as Record<string, string>,
     });
   }
-  return api.post<TourGuide, TourGuideUpsertPayload>('/api/v1/tour-guides', payload);
+  return api.post<TourGuide, TourGuideUpsertPayload>(
+    '/api/v1/admin/tour-guides',
+    payload,
+  );
 };
 
 export const updateTourGuide = (
@@ -32,18 +42,20 @@ export const updateTourGuide = (
   payload: Partial<TourGuideUpsertPayload> | FormData,
 ): Promise<TourGuide> => {
   if (payload instanceof FormData) {
-    return api.patch<TourGuide>(`/api/v1/tour-guides/${id}`, payload, {
+    return api.patch<TourGuide>(`/api/v1/admin/tour-guides/${id}`, payload, {
       headers: { 'Content-Type': undefined } as unknown as Record<string, string>,
     });
   }
   return api.patch<TourGuide, Partial<TourGuideUpsertPayload>>(
-    `/api/v1/tour-guides/${id}`,
+    `/api/v1/admin/tour-guides/${id}`,
     payload,
   );
 };
 
 export const toggleTourGuideAvailability = (id: string): Promise<TourGuide> => {
-  return api.patch<TourGuide>(`/api/v1/tour-guides/${id}/availability`);
+  return api.patch<TourGuide>(
+    `/api/v1/admin/tour-guides/${id}/availability`,
+  );
 };
 
 export const verifyTourGuide = (
@@ -51,7 +63,7 @@ export const verifyTourGuide = (
   isVerified: boolean,
 ): Promise<TourGuide> => {
   return api.patch<TourGuide, { isVerified: boolean }>(
-    `/api/v1/tour-guides/${id}/verify`,
+    `/api/v1/admin/tour-guides/${id}/verify`,
     { isVerified },
   );
 };
@@ -59,6 +71,5 @@ export const verifyTourGuide = (
 export const deleteTourGuide = (
   id: string,
 ): Promise<{ message: string } | unknown> => {
-  return api.delete(`/api/v1/tour-guides/${id}`);
+  return api.delete(`/api/v1/admin/tour-guides/${id}`);
 };
-

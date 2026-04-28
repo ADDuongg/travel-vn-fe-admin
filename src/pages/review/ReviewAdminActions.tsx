@@ -1,3 +1,5 @@
+import { RBAC } from '@/constants/rbac-keys';
+import { useRbac } from '@/hooks/useRbac';
 import { Button, Input, Modal, Popconfirm, Select, Space, message } from 'antd';
 import { useState } from 'react';
 import type {
@@ -39,6 +41,7 @@ export default function ReviewAdminActions({
   onDelete,
   onSuccess,
 }: Props) {
+  const { can } = useRbac();
   const [modalKind, setModalKind] = useState<ModalKind>(null);
   const [reason, setReason] = useState('');
 
@@ -140,10 +143,12 @@ export default function ReviewAdminActions({
     : { size: 'small' as const };
 
   const actionPending = approvePending || updateStatusPending;
+  const allowModerate = can(RBAC.review.update);
 
   return (
     <>
       <Space size="small" wrap>
+        {allowModerate ? (
         <Select
           size="small"
           style={{ minWidth: compact ? 160 : 180 }}
@@ -162,7 +167,9 @@ export default function ReviewAdminActions({
           onSelect={handleStatusSelect}
           allowClear={false}
         />
+        ) : null}
 
+        {allowModerate ? (
         <Popconfirm
           title="Xóa mềm review này?"
           okText="Xóa"
@@ -182,6 +189,7 @@ export default function ReviewAdminActions({
             Xóa mềm
           </Button>
         </Popconfirm>
+        ) : null}
       </Space>
 
       <Modal
