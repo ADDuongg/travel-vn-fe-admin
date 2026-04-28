@@ -39,10 +39,10 @@ export const BLOG_TAG_KEYS = {
 };
 
 export const BLOG_POST_KEYS = {
-  all: ['blog-posts'] as const,
+  all: ['blogs', 'admin'] as const,
   adminList: (params?: BlogPostAdminQueryParams) =>
-    ['blog-posts', 'admin', params] as const,
-  adminDetail: (id: string) => ['blog-posts', 'admin', id] as const,
+    ['blogs', 'admin', 'list', params] as const,
+  adminDetail: (id: string) => ['blogs', 'admin', 'detail', id] as const,
 };
 
 export const useBlogCategories = (params?: BlogCategoryQueryParams) =>

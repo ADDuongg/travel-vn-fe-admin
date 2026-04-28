@@ -1,34 +1,38 @@
-# Blog API — hướng dẫn tích hợp FE
+# Blog API — FE integration (blog module)
 
-Tất cả path prefix: **`/api/v1`**. Ảnh tải trước qua `POST /api/v1/media/upload` (xem tài liệu media nếu có), sau đó gắn `url` / `public_id` vào DTO (thumbnail, gallery, category thumbnail…).
+**Canonical English API guides:** [FE-CLIENT-API.md](./api/FE-CLIENT-API.md) · [FE-ADMIN-API.md](./api/FE-ADMIN-API.md).
 
-**Auth (Admin):** `Authorization: Bearer <accessToken>`, user có `roles` chứa `admin`.
+All paths below are **relative to `/api/v1`**. Upload images first via **`POST /api/v1/media/upload`** (or upload-multiple), then put `url` / `public_id` into DTOs (thumbnail, gallery, category thumbnail…).
+
+**Admin auth:** `Authorization: Bearer <accessToken>` with `roles` containing `admin`.
+
+Resources were split into **public** vs **admin** route groups (no mixed controller). Post collection name in Mongo remains **`blog-posts`** (unchanged).
 
 ---
 
-## FE Client (công khai)
+## FE Client (public website)
 
 ### Categories
 
 | Method | Path | Mô tả |
 |--------|------|--------|
-| GET | `/blog-categories` | Danh sách (query: `page`, `limit`, `search`, public chỉ thấy `isActive: true` qua dữ liệu) |
-| GET | `/blog-categories/:slug` | Chi tiết category theo `slug` |
+| GET | `/public/blog-categories` | Danh sách (query: `page`, `limit`, `search`, public chỉ thấy `isActive: true` qua dữ liệu) |
+| GET | `/public/blog-categories/:slug` | Chi tiết category theo `slug` |
 
 ### Tags
 
 | Method | Path | Mô tả |
 |--------|------|--------|
-| GET | `/blog-tags` | Danh sách tag (query: `page`, `limit`, `search`) |
+| GET | `/public/blog-tags` | Danh sách tag (query: `page`, `limit`, `search`) |
 
-### Bài viết
+### Bài viết (posts)
 
 | Method | Path | Mô tả |
 |--------|------|--------|
-| GET | `/blog-posts` | Danh sách bài **đã publish** — query: `page`, `limit`, `search`, `category` (slug), `tag` (slug), `province` (slug tỉnh), `sort` = `latest` \| `popular` \| `oldest`, `lang` (ưu tiên giao diện) |
-| GET | `/blog-posts/featured?limit=6` | Bài nổi bật |
-| GET | `/blog-posts/:slug` | Chi tiết bài (tự **tăng** `viewCount` mỗi lần gọi) |
-| GET | `/blog-posts/:slug/related` | Bài gợi ý theo cùng category / tag / province (giới hạn 5) |
+| GET | `/public/blogs` | Danh sách bài **đã publish** — query: `page`, `limit`, `search`, `category` (slug), `tag` (slug), `province` (slug tỉnh), `sort` = `latest` \| `popular` \| `oldest`, `lang` (ưu tiên giao diện) |
+| GET | `/public/blogs/featured?limit=6` | Bài nổi bật |
+| GET | `/public/blogs/:slug` | Chi tiết bài (tự **tăng** `viewCount` mỗi lần gọi). Optional Bearer cho tương lai cá nhân hóa |
+| GET | `/public/blogs/:slug/related` | Bài gợi ý theo cùng category / tag / province (giới hạn 5) |
 
 **Reserved slug (không dùng làm slug bài):** `admin`, `featured`.
 
@@ -42,29 +46,29 @@ Nội dung bài: `translations[lang].content` là mảng **Editor.js** blocks. `
 
 | Method | Path | Body |
 |--------|------|------|
-| POST | `/blog-categories` | `name` { vi, en,… }, `slug?`, `description?`, `thumbnail?`, `order?`, `isActive?`, `translations?` (SEO) |
-| PATCH | `/blog-categories/:id` | Partial |
-| DELETE | `/blog-categories/:id` | Soft delete (`isDeleted`, `isActive: false`) |
+| POST | `/admin/blog-categories` | `name` { vi, en,… }, `slug?`, `description?`, `thumbnail?`, `order?`, `isActive?`, `translations?` (SEO) |
+| PATCH | `/admin/blog-categories/:id` | Partial |
+| DELETE | `/admin/blog-categories/:id` | Soft delete (`isDeleted`, `isActive: false`) |
 
 ### Tags
 
 | Method | Path | Body |
 |--------|------|------|
-| POST | `/blog-tags` | `name` {…}, `slug?`, `isActive?` |
-| PATCH | `/blog-tags/:id` | Partial |
-| DELETE | `/blog-tags/:id` | Soft delete |
+| POST | `/admin/blog-tags` | `name` {…}, `slug?`, `isActive?` |
+| PATCH | `/admin/blog-tags/:id` | Partial |
+| DELETE | `/admin/blog-tags/:id` | Soft delete |
 
 ### Bài viết
 
 | Method | Path | Mô tả |
 |--------|------|--------|
-| GET | `/blog-posts/admin` | Tất cả bài (kể cả draft) — query: `page`, `limit`, `search`, `status` = `draft` \| `published` |
-| GET | `/blog-posts/admin/:id` | Chi tiết theo Mongo `_id` (form chỉnh sửa) |
-| POST | `/blog-posts` | Tạo bài. `author` = user đăng nhập. `status` mặc định `draft` |
-| PATCH | `/blog-posts/:id` | Cập nhật. Xóa category: gửi `category: null` hoặc `""` (theo cấu hình JSON) — BE chấp nhận clear bằng cách tương ứng trong service |
-| PATCH | `/blog-posts/:id/publish` | Publish (set `publishedAt` nếu chưa có) |
-| PATCH | `/blog-posts/:id/unpublish` | Về `draft` |
-| DELETE | `/blog-posts/:id` | Soft delete |
+| GET | `/admin/blogs` | Tất cả bài (kể cả draft) — query: `page`, `limit`, `search`, `status` = `draft` \| `published` |
+| GET | `/admin/blogs/:id` | Chi tiết theo Mongo `_id` (form chỉnh sửa) |
+| POST | `/admin/blogs` | Tạo bài. `author` = user đăng nhập. `status` mặc định `draft` |
+| PATCH | `/admin/blogs/:id` | Cập nhật. Xóa category: gửi `category: null` hoặc `""` — BE chấp nhận clear trong service |
+| PATCH | `/admin/blogs/:id/publish` | Publish (set `publishedAt` nếu chưa có) |
+| PATCH | `/admin/blogs/:id/unpublish` | Về `draft` |
+| DELETE | `/admin/blogs/:id` | Soft delete |
 
 **Payload tạo/sửa bài (gợi ý):**
 
