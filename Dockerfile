@@ -28,7 +28,7 @@
 # Khi code thay doi nhung package.json/yarn.lock khong doi, Docker se dung cache
 # cua layer nay thay vi install lai tu dau.
 # -----------------------------------------------------------------------------
-FROM node:20-alpine AS deps
+FROM node:24-alpine AS deps
 
 WORKDIR /app
 
@@ -45,7 +45,7 @@ RUN yarn install --frozen-lockfile
 # Cac bien VITE_* duoc truyen qua ARG -> ENV -> Vite doc tai build time.
 # Ket qua: thu muc dist/ chua HTML/JS/CSS da optimize.
 # -----------------------------------------------------------------------------
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
