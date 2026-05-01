@@ -23,7 +23,7 @@
 
 services:
   admin-web-production:
-    image: ${CI_REGISTRY_IMAGE:-registry.gitlab.com/your-group/your-project}:${IMAGE_TAG:-prod-latest}
+    image: registry.gitlab.com/nvduong2302/travel-vn-fe-admin:prod-latest
 
     container_name: admin-frontend-production
 
