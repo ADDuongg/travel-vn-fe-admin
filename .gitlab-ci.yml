@@ -37,7 +37,7 @@ stages:
 variables:
   NODE_IMAGE: node:24-alpine
   DOCKER_TLS_CERTDIR: '/certs'
-
+  DOCKER_BUILDKIT: '1'
 cache:
   key:
     files:
@@ -125,8 +125,16 @@ build:staging:
       -t $CI_REGISTRY_IMAGE:staging-$CI_COMMIT_SHORT_SHA
       -t $CI_REGISTRY_IMAGE:staging-latest
       .
-    - docker push $CI_REGISTRY_IMAGE:staging-$CI_COMMIT_SHORT_SHA
-    - docker push $CI_REGISTRY_IMAGE:staging-latest
+    - |
+      for i in 1 2 3; do
+        docker push $CI_REGISTRY_IMAGE:staging-$CI_COMMIT_SHORT_SHA && break
+        echo "Push failed, retry $i/3..." && sleep 10
+      done
+    - |
+      for i in 1 2 3; do
+        docker push $CI_REGISTRY_IMAGE:staging-latest && break
+        echo "Push failed, retry $i/3..." && sleep 10
+      done
   rules:
     - if: '$CI_COMMIT_BRANCH == "staging"'
   environment:
@@ -153,8 +161,16 @@ build:production:
       -t $CI_REGISTRY_IMAGE:prod-$CI_COMMIT_SHORT_SHA
       -t $CI_REGISTRY_IMAGE:prod-latest
       .
-    - docker push $CI_REGISTRY_IMAGE:prod-$CI_COMMIT_SHORT_SHA
-    - docker push $CI_REGISTRY_IMAGE:prod-latest
+    - |
+      for i in 1 2 3; do
+        docker push $CI_REGISTRY_IMAGE:prod-$CI_COMMIT_SHORT_SHA && break
+        echo "Push failed, retry $i/3..." && sleep 10
+      done
+    - |
+      for i in 1 2 3; do
+        docker push $CI_REGISTRY_IMAGE:prod-latest && break
+        echo "Push failed, retry $i/3..." && sleep 10
+      done
   rules:
     - if: '$CI_COMMIT_BRANCH == "production"'
   environment:
