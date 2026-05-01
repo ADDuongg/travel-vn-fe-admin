@@ -185,6 +185,7 @@ build:production:
 deploy:staging:
   stage: deploy
   script:
+    - cp docker-compose.staging.yml /opt/travel-admin-fe/staging/docker-compose.staging.yml
     - cd /opt/travel-admin-fe/staging
     - echo "Login registry..."
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
@@ -216,6 +217,7 @@ deploy:staging:
 deploy:production:
   stage: deploy
   script:
+    - cp docker-compose.production.yml /opt/travel-admin-fe/production/docker-compose.production.yml
     - cd /opt/travel-admin-fe/production
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - export IMAGE_TAG=prod-$CI_COMMIT_SHORT_SHA
