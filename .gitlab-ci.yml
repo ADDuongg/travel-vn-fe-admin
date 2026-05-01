@@ -37,7 +37,7 @@ stages:
 variables:
   NODE_IMAGE: node:24-alpine
   DOCKER_TLS_CERTDIR: '/certs'
-  DOCKER_BUILDKIT: '1'
+  # DOCKER_BUILDKIT: '1'
 cache:
   key:
     files:
