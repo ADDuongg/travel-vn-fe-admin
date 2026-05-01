@@ -114,7 +114,7 @@ build:staging:
   variables:
     DOCKER_TLS_CERTDIR: '/certs'
   before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker login -u $CI_JOB_TOKEN $CI_REGISTRY
   script:
     - >
       docker build
@@ -142,7 +142,7 @@ build:production:
   variables:
     DOCKER_TLS_CERTDIR: '/certs'
   before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker login -u $CI_JOB_TOKEN $CI_REGISTRY
   script:
     - >
       docker build
@@ -171,7 +171,7 @@ deploy:staging:
   script:
     - cd /opt/travel-admin-fe/staging
     - echo "Login registry..."
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker login -u $CI_JOB_TOKEN $CI_REGISTRY
 
     - echo "Set image tag..."
     - export IMAGE_TAG=staging-$CI_COMMIT_SHORT_SHA
@@ -201,7 +201,7 @@ deploy:production:
   stage: deploy
   script:
     - cd /opt/travel-admin-fe/production
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker login -u $CI_JOB_TOKEN $CI_REGISTRY
     - export IMAGE_TAG=prod-$CI_COMMIT_SHORT_SHA
     - docker compose -f docker-compose.production.yml pull
     - docker compose -f docker-compose.production.yml up -d --force-recreate
