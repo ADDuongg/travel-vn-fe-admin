@@ -37,7 +37,7 @@ stages:
 variables:
   NODE_IMAGE: node:24-alpine
   DOCKER_TLS_CERTDIR: '/certs'
-
+  # DOCKER_BUILDKIT: '1'
 cache:
   key:
     files:
@@ -114,7 +114,7 @@ build:staging:
   variables:
     DOCKER_TLS_CERTDIR: '/certs'
   before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
   script:
     - >
       docker build
@@ -125,8 +125,16 @@ build:staging:
       -t $CI_REGISTRY_IMAGE:staging-$CI_COMMIT_SHORT_SHA
       -t $CI_REGISTRY_IMAGE:staging-latest
       .
-    - docker push $CI_REGISTRY_IMAGE:staging-$CI_COMMIT_SHORT_SHA
-    - docker push $CI_REGISTRY_IMAGE:staging-latest
+    - |
+      for i in 1 2 3; do
+        docker push $CI_REGISTRY_IMAGE:staging-$CI_COMMIT_SHORT_SHA && break
+        echo "Push failed, retry $i/3..." && sleep 10
+      done
+    - |
+      for i in 1 2 3; do
+        docker push $CI_REGISTRY_IMAGE:staging-latest && break
+        echo "Push failed, retry $i/3..." && sleep 10
+      done
   rules:
     - if: '$CI_COMMIT_BRANCH == "staging"'
   environment:
@@ -142,7 +150,7 @@ build:production:
   variables:
     DOCKER_TLS_CERTDIR: '/certs'
   before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
   script:
     - >
       docker build
@@ -153,8 +161,16 @@ build:production:
       -t $CI_REGISTRY_IMAGE:prod-$CI_COMMIT_SHORT_SHA
       -t $CI_REGISTRY_IMAGE:prod-latest
       .
-    - docker push $CI_REGISTRY_IMAGE:prod-$CI_COMMIT_SHORT_SHA
-    - docker push $CI_REGISTRY_IMAGE:prod-latest
+    - |
+      for i in 1 2 3; do
+        docker push $CI_REGISTRY_IMAGE:prod-$CI_COMMIT_SHORT_SHA && break
+        echo "Push failed, retry $i/3..." && sleep 10
+      done
+    - |
+      for i in 1 2 3; do
+        docker push $CI_REGISTRY_IMAGE:prod-latest && break
+        echo "Push failed, retry $i/3..." && sleep 10
+      done
   rules:
     - if: '$CI_COMMIT_BRANCH == "production"'
   environment:
@@ -169,9 +185,10 @@ build:production:
 deploy:staging:
   stage: deploy
   script:
+    - cp docker-compose.staging.yml /opt/travel-admin-fe/staging/docker-compose.staging.yml
     - cd /opt/travel-admin-fe/staging
     - echo "Login registry..."
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
 
     - echo "Set image tag..."
     - export IMAGE_TAG=staging-$CI_COMMIT_SHORT_SHA
@@ -200,8 +217,9 @@ deploy:staging:
 deploy:production:
   stage: deploy
   script:
+    - cp docker-compose.production.yml /opt/travel-admin-fe/production/docker-compose.production.yml
     - cd /opt/travel-admin-fe/production
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - export IMAGE_TAG=prod-$CI_COMMIT_SHORT_SHA
     - docker compose -f docker-compose.production.yml pull
     - docker compose -f docker-compose.production.yml up -d --force-recreate

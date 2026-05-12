@@ -23,7 +23,7 @@
 
 services:
   admin-web-staging:
-    image: ${CI_REGISTRY_IMAGE:-registry.gitlab.com/your-group/your-project}:${IMAGE_TAG:-staging-latest}
+    image: registry.gitlab.com/nvduong2302/travel-vn-fe-admin:staging-latest
 
     container_name: admin-frontend-staging
 
