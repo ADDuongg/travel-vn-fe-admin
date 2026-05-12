@@ -26,7 +26,6 @@ import {
   ReloadOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
-import type { UploadFile } from 'antd/es/upload/interface';
 import { useProvinceDropdown } from '@/queries/province.queries';
 import { getProvinceLabel } from '@/lib/dynamic-localized';
 import { useUsers } from '@/queries/user.queries';
@@ -39,7 +38,14 @@ import {
   useUpdateTourGuide,
   useVerifyTourGuide,
 } from '@/queries/tour-guide.queries';
-import type { TourGuide, TourGuideQueryParams } from '@/interface/tour-guide';
+import type {
+  TourGuide,
+  TourGuideCV,
+  TourGuideGalleryItem,
+  TourGuideQueryParams,
+  TourGuideUpsertPayload,
+} from '@/interface/tour-guide';
+import { uploadMedia } from '@/services/media.service';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/constants/route.constant';
 import tableStyles from '@/styles/promax-table.module.css';
@@ -117,14 +123,13 @@ export default function TourGuidePage() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingGuide, setEditingGuide] = useState<TourGuide | null>(null);
-  const [createCvFileList, setCreateCvFileList] = useState<UploadFile[]>([]);
-  const [createGalleryFileList, setCreateGalleryFileList] = useState<
-    UploadFile[]
-  >([]);
-  const [editCvFileList, setEditCvFileList] = useState<UploadFile[]>([]);
-  const [editGalleryFileList, setEditGalleryFileList] = useState<UploadFile[]>(
+  const [createCv, setCreateCv] = useState<TourGuideCV | undefined>();
+  const [createGallery, setCreateGallery] = useState<TourGuideGalleryItem[]>(
     [],
   );
+  const [editCv, setEditCv] = useState<TourGuideCV | undefined>();
+  const [editCvRemoved, setEditCvRemoved] = useState(false);
+  const [editGallery, setEditGallery] = useState<TourGuideGalleryItem[]>([]);
   const [createForm] = Form.useForm<CreateGuideFormValues>();
   const [editForm] = Form.useForm<CreateGuideFormValues>();
 
@@ -167,8 +172,8 @@ export default function TourGuidePage() {
 
   const handleOpenCreate = () => {
     createForm.resetFields();
-    setCreateCvFileList([]);
-    setCreateGalleryFileList([]);
+    setCreateCv(undefined);
+    setCreateGallery([]);
     setCreateModalOpen(true);
   };
 
@@ -195,26 +200,25 @@ export default function TourGuidePage() {
       contactMethods: guide.contactMethods || [],
       isAvailable: guide.isAvailable ?? true,
     });
-    const cvList: UploadFile[] = [];
-    if (guide.cv?.url) {
-      cvList.push({
-        uid: guide.cv.publicId || 'cv',
-        name: guide.cv.filename || guide.cv.url.split('/').pop() || 'cv',
-        status: 'done',
-        url: guide.cv.url,
-      });
-    }
-    setEditCvFileList(cvList);
-
-    const galleryList: UploadFile[] = (guide.gallery || []).map(
-      (img, index) => ({
-        uid: img.publicId || `${index}`,
-        name: img.alt || img.url.split('/').pop() || `image-${index}`,
-        status: 'done',
-        url: img.url,
-      }),
+    setEditCv(
+      guide.cv?.url
+        ? {
+            url: guide.cv.url,
+            publicId: guide.cv.publicId,
+            filename: guide.cv.filename,
+            format: guide.cv.format,
+          }
+        : undefined,
     );
-    setEditGalleryFileList(galleryList);
+    setEditCvRemoved(false);
+    setEditGallery(
+      (guide.gallery || []).map((img, i) => ({
+        url: img.url,
+        publicId: img.publicId,
+        alt: img.alt,
+        order: img.order ?? i,
+      })),
+    );
     setEditModalOpen(true);
   };
 
@@ -222,8 +226,9 @@ export default function TourGuidePage() {
     setEditModalOpen(false);
     setEditingGuide(null);
     editForm.resetFields();
-    setEditCvFileList([]);
-    setEditGalleryFileList([]);
+    setEditCv(undefined);
+    setEditCvRemoved(false);
+    setEditGallery([]);
   };
 
   const handleEdit = async () => {
@@ -263,7 +268,7 @@ export default function TourGuidePage() {
           };
         }
       });
-      const payload = {
+      const partial: Partial<TourGuideUpsertPayload> = {
         translations,
         languages: values.languages ?? [],
         specializedProvinces: values.specializedProvinces ?? [],
@@ -277,67 +282,26 @@ export default function TourGuidePage() {
         currency: values.currency || 'VND',
         contactMethods: values.contactMethods ?? [],
         isAvailable: values.isAvailable ?? true,
+        gallery: editGallery.map((g, i) => ({
+          ...g,
+          order: g.order ?? i,
+        })),
       };
-      const cvFile = editCvFileList.find((f) => f.originFileObj)
-        ?.originFileObj as File | undefined;
-      const galleryFiles = editGalleryFileList
-        .filter((f) => f.originFileObj)
-        .map((f) => f.originFileObj as File);
 
-      const formData = new FormData();
-      formData.append(
-        'translations',
-        JSON.stringify(payload.translations ?? {}),
-      );
-      formData.append('languages', JSON.stringify(payload.languages ?? []));
-      formData.append(
-        'specializedProvinces',
-        JSON.stringify(payload.specializedProvinces ?? []),
-      );
-      formData.append(
-        'certifications',
-        JSON.stringify(payload.certifications ?? []),
-      );
-      if (payload.licenseNumber)
-        formData.append('licenseNumber', payload.licenseNumber);
-      if (payload.yearsOfExperience != null) {
-        formData.append('yearsOfExperience', String(payload.yearsOfExperience));
+      const initialCvUrl = editingGuide.cv?.url;
+      const initialCvPublicId = editingGuide.cv?.publicId;
+      if (editCvRemoved && initialCvUrl) {
+        partial.cv = null;
+      } else if (
+        editCv &&
+        (editCv.url !== initialCvUrl || editCv.publicId !== initialCvPublicId)
+      ) {
+        partial.cv = editCv;
       }
-      if (payload.responseRate != null) {
-        formData.append('responseRate', String(payload.responseRate));
-      }
-      if (payload.completedTripsCount != null) {
-        formData.append(
-          'completedTripsCount',
-          String(payload.completedTripsCount),
-        );
-      }
-      if (payload.returningCustomerRate != null) {
-        formData.append(
-          'returningCustomerRate',
-          String(payload.returningCustomerRate),
-        );
-      }
-      if (payload.dailyRate != null) {
-        formData.append('dailyRate', String(payload.dailyRate));
-      }
-      if (payload.currency) {
-        formData.append('currency', payload.currency);
-      }
-      formData.append(
-        'contactMethods',
-        JSON.stringify(payload.contactMethods ?? []),
-      );
-      formData.append('isAvailable', String(payload.isAvailable ?? true));
-
-      if (cvFile) {
-        formData.append('cv', cvFile);
-      }
-      galleryFiles.forEach((file) => formData.append('gallery', file));
 
       await updateMutation.mutateAsync({
         id: editingGuide._id,
-        payload: formData,
+        payload: partial,
       });
       message.success('Đã cập nhật hồ sơ hướng dẫn viên');
       handleCloseEdit();
@@ -396,7 +360,7 @@ export default function TourGuidePage() {
           };
         }
       });
-      const payload = {
+      const payload: TourGuideUpsertPayload = {
         userId: values.userId,
         translations,
         languages: values.languages ?? [],
@@ -412,70 +376,22 @@ export default function TourGuidePage() {
         contactMethods: values.contactMethods ?? [],
         isAvailable: values.isAvailable ?? true,
       };
-      const cvFile = createCvFileList.find((f) => f.originFileObj)
-        ?.originFileObj as File | undefined;
-      const galleryFiles = createGalleryFileList
-        .filter((f) => f.originFileObj)
-        .map((f) => f.originFileObj as File);
+      if (createCv) {
+        payload.cv = createCv;
+      }
+      if (createGallery.length > 0) {
+        payload.gallery = createGallery.map((g, i) => ({
+          ...g,
+          order: g.order ?? i,
+        }));
+      }
 
-      const formData = new FormData();
-      formData.append('userId', payload.userId);
-      formData.append(
-        'translations',
-        JSON.stringify(payload.translations ?? {}),
-      );
-      formData.append('languages', JSON.stringify(payload.languages ?? []));
-      formData.append(
-        'specializedProvinces',
-        JSON.stringify(payload.specializedProvinces ?? []),
-      );
-      formData.append(
-        'certifications',
-        JSON.stringify(payload.certifications ?? []),
-      );
-      if (payload.licenseNumber)
-        formData.append('licenseNumber', payload.licenseNumber);
-      if (payload.yearsOfExperience != null) {
-        formData.append('yearsOfExperience', String(payload.yearsOfExperience));
-      }
-      if (payload.responseRate != null) {
-        formData.append('responseRate', String(payload.responseRate));
-      }
-      if (payload.completedTripsCount != null) {
-        formData.append(
-          'completedTripsCount',
-          String(payload.completedTripsCount),
-        );
-      }
-      if (payload.returningCustomerRate != null) {
-        formData.append(
-          'returningCustomerRate',
-          String(payload.returningCustomerRate),
-        );
-      }
-      if (payload.dailyRate != null) {
-        formData.append('dailyRate', String(payload.dailyRate));
-      }
-      if (payload.currency) {
-        formData.append('currency', payload.currency);
-      }
-      formData.append(
-        'contactMethods',
-        JSON.stringify(payload.contactMethods ?? []),
-      );
-      formData.append('isAvailable', String(payload.isAvailable ?? true));
-
-      if (cvFile) {
-        formData.append('cv', cvFile);
-      }
-      galleryFiles.forEach((file) => formData.append('gallery', file));
-
-      await createMutation.mutateAsync(formData);
+      await createMutation.mutateAsync(payload);
       message.success('Đã tạo hồ sơ hướng dẫn viên');
       setCreateModalOpen(false);
       createForm.resetFields();
-      setCreateCvFileList([]);
-      setCreateGalleryFileList([]);
+      setCreateCv(undefined);
+      setCreateGallery([]);
     } catch {
       // validation errors
     }
@@ -998,29 +914,26 @@ export default function TourGuidePage() {
                       </Form.Item>
                     </Space>
                     <Form.Item label="CV (PDF/DOC)">
-                      <Upload
-                        beforeUpload={() => false}
-                        fileList={createCvFileList}
-                        maxCount={1}
-                        onChange={({ fileList }) =>
-                          setCreateCvFileList(fileList.slice(-1))
-                        }
+                      <p
+                        style={{
+                          fontSize: 12,
+                          color: 'var(--ant-color-text-secondary)',
+                          marginBottom: 8,
+                        }}
                       >
-                        <Button icon={<UploadOutlined />}>Chọn file CV</Button>
-                      </Upload>
+                        Tải lên qua Media API; body tạo HDV chỉ gửi reference (url,
+                        publicId).
+                      </p>
+                      <TourGuideCvFormControl
+                        value={createCv}
+                        onChange={setCreateCv}
+                      />
                     </Form.Item>
                     <Form.Item label="Gallery (ảnh HDV)">
-                      <Upload
-                        listType="picture"
-                        multiple
-                        beforeUpload={() => false}
-                        fileList={createGalleryFileList}
-                        onChange={({ fileList }) =>
-                          setCreateGalleryFileList(fileList)
-                        }
-                      >
-                        <Button icon={<UploadOutlined />}>Thêm ảnh</Button>
-                      </Upload>
+                      <TourGuideGalleryFormControl
+                        value={createGallery}
+                        onChange={setCreateGallery}
+                      />
                     </Form.Item>
                   </>
                 ),
@@ -1287,29 +1200,33 @@ export default function TourGuidePage() {
                       </Form.Item>
                     </Space>
                     <Form.Item label="CV (PDF/DOC)">
-                      <Upload
-                        beforeUpload={() => false}
-                        fileList={editCvFileList}
-                        maxCount={1}
-                        onChange={({ fileList }) =>
-                          setEditCvFileList(fileList.slice(-1))
-                        }
+                      <p
+                        style={{
+                          fontSize: 12,
+                          color: 'var(--ant-color-text-secondary)',
+                          marginBottom: 8,
+                        }}
                       >
-                        <Button icon={<UploadOutlined />}>Chọn file CV</Button>
-                      </Upload>
+                        Tải lên qua Media API. Xoá file trong danh sách để gửi{' '}
+                        <code>cv: null</code> khi lưu (nếu trước đó có CV).
+                      </p>
+                      <TourGuideCvFormControl
+                        value={editCv}
+                        onChange={(v) => {
+                          setEditCv(v);
+                          if (v) {
+                            setEditCvRemoved(false);
+                          } else if (editingGuide?.cv?.url) {
+                            setEditCvRemoved(true);
+                          }
+                        }}
+                      />
                     </Form.Item>
                     <Form.Item label="Gallery (ảnh HDV)">
-                      <Upload
-                        listType="picture"
-                        multiple
-                        beforeUpload={() => false}
-                        fileList={editGalleryFileList}
-                        onChange={({ fileList }) =>
-                          setEditGalleryFileList(fileList)
-                        }
-                      >
-                        <Button icon={<UploadOutlined />}>Thêm ảnh</Button>
-                      </Upload>
+                      <TourGuideGalleryFormControl
+                        value={editGallery}
+                        onChange={setEditGallery}
+                      />
                     </Form.Item>
                   </>
                 ),
@@ -1366,5 +1283,104 @@ export default function TourGuidePage() {
         </Form>
       </Modal>
     </div>
+  );
+}
+
+function TourGuideCvFormControl({
+  value,
+  onChange,
+}: {
+  value?: TourGuideCV;
+  onChange?: (v: TourGuideCV | undefined) => void;
+}) {
+  return (
+    <Upload
+      maxCount={1}
+      fileList={
+        value?.url
+          ? [
+              {
+                uid: value.publicId || 'cv',
+                name: value.filename || value.url.split('/').pop() || 'cv',
+                status: 'done' as const,
+                url: value.url,
+              },
+            ]
+          : []
+      }
+      beforeUpload={async (file) => {
+        try {
+          const r = await uploadMedia(file);
+          onChange?.({
+            url: r.url,
+            publicId: r.publicId,
+            filename: file.name,
+            ...(r.format ? { format: r.format } : {}),
+          });
+        } catch (e: unknown) {
+          const msg = (e as { message?: string })?.message;
+          void message.error(msg || 'Upload thất bại');
+        }
+        return false;
+      }}
+      onRemove={() => {
+        onChange?.(undefined);
+        return true;
+      }}
+    >
+      <Button icon={<UploadOutlined />}>Chọn file CV</Button>
+    </Upload>
+  );
+}
+
+function TourGuideGalleryFormControl({
+  value,
+  onChange,
+}: {
+  value?: TourGuideGalleryItem[];
+  onChange?: (v: TourGuideGalleryItem[]) => void;
+}) {
+  const list = value || [];
+  const fileList = list.map((g, i) => ({
+    uid: `${g.publicId ?? g.url}-${i}`,
+    name: g.alt || g.url.split('/').pop() || `img-${i}`,
+    status: 'done' as const,
+    url: g.url,
+  }));
+
+  return (
+    <Upload
+      listType="picture-card"
+      multiple
+      fileList={fileList as never}
+      beforeUpload={async (file) => {
+        try {
+          const r = await uploadMedia(file);
+          const next = [
+            ...list,
+            {
+              url: r.url,
+              publicId: r.publicId,
+              order: list.length,
+            },
+          ];
+          onChange?.(next);
+        } catch (e: unknown) {
+          const msg = (e as { message?: string })?.message;
+          void message.error(msg || 'Upload thất bại');
+        }
+        return false;
+      }}
+      onRemove={(file) => {
+        const u = file.url;
+        onChange?.(list.filter((g) => g.url !== u));
+        return true;
+      }}
+    >
+      <div>
+        <UploadOutlined />
+        <div style={{ marginTop: 4 }}>Thêm</div>
+      </div>
+    </Upload>
   );
 }

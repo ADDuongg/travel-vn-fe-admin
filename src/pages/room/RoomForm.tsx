@@ -6,11 +6,11 @@ import {
   Form,
   Input,
   InputNumber,
+  message,
   Radio,
   Select,
   Space,
   Switch,
-  Tabs,
   Upload,
 } from 'antd';
 import {
@@ -18,28 +18,42 @@ import {
   PlusOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
-import { useEffect, useState } from 'react';
-import type { UploadFile } from 'antd/es/upload/interface';
+import { useEffect, useRef, useState } from 'react';
 import RichTextEditor from '@/components/RichTextEditor';
 import { useLanguages } from '@/queries/language.queries';
-import type { Room } from '@interface/room';
+import type {
+  Room,
+  RoomPayload,
+  RoomPayloadCapacity,
+  RoomPayloadSale,
+  RoomPayloadTranslation,
+} from '@interface/room';
 import { useAmenities } from '@/queries/amenities.queries';
 import { EnumLanguage } from '@/constants/enum';
 import { useHotelOptions } from '@/queries/hotel.queries';
+import { uploadMedia } from '@/services/media.service';
 
-const capacityValidator = ({ getFieldValue }: any) => ({
+const capacityValidator = ({ getFieldValue }: { getFieldValue: (n: string) => unknown }) => ({
   validator() {
-    const capacity = getFieldValue('capacity');
+    const capacity = getFieldValue('capacity') as RoomPayloadCapacity | undefined;
 
     if (!capacity) return Promise.resolve();
 
     const { baseAdults, baseChildren, maxAdults, maxChildren } = capacity;
 
-    if (baseAdults > maxAdults) {
+    if (
+      typeof baseAdults === 'number' &&
+      typeof maxAdults === 'number' &&
+      baseAdults > maxAdults
+    ) {
       return Promise.reject(new Error('Base adults cannot exceed max adults'));
     }
 
-    if (baseChildren > maxChildren) {
+    if (
+      typeof baseChildren === 'number' &&
+      typeof maxChildren === 'number' &&
+      baseChildren > maxChildren
+    ) {
       return Promise.reject(
         new Error('Base children cannot exceed max children'),
       );
@@ -49,11 +63,75 @@ const capacityValidator = ({ getFieldValue }: any) => ({
   },
 });
 
+function toHotelId(room: Room): string {
+  const h = room.hotelId;
+  if (typeof h === 'string') return h;
+  if (h && typeof h === 'object' && '_id' in h) return (h as { _id: string })._id;
+  return '';
+}
+
+function roomToFormCapacity(room: Room): RoomPayloadCapacity {
+  if (room.capacity) return room.capacity;
+  const adults = room.adults ?? 2;
+  const children = room.children ?? 0;
+  const maxGuests = room.maxGuests ?? adults;
+  return {
+    baseAdults: adults,
+    baseChildren: children,
+    maxAdults: maxGuests,
+    maxChildren: children,
+    roomSize: room.roomSize ?? 0,
+  };
+}
+
+function parseTranslations(
+  raw: Room['translations'] | string,
+): Record<string, RoomPayloadTranslation> {
+  const parsed =
+    typeof raw === 'string' ? (JSON.parse(raw) as Record<string, RoomPayloadTranslation>) : raw;
+  const out: Record<string, RoomPayloadTranslation> = {};
+  for (const [code, t] of Object.entries(parsed || {})) {
+    out[code] = {
+      name: t?.name ?? '',
+      description: t?.description ?? '',
+      shortDescription: t?.shortDescription,
+      hotelRule: Array.isArray(t?.hotelRule) ? t.hotelRule : undefined,
+      faq: Array.isArray(t?.faq) ? t.faq : [],
+    };
+  }
+  return out;
+}
+
+function buildSalePayload(
+  sale: Partial<RoomPayloadSale> & { isActive?: boolean } | undefined,
+  options?: { serverHadActiveSale?: boolean },
+): RoomPayloadSale | undefined {
+  if (!sale) return undefined;
+  if (!sale.isActive) {
+    if (options?.serverHadActiveSale) {
+      return {
+        isActive: false,
+        type: sale.type ?? 'PERCENT',
+        value: sale.value ?? 0,
+      };
+    }
+    return undefined;
+  }
+  if (sale.type == null || sale.value == null) return undefined;
+  return {
+    isActive: true,
+    type: sale.type,
+    value: Number(sale.value),
+    ...(typeof sale.startDate === 'string' ? { startDate: sale.startDate } : {}),
+    ...(typeof sale.endDate === 'string' ? { endDate: sale.endDate } : {}),
+  };
+}
+
 type Props = {
   initialValues?: Room;
   loading?: boolean;
   submitText: string;
-  onSubmit: (formData: FormData) => void;
+  onSubmit: (payload: RoomPayload) => void | Promise<void>;
   onCancel: () => void;
 };
 
@@ -69,92 +147,158 @@ export default function RoomForm({
   const { data: amenities = [] } = useAmenities();
   const { data: hotels = [], isLoading: hotelLoading } = useHotelOptions(undefined);
 
-  const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const formSeedFromServer = useRef<string | null>(null);
+
+  const [tabLang, setTabLang] = useState<string>('vi');
 
   useEffect(() => {
+    const first = languages[0]?.code;
+    if (first) setTabLang((t) => (languages.some((l) => l.code === t) ? t : first));
+  }, [languages]);
+
+  /** Create mode: ensure every language has a translation object for Form.List / fields. */
+  useEffect(() => {
+    if (initialValues) return;
+    if (!languages.length) return;
+    const t = { ...(form.getFieldValue('translations') as Record<string, RoomPayloadTranslation> | undefined) ?? {} };
+    let changed = false;
+    for (const l of languages) {
+      if (!t[l.code]) {
+        t[l.code] = { name: '', description: '', faq: [] };
+        changed = true;
+      }
+    }
+    if (changed) form.setFieldValue('translations', t);
+  }, [languages, form, initialValues]);
+
+  useEffect(() => {
+    const seedKey = initialValues?._id ?? '__new__';
+    if (formSeedFromServer.current === seedKey) return;
+    formSeedFromServer.current = seedKey;
+
     if (initialValues) {
-      const parsedTranslations =
-        typeof initialValues.translations === 'string'
-          ? JSON.parse(initialValues.translations)
-          : initialValues.translations;
+      const translations = parseTranslations(initialValues.translations);
 
       form.setFieldsValue({
-        ...initialValues,
+        code: initialValues.code,
+        slug: initialValues.slug,
         roomType: initialValues.roomType,
-        amenities: initialValues.amenities?.map((a: any) =>
-          typeof a === 'string' ? a : a._id,
-        ),
+        isActive: initialValues.isActive,
+        hotelId: toHotelId(initialValues),
+        amenities: initialValues.amenities
+          ?.map((a) => {
+            if (typeof a === 'string') return a;
+            const id = (a as unknown as { _id?: string })._id;
+            return id ?? '';
+          })
+          .filter(Boolean),
         bookingConfig: initialValues.bookingConfig || {
           minNights: 1,
           allowInstantBooking: true,
         },
-        translations: parsedTranslations,
+        translations,
         basePrice: initialValues.pricing?.basePrice,
         totalRooms: initialValues.inventory?.totalRooms,
+        capacity: roomToFormCapacity(initialValues),
         sale: initialValues.sale || { isActive: false },
+        thumbnail: initialValues.thumbnail?.url
+          ? {
+              url: initialValues.thumbnail.url,
+              publicId: initialValues.thumbnail.publicId,
+              alt: initialValues.thumbnail.alt,
+            }
+          : undefined,
+        gallery: (initialValues.gallery ?? []).map((img, i) => ({
+          url: img.url,
+          publicId: img.publicId,
+          alt: img.alt,
+          order: img.order ?? i,
+        })),
       });
-
-      if (initialValues.gallery?.length) {
-        setFileList(
-          initialValues.gallery.map((img, index) => ({
-            uid: `${index}`,
-            name: img.url,
-            status: 'done',
-            url: img.url,
-          })),
-        );
-      }
+    } else {
+      form.resetFields();
+      form.setFieldsValue({
+        isActive: true,
+        gallery: [],
+        bookingConfig: { minNights: 1, allowInstantBooking: true },
+        sale: { isActive: false },
+      });
     }
   }, [initialValues, form]);
 
-  /* ===== submit ===== */
+  /** Edit mode: add empty shells for languages missing from API translations. */
+  useEffect(() => {
+    if (!initialValues?._id || !languages.length) return;
+    const t = form.getFieldValue('translations') as
+      | Record<string, RoomPayloadTranslation>
+      | undefined;
+    if (!t) return;
+    const next = { ...t };
+    let changed = false;
+    for (const l of languages) {
+      if (!next[l.code]) {
+        next[l.code] = { name: '', description: '', faq: [] };
+        changed = true;
+      }
+    }
+    if (changed) form.setFieldValue('translations', next);
+  }, [languages, initialValues?._id, form, initialValues]);
+
   const handleSubmit = async () => {
     const values = await form.validateFields();
-    const formData = new FormData();
-    console.log('values', values);
+    const v = values as {
+      code: string;
+      slug: string;
+      roomType: string;
+      isActive: boolean;
+      hotelId: string;
+      capacity: RoomPayloadCapacity;
+      basePrice: number;
+      totalRooms: number;
+      translations: Record<string, RoomPayloadTranslation>;
+      bookingConfig: RoomPayload['bookingConfig'];
+      amenities?: string[];
+      sale?: Partial<RoomPayloadSale> & { isActive?: boolean };
+      thumbnail?: { url: string; publicId?: string; alt?: string };
+      gallery?: Array<{
+        url: string;
+        publicId?: string;
+        alt?: string;
+        order?: number;
+      }>;
+    };
 
-    /* ===== primitive fields ===== */
-    formData.append('code', values.code);
-    formData.append('slug', values.slug);
-    formData.append('roomType', values.roomType);
-    formData.append('isActive', String(values.isActive));
-
-    // formData.append('maxGuests', String(values.maxGuests));
-    // formData.append('adults', String(values.adults));
-    // formData.append('children', String(values.children || 0));
-    // formData.append('roomSize', String(values.roomSize || ''));
-
-    formData.append('basePrice', String(values.basePrice));
-    formData.append('totalRooms', String(values.totalRooms));
-
-    formData.append('hotelId', values.hotelId);
-
-    /* ===== amenities ===== */
-    if (Array.isArray(values.amenities)) {
-      values.amenities.forEach((id: string) => {
-        formData.append('amenities[]', id);
-      });
-    }
-
-    formData.append('bookingConfig', JSON.stringify(values.bookingConfig));
-
-    /* ===== translations ===== */
-    formData.append('translations', JSON.stringify(values.translations));
-
-    /* ===== capacity ===== */
-    formData.append('capacity', JSON.stringify(values.capacity));
-
-    /* ===== sale ===== */
-    formData.append('sale', JSON.stringify(values.sale));
-
-    /* ===== gallery files ===== */
-    fileList.forEach((file) => {
-      if (file.originFileObj) {
-        formData.append('gallery', file.originFileObj);
-      }
+    const salePayload = buildSalePayload(v.sale, {
+      serverHadActiveSale: !!initialValues?.sale?.isActive,
     });
 
-    onSubmit(formData);
+    const payload: RoomPayload = {
+      code: v.code,
+      slug: v.slug,
+      roomType: v.roomType,
+      isActive: v.isActive,
+      hotelId: v.hotelId,
+      capacity: v.capacity,
+      basePrice: Number(v.basePrice),
+      totalRooms: Number(v.totalRooms),
+      translations: v.translations,
+      bookingConfig: v.bookingConfig,
+      ...(Array.isArray(v.amenities) && v.amenities.length > 0
+        ? { amenities: v.amenities }
+        : {}),
+      ...(salePayload ? { sale: salePayload } : {}),
+      ...(v.thumbnail?.url ? { thumbnail: v.thumbnail } : {}),
+      ...(Array.isArray(v.gallery)
+        ? {
+            gallery: v.gallery.map((g, i) => ({
+              ...g,
+              order: g.order ?? i,
+            })),
+          }
+        : {}),
+    };
+
+    await onSubmit(payload);
   };
 
   return (
@@ -319,17 +463,6 @@ export default function RoomForm({
                   }
                 />
               </Form.Item>
-
-              {/* Optional – enable later */}
-              {/* 
-        <Form.Item name={['sale', 'startDate']} label="Start Date">
-          <DatePicker style={{ width: '100%' }} />
-        </Form.Item>
-
-        <Form.Item name={['sale', 'endDate']} label="End Date">
-          <DatePicker style={{ width: '100%' }} />
-        </Form.Item>
-        */}
             </>
           ) : null
         }
@@ -362,181 +495,176 @@ export default function RoomForm({
       <Divider orientation="left">Hotel Rules</Divider>
 
       {/* ===== TRANSLATIONS ===== */}
-      <Tabs
-        items={languages.map((lang) => ({
-          key: lang.code,
-          label: (
-            <Space>
-              {lang.flagUrl && <img src={lang.flagUrl} width={18} />}
-              {lang.code}
-            </Space>
-          ),
-          children: (
-            <>
-              <Collapse
-                defaultActiveKey={[]}
-                items={[
-                  {
-                    key: 'rules',
-                    label: 'Hotel Rules',
-                    children: (
-                      <Form.List
-                        name={['translations', lang.code, 'hotelRule']}
-                      >
-                        {(fields, { add, remove }) => (
-                          <>
-                            {fields.map(({ key, name }) => (
-                              <Space
-                                key={key}
-                                style={{ display: 'flex', marginBottom: 8 }}
-                                align="start"
-                              >
-                                <Form.Item
-                                  name={name}
-                                  rules={[
-                                    {
-                                      required: true,
-                                      message: 'Please enter hotel rule',
-                                    },
-                                  ]}
-                                  style={{ flex: 1 }}
-                                >
-                                  <Input placeholder="e.g. Smoking not allowed" />
-                                </Form.Item>
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ marginBottom: 8, fontWeight: 500 }}>Translations</div>
+        <Space wrap>
+          {languages.map((l) => (
+            <Button
+              key={l.code}
+              type={tabLang === l.code ? 'primary' : 'default'}
+              size="small"
+              onClick={() => setTabLang(l.code)}
+            >
+              {l.name} ({l.code})
+            </Button>
+          ))}
+        </Space>
+      </div>
 
-                                <Button
-                                  danger
-                                  type="text"
-                                  icon={<DeleteOutlined />}
-                                  onClick={() => remove(name)}
-                                />
-                              </Space>
-                            ))}
+      {languages.some((l) => l.code === tabLang) && (
+        <>
+          <Collapse
+            defaultActiveKey={[]}
+            items={[
+              {
+                key: 'rules',
+                label: 'Hotel Rules',
+                children: (
+                  <Form.List name={['translations', tabLang, 'hotelRule']}>
+                    {(fields, { add, remove }) => (
+                      <>
+                        {fields.map(({ key, name }) => (
+                          <Space
+                            key={key}
+                            style={{ display: 'flex', marginBottom: 8 }}
+                            align="start"
+                          >
+                            <Form.Item
+                              name={name}
+                              rules={[
+                                {
+                                  required: true,
+                                  message: 'Please enter hotel rule',
+                                },
+                              ]}
+                              style={{ flex: 1 }}
+                            >
+                              <Input placeholder="e.g. Smoking not allowed" />
+                            </Form.Item>
 
                             <Button
-                              type="dashed"
-                              block
-                              icon={<PlusOutlined />}
-                              onClick={() => add()}
+                              danger
+                              type="text"
+                              icon={<DeleteOutlined />}
+                              onClick={() => remove(name)}
+                            />
+                          </Space>
+                        ))}
+
+                        <Button
+                          type="dashed"
+                          block
+                          icon={<PlusOutlined />}
+                          onClick={() => add()}
+                        >
+                          Add rule
+                        </Button>
+                      </>
+                    )}
+                  </Form.List>
+                ),
+              },
+            ]}
+          />
+
+          <Divider orientation="left">FAQ</Divider>
+          <Collapse
+            className="mt-4"
+            defaultActiveKey={[]}
+            items={[
+              {
+                key: 'faq',
+                label: 'FAQ',
+                children: (
+                  <Form.List name={['translations', tabLang, 'faq']}>
+                    {(fields, { add, remove }) => (
+                      <>
+                        {fields.map(({ key, name }) => (
+                          <Space
+                            key={key}
+                            direction="vertical"
+                            style={{
+                              display: 'flex',
+                              marginBottom: 16,
+                              padding: 12,
+                              border: '1px solid #eee',
+                              borderRadius: 8,
+                            }}
+                          >
+                            <Form.Item
+                              name={[name, 'question']}
+                              rules={[
+                                {
+                                  required: true,
+                                  message: 'Please enter question',
+                                },
+                              ]}
                             >
-                              Add rule
-                            </Button>
-                          </>
-                        )}
-                      </Form.List>
-                    ),
-                  },
-                ]}
-              />
+                              <Input placeholder="Question" />
+                            </Form.Item>
 
-              <Divider orientation="left">FAQ</Divider>
-              <Collapse
-                className="mt-4"
-                defaultActiveKey={[]}
-                items={[
-                  {
-                    key: 'faq',
-                    label: 'FAQ',
-                    children: (
-                      <Form.List name={['translations', lang.code, 'faq']}>
-                        {(fields, { add, remove }) => (
-                          <>
-                            {fields.map(({ key, name }) => (
-                              <Space
-                                key={key}
-                                direction="vertical"
-                                style={{
-                                  display: 'flex',
-                                  marginBottom: 16,
-                                  padding: 12,
-                                  border: '1px solid #eee',
-                                  borderRadius: 8,
-                                }}
-                              >
-                                <Form.Item
-                                  name={[name, 'question']}
-                                  rules={[
-                                    {
-                                      required: true,
-                                      message: 'Please enter question',
-                                    },
-                                  ]}
-                                >
-                                  <Input placeholder="Question" />
-                                </Form.Item>
-
-                                <Form.Item
-                                  name={[name, 'answer']}
-                                  rules={[
-                                    {
-                                      required: true,
-                                      message: 'Please enter answer',
-                                    },
-                                  ]}
-                                >
-                                  <Input.TextArea
-                                    rows={3}
-                                    placeholder="Answer"
-                                  />
-                                </Form.Item>
-
-                                <Button
-                                  danger
-                                  type="text"
-                                  icon={<DeleteOutlined />}
-                                  onClick={() => remove(name)}
-                                >
-                                  Remove FAQ
-                                </Button>
-                              </Space>
-                            ))}
+                            <Form.Item
+                              name={[name, 'answer']}
+                              rules={[
+                                {
+                                  required: true,
+                                  message: 'Please enter answer',
+                                },
+                              ]}
+                            >
+                              <Input.TextArea rows={3} placeholder="Answer" />
+                            </Form.Item>
 
                             <Button
-                              type="dashed"
-                              block
-                              icon={<PlusOutlined />}
-                              onClick={() => add()}
+                              danger
+                              type="text"
+                              icon={<DeleteOutlined />}
+                              onClick={() => remove(name)}
                             >
-                              Add FAQ
+                              Remove FAQ
                             </Button>
-                          </>
-                        )}
-                      </Form.List>
-                    ),
-                  },
-                ]}
-              />
+                          </Space>
+                        ))}
 
-              <Form.Item
-                name={['translations', lang.code, 'name']}
-                label="Name"
-                // rules={[{ required: true }]}
-              >
-                <Input />
-              </Form.Item>
+                        <Button
+                          type="dashed"
+                          block
+                          icon={<PlusOutlined />}
+                          onClick={() => add()}
+                        >
+                          Add FAQ
+                        </Button>
+                      </>
+                    )}
+                  </Form.List>
+                ),
+              },
+            ]}
+          />
 
-              <Form.Item
-                name={['translations', lang.code, 'description']}
-                label="Description"
-              >
-                <RichTextEditor />
-              </Form.Item>
-            </>
-          ),
-        }))}
-      />
+          <Form.Item name={['translations', tabLang, 'name']} label="Name">
+            <Input />
+          </Form.Item>
 
-      {/* ===== GALLERY ===== */}
-      <Form.Item label="Gallery">
-        <Upload
-          listType="picture"
-          multiple
-          fileList={fileList}
-          beforeUpload={() => false}
-          onChange={({ fileList }) => setFileList(fileList)}
-        >
-          <Button icon={<UploadOutlined />}>Upload</Button>
-        </Upload>
+          <Form.Item
+            name={['translations', tabLang, 'description']}
+            label="Description"
+          >
+            <RichTextEditor key={`${initialValues?._id ?? 'new'}-${tabLang}`} />
+          </Form.Item>
+        </>
+      )}
+
+      <Divider orientation="left">Media</Divider>
+      <p style={{ fontSize: 12, color: 'var(--ant-color-text-secondary)', marginBottom: 8 }}>
+        Ảnh tải lên qua Media API; chỉ gửi reference (url, publicId). Bỏ trống thumbnail để BE
+        dùng ảnh đầu gallery làm thumbnail.
+      </p>
+      <Form.Item name="thumbnail" label="Thumbnail" valuePropName="value">
+        <ThumbnailFormControl />
+      </Form.Item>
+      <Form.Item name="gallery" label="Gallery" valuePropName="value">
+        <GalleryFormControl />
       </Form.Item>
 
       {/* ===== ACTIONS ===== */}
@@ -547,5 +675,105 @@ export default function RoomForm({
         <Button onClick={onCancel}>Cancel</Button>
       </Space>
     </Form>
+  );
+}
+
+function ThumbnailFormControl({
+  value,
+  onChange,
+}: {
+  value?: { url: string; publicId?: string; alt?: string };
+  onChange?: (v: { url: string; publicId?: string; alt?: string } | undefined) => void;
+}) {
+  return (
+    <Upload
+      listType="picture-card"
+      maxCount={1}
+      fileList={
+        value?.url
+          ? [
+              {
+                uid: 'thumb',
+                name: 'thumb',
+                status: 'done' as const,
+                url: value.url,
+              },
+            ]
+          : []
+      }
+      beforeUpload={async (file) => {
+        try {
+          const r = await uploadMedia(file);
+          onChange?.({ url: r.url, publicId: r.publicId });
+        } catch (e: unknown) {
+          const msg = (e as { message?: string })?.message;
+          void message.error(msg || 'Upload thất bại');
+        }
+        return false;
+      }}
+      onRemove={() => {
+        onChange?.(undefined);
+        return true;
+      }}
+    >
+      <div>
+        <UploadOutlined />
+        <div style={{ marginTop: 4 }}>Upload</div>
+      </div>
+    </Upload>
+  );
+}
+
+function GalleryFormControl({
+  value,
+  onChange,
+}: {
+  value?: { url: string; publicId?: string; alt?: string; order?: number }[];
+  onChange?: (
+    v: { url: string; publicId?: string; alt?: string; order?: number }[],
+  ) => void;
+}) {
+  const list = value || [];
+  const fileList = list.map((g, i) => ({
+    uid: `${g.publicId ?? g.url}-${i}`,
+    name: g.url.split('/').pop() || `img-${i}`,
+    status: 'done' as const,
+    url: g.url,
+  }));
+
+  return (
+    <Upload
+      listType="picture-card"
+      multiple
+      fileList={fileList as never}
+      beforeUpload={async (file) => {
+        try {
+          const r = await uploadMedia(file);
+          const next = [
+            ...list,
+            {
+              url: r.url,
+              publicId: r.publicId,
+              order: list.length,
+            },
+          ];
+          onChange?.(next);
+        } catch (e: unknown) {
+          const msg = (e as { message?: string })?.message;
+          void message.error(msg || 'Upload thất bại');
+        }
+        return false;
+      }}
+      onRemove={(file) => {
+        const u = file.url;
+        onChange?.(list.filter((g) => g.url !== u));
+        return true;
+      }}
+    >
+      <div>
+        <UploadOutlined />
+        <div style={{ marginTop: 4 }}>Thêm</div>
+      </div>
+    </Upload>
   );
 }

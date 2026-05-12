@@ -46,9 +46,9 @@ export function useUpdateUser() {
   return useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: UpdateUserPayload }) =>
       updateUser(id, payload),
-    onSuccess: () => {
+    onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: USER_QUERY_KEYS.LIST });
-      qc.invalidateQueries({ queryKey: USER_QUERY_KEYS.DETAIL });
+      qc.invalidateQueries({ queryKey: USER_QUERY_KEYS.DETAIL(id) });
     },
   });
 }
@@ -57,9 +57,9 @@ export function useDeleteUser() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deleteUser(id),
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       qc.invalidateQueries({ queryKey: USER_QUERY_KEYS.LIST });
-      qc.invalidateQueries({ queryKey: USER_QUERY_KEYS.DETAIL });
+      qc.invalidateQueries({ queryKey: USER_QUERY_KEYS.DETAIL(id) });
     },
   });
 }
@@ -68,9 +68,9 @@ export function useResetUserPassword() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => resetUserPassword(id),
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       qc.invalidateQueries({ queryKey: USER_QUERY_KEYS.LIST });
-      qc.invalidateQueries({ queryKey: USER_QUERY_KEYS.DETAIL });
+      qc.invalidateQueries({ queryKey: USER_QUERY_KEYS.DETAIL(id) });
     },
   });
 }

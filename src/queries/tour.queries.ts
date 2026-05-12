@@ -60,7 +60,7 @@ export const useFeaturedTours = (params?: { limit?: number }) =>
 export const useCreateTour = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: TourUpsertPayload | FormData) => createTour(data),
+    mutationFn: (data: TourUpsertPayload) => createTour(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: TOUR_KEYS.all });
     },
@@ -75,7 +75,7 @@ export const useUpdateTour = () => {
       data,
     }: {
       id: string;
-      data: Partial<TourUpsertPayload> | FormData;
+      data: Partial<TourUpsertPayload>;
     }) => updateTour(id, data),
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: TOUR_KEYS.all });

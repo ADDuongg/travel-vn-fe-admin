@@ -24,13 +24,8 @@ export const getTourGuideById = (id: string): Promise<TourGuide> => {
 };
 
 export const createTourGuide = (
-  payload: TourGuideUpsertPayload | FormData,
+  payload: TourGuideUpsertPayload,
 ): Promise<TourGuide> => {
-  if (payload instanceof FormData) {
-    return api.post<TourGuide>('/api/v1/admin/tour-guides', payload, {
-      headers: { 'Content-Type': undefined } as unknown as Record<string, string>,
-    });
-  }
   return api.post<TourGuide, TourGuideUpsertPayload>(
     '/api/v1/admin/tour-guides',
     payload,
@@ -39,13 +34,8 @@ export const createTourGuide = (
 
 export const updateTourGuide = (
   id: string,
-  payload: Partial<TourGuideUpsertPayload> | FormData,
+  payload: Partial<TourGuideUpsertPayload>,
 ): Promise<TourGuide> => {
-  if (payload instanceof FormData) {
-    return api.patch<TourGuide>(`/api/v1/admin/tour-guides/${id}`, payload, {
-      headers: { 'Content-Type': undefined } as unknown as Record<string, string>,
-    });
-  }
   return api.patch<TourGuide, Partial<TourGuideUpsertPayload>>(
     `/api/v1/admin/tour-guides/${id}`,
     payload,

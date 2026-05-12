@@ -1,5 +1,7 @@
 import {
   Button,
+  Collapse,
+  Divider,
   Form,
   Input,
   InputNumber,
@@ -7,23 +9,33 @@ import {
   Space,
   Switch,
   Tabs,
-  Collapse,
+  Upload,
+  message,
 } from 'antd';
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  PlusOutlined,
+  UploadOutlined,
+} from '@ant-design/icons';
 import { useEffect } from 'react';
 import RichTextEditor from '@/components/RichTextEditor';
 import { useProvinceDropdown } from '@/queries/province.queries';
 import { useAmenities } from '@/queries/amenities.queries';
 import { useLanguages } from '@/queries/language.queries';
 import { EnumLanguage } from '@/constants/enum';
-import type { Hotel } from '@/interface/hotel';
+import type {
+  Hotel,
+  HotelCreateUpdateBody,
+  HotelTranslation,
+} from '@/interface/hotel';
 import { getProvinceLabel } from '@/lib/dynamic-localized';
+import { uploadMedia } from '@/services/media.service';
 
 type Props = {
   initialValues?: Hotel;
   loading?: boolean;
   submitText: string;
-  onSubmit: (formData: FormData) => void;
+  onSubmit: (payload: HotelCreateUpdateBody) => void | Promise<void>;
   onCancel: () => void;
 };
 
@@ -54,24 +66,66 @@ export default function HotelForm({
         location: initialValues.location || {},
         translations: initialValues.translations || {},
         amenities: initialValues.amenities?.map((a: { _id: string }) => a._id) || [],
+        thumbnail: initialValues.thumbnail?.url
+          ? {
+              url: initialValues.thumbnail.url,
+              publicId: initialValues.thumbnail.publicId,
+              alt: initialValues.thumbnail.alt,
+            }
+          : undefined,
+        gallery: (initialValues.gallery ?? []).map((img, i) => ({
+          url: img.url,
+          publicId: img.publicId,
+          alt: img.alt,
+          order: img.order ?? i,
+        })),
       });
     }
   }, [initialValues, form]);
 
   const handleSubmit = async () => {
     const values = await form.validateFields();
-    const formData = new FormData();
-    formData.append('slug', values.slug);
-    formData.append('isActive', String(values.isActive));
-    formData.append('starRating', String(values.starRating ?? 3));
-    formData.append('provinceId', values.provinceId);
-    formData.append('translations', JSON.stringify(values.translations || {}));
-    formData.append('contact', JSON.stringify(values.contact || {}));
-    formData.append('location', JSON.stringify(values.location || {}));
-    if (Array.isArray(values.amenities)) {
-      values.amenities.forEach((id: string) => formData.append('amenities[]', id));
-    }
-    onSubmit(formData);
+    const v = values as {
+      slug: string;
+      isActive: boolean;
+      starRating?: number;
+      provinceId: string;
+      translations: Record<string, HotelTranslation>;
+      contact?: HotelCreateUpdateBody['contact'];
+      location?: HotelCreateUpdateBody['location'];
+      amenities?: string[];
+      thumbnail?: { url: string; publicId?: string; alt?: string };
+      gallery?: Array<{
+        url: string;
+        publicId?: string;
+        alt?: string;
+        order?: number;
+      }>;
+    };
+
+    const payload: HotelCreateUpdateBody = {
+      slug: v.slug,
+      isActive: !!v.isActive,
+      starRating: Number(v.starRating ?? 3),
+      provinceId: v.provinceId,
+      translations: v.translations || {},
+      contact: v.contact || {},
+      location: v.location || {},
+      ...(Array.isArray(v.amenities) && v.amenities.length > 0
+        ? { amenities: v.amenities }
+        : {}),
+      ...(v.thumbnail?.url ? { thumbnail: v.thumbnail } : {}),
+      ...(Array.isArray(v.gallery)
+        ? {
+            gallery: v.gallery.map((g, i) => ({
+              ...g,
+              order: g.order ?? i,
+            })),
+          }
+        : {}),
+    };
+
+    await onSubmit(payload);
   };
 
   return (
@@ -84,6 +138,7 @@ export default function HotelForm({
         translations: {},
         contact: {},
         location: {},
+        gallery: [],
       }}
     >
       <Form.Item name="slug" label="Slug" rules={[{ required: true }]}>
@@ -240,6 +295,18 @@ export default function HotelForm({
         />
       </Form.Item>
 
+      <Divider orientation="left">Media</Divider>
+      <p style={{ fontSize: 12, color: 'var(--ant-color-text-secondary)', marginBottom: 8 }}>
+        Ảnh tải lên qua Media API; chỉ gửi reference (url, publicId). Bỏ trống thumbnail để BE
+        dùng ảnh đầu gallery làm thumbnail.
+      </p>
+      <Form.Item name="thumbnail" label="Thumbnail" valuePropName="value">
+        <ThumbnailFormControl />
+      </Form.Item>
+      <Form.Item name="gallery" label="Gallery" valuePropName="value">
+        <GalleryFormControl />
+      </Form.Item>
+
       <Space>
         <Button type="primary" loading={loading} onClick={handleSubmit}>
           {submitText}
@@ -247,5 +314,105 @@ export default function HotelForm({
         <Button onClick={onCancel}>Cancel</Button>
       </Space>
     </Form>
+  );
+}
+
+function ThumbnailFormControl({
+  value,
+  onChange,
+}: {
+  value?: { url: string; publicId?: string; alt?: string };
+  onChange?: (v: { url: string; publicId?: string; alt?: string } | undefined) => void;
+}) {
+  return (
+    <Upload
+      listType="picture-card"
+      maxCount={1}
+      fileList={
+        value?.url
+          ? [
+              {
+                uid: 'thumb',
+                name: 'thumb',
+                status: 'done' as const,
+                url: value.url,
+              },
+            ]
+          : []
+      }
+      beforeUpload={async (file) => {
+        try {
+          const r = await uploadMedia(file);
+          onChange?.({ url: r.url, publicId: r.publicId });
+        } catch (e: unknown) {
+          const msg = (e as { message?: string })?.message;
+          void message.error(msg || 'Upload thất bại');
+        }
+        return false;
+      }}
+      onRemove={() => {
+        onChange?.(undefined);
+        return true;
+      }}
+    >
+      <div>
+        <UploadOutlined />
+        <div style={{ marginTop: 4 }}>Upload</div>
+      </div>
+    </Upload>
+  );
+}
+
+function GalleryFormControl({
+  value,
+  onChange,
+}: {
+  value?: { url: string; publicId?: string; alt?: string; order?: number }[];
+  onChange?: (
+    v: { url: string; publicId?: string; alt?: string; order?: number }[],
+  ) => void;
+}) {
+  const list = value || [];
+  const fileList = list.map((g, i) => ({
+    uid: `${g.publicId ?? g.url}-${i}`,
+    name: g.url.split('/').pop() || `img-${i}`,
+    status: 'done' as const,
+    url: g.url,
+  }));
+
+  return (
+    <Upload
+      listType="picture-card"
+      multiple
+      fileList={fileList as never}
+      beforeUpload={async (file) => {
+        try {
+          const r = await uploadMedia(file);
+          const next = [
+            ...list,
+            {
+              url: r.url,
+              publicId: r.publicId,
+              order: list.length,
+            },
+          ];
+          onChange?.(next);
+        } catch (e: unknown) {
+          const msg = (e as { message?: string })?.message;
+          void message.error(msg || 'Upload thất bại');
+        }
+        return false;
+      }}
+      onRemove={(file) => {
+        const u = file.url;
+        onChange?.(list.filter((g) => g.url !== u));
+        return true;
+      }}
+    >
+      <div>
+        <UploadOutlined />
+        <div style={{ marginTop: 4 }}>Thêm</div>
+      </div>
+    </Upload>
   );
 }

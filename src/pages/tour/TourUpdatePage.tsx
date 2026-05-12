@@ -1,5 +1,6 @@
 import { Card, Spin, message } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
+import type { TourUpsertPayload } from '@/interface/tour';
 import { useTour, useUpdateTour } from '@/queries/tour.queries';
 import TourForm from './TourForm';
 import TourReviewSection from './TourReviewSection';
@@ -10,7 +11,7 @@ export default function TourUpdatePage() {
   const { data, isLoading } = useTour(id);
   const updateMutation = useUpdateTour();
 
-  const onSubmit = async (payload: FormData) => {
+  const onSubmit = async (payload: TourUpsertPayload) => {
     if (!id) return;
     await updateMutation.mutateAsync({ id, data: payload });
     message.success('Tour updated');

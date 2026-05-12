@@ -150,6 +150,9 @@ export interface TourPaginatedResponse {
   };
 }
 
-export type TourUpsertPayload = Omit<Tour, '_id' | 'createdAt' | 'updatedAt'> & {
+export type TourUpsertPayload = Omit<
+  Tour,
+  '_id' | 'createdAt' | 'updatedAt' | 'ratingSummary'
+> & {
   _id?: string;
 };

@@ -6,7 +6,7 @@ import {
   getRooms,
   updateRoom,
 } from '@/services/room.service';
-import type { RoomListResponse } from '@interface/room';
+import type { RoomListResponse, RoomPayload } from '@interface/room';
 import type { GetRoomsParams } from '@/services/room.service';
 
 export const ROOM_KEYS = {
@@ -39,7 +39,7 @@ export const useCreateRoom = () => {
 export const useUpdateRoom = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: FormData }) =>
+    mutationFn: ({ id, data }: { id: string; data: Partial<RoomPayload> }) =>
       updateRoom(id, data),
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: ROOM_KEYS.all });
