@@ -37,8 +37,7 @@ export const useTourGuide = (id?: string) =>
 export const useCreateTourGuide = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: TourGuideUpsertPayload | FormData) =>
-      createTourGuide(payload),
+    mutationFn: (payload: TourGuideUpsertPayload) => createTourGuide(payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: TOUR_GUIDE_KEYS.all });
     },
@@ -53,7 +52,7 @@ export const useUpdateTourGuide = () => {
       payload,
     }: {
       id: string;
-      payload: Partial<TourGuideUpsertPayload> | FormData;
+      payload: Partial<TourGuideUpsertPayload>;
     }) => updateTourGuide(id, payload),
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: TOUR_GUIDE_KEYS.all });

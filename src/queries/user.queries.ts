@@ -46,11 +46,9 @@ export function useUpdateUser() {
   return useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: UpdateUserPayload }) =>
       updateUser(id, payload),
-    onSuccess: (_, variables) => {
+    onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: USER_QUERY_KEYS.LIST });
-      qc.invalidateQueries({
-        queryKey: USER_QUERY_KEYS.DETAIL(variables.id),
-      });
+      qc.invalidateQueries({ queryKey: USER_QUERY_KEYS.DETAIL(id) });
     },
   });
 }
@@ -61,9 +59,7 @@ export function useDeleteUser() {
     mutationFn: (id: string) => deleteUser(id),
     onSuccess: (_, id) => {
       qc.invalidateQueries({ queryKey: USER_QUERY_KEYS.LIST });
-      qc.invalidateQueries({
-        queryKey: USER_QUERY_KEYS.DETAIL(id),
-      });
+      qc.invalidateQueries({ queryKey: USER_QUERY_KEYS.DETAIL(id) });
     },
   });
 }
@@ -74,9 +70,7 @@ export function useResetUserPassword() {
     mutationFn: (id: string) => resetUserPassword(id),
     onSuccess: (_, id) => {
       qc.invalidateQueries({ queryKey: USER_QUERY_KEYS.LIST });
-      qc.invalidateQueries({
-        queryKey: USER_QUERY_KEYS.DETAIL(id),
-      });
+      qc.invalidateQueries({ queryKey: USER_QUERY_KEYS.DETAIL(id) });
     },
   });
 }

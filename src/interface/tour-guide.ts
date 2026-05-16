@@ -12,12 +12,14 @@ export type TourGuideGalleryItem = {
   url: string;
   publicId?: string;
   alt?: string;
+  order?: number;
 };
 
 export type TourGuideCV = {
   url: string;
   publicId?: string;
   filename?: string;
+  format?: string;
 };
 
 export interface TourGuide {
@@ -90,6 +92,8 @@ export type TourGuideUpsertPayload = {
   certifications?: string[];
   licenseNumber?: string;
   yearsOfExperience?: number;
+  /** Đã upload qua /admin/media/upload; PATCH: `null` = xoá CV */
+  cv?: TourGuideCV | null;
   gallery?: TourGuideGalleryItem[];
   /** Tỷ lệ phản hồi 0–100 */
   responseRate?: number;

@@ -1,7 +1,64 @@
 export type RoomImage = {
   url: string;
   publicId?: string;
+  alt?: string;
   order?: number;
+};
+
+/** Admin create/update body — see docs/FE-ROOMS-ADMIN.md */
+export type RoomPayloadCapacity = {
+  baseAdults: number;
+  baseChildren?: number;
+  maxAdults: number;
+  maxChildren?: number;
+  roomSize?: number;
+};
+
+export type RoomPayloadTranslation = {
+  name: string;
+  description: string;
+  shortDescription?: string;
+  hotelRule?: string[];
+  faq?: { question: string; answer: string }[];
+};
+
+export type RoomPayloadSale = {
+  isActive: boolean;
+  type: 'PERCENT' | 'FIXED';
+  value: number;
+  startDate?: string;
+  endDate?: string;
+};
+
+export type RoomPayload = {
+  code: string;
+  slug: string;
+  roomType: string;
+  isActive: boolean;
+  hotelId: string;
+  capacity: RoomPayloadCapacity;
+  basePrice: number;
+  currency?: string;
+  totalRooms: number;
+  translations: Record<string, RoomPayloadTranslation>;
+  bookingConfig: {
+    minNights: number;
+    maxNights?: number;
+    allowInstantBooking: boolean;
+  };
+  amenities?: Array<string | { code: string; icon?: string }>;
+  sale?: RoomPayloadSale;
+  thumbnail?: {
+    url: string;
+    publicId?: string;
+    alt?: string;
+  };
+  gallery?: Array<{
+    url: string;
+    publicId?: string;
+    alt?: string;
+    order?: number;
+  }>;
 };
 
 export type RoomTranslation = {
@@ -39,11 +96,12 @@ export interface Room {
   roomType: string; // e.g., "Master", "Deluxe"
   isActive: boolean;
 
-  /* ===== capacity ===== */
+  /* ===== capacity (legacy flat + nested from BE) ===== */
   maxGuests: number;
   adults: number;
   children?: number;
   roomSize?: number;
+  capacity?: RoomPayloadCapacity;
 
   /* ===== pricing ===== */
   pricing: {

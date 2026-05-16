@@ -1,10 +1,10 @@
 import PageShell from '@/components/PageShell';
 import { RBAC } from '@/constants/rbac-keys';
 import { useRbac } from '@/hooks/useRbac';
-import { useHotels } from '@/queries/hotel.queries';
+import { useHotels, useDeleteHotel } from '@/queries/hotel.queries';
 import { useProvinceDropdown } from '@/queries/province.queries';
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Card, Select, Switch, Table, Typography } from 'antd';
+import { Button, Card, message, Popconfirm, Select, Space, Switch, Table, Typography } from 'antd';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getProvinceLabel } from '@/lib/dynamic-localized';
@@ -34,6 +34,7 @@ export default function HotelPage() {
   const [pageSize, setPageSize] = useState(20);
   const { data: provinces = [] } = useProvinceDropdown();
   const { data, isLoading } = useHotels({ provinceId, page, pageSize });
+  const deleteMutation = useDeleteHotel();
   const hotels = Array.isArray(data?.items) ? data.items : [];
   const total = data?.pagination?.total ?? 0;
   const current = data?.pagination?.page ?? page;
@@ -131,19 +132,42 @@ export default function HotelPage() {
                 <Switch checked={v} disabled size="small" />
               ),
             },
-            ...(can(RBAC.hotel.update)
+            ...(can(RBAC.hotel.update) || can(RBAC.hotel.delete)
               ? [
                   {
                     title: 'Actions',
                     key: 'actions',
-                    width: 100,
+                    width: 180,
                     render: (_: unknown, row: { _id: string }) => (
-                      <Button
-                        size="small"
-                        onClick={() => navigate(`/dashboard/hotel/${row._id}/edit`)}
-                      >
-                        Edit
-                      </Button>
+                      <Space size={4}>
+                        {can(RBAC.hotel.update) ? (
+                          <Button
+                            size="small"
+                            onClick={() => navigate(`/dashboard/hotel/${row._id}/edit`)}
+                          >
+                            Edit
+                          </Button>
+                        ) : null}
+                        {can(RBAC.hotel.delete) ? (
+                          <Popconfirm
+                            title="Xóa hotel này?"
+                            description="Backend có thể chưa chặn khi còn phòng: phòng (room) gắn hotel có thể bị orphan. Nên xử lý hoặc xóa phòng trước nếu cần."
+                            onConfirm={async () => {
+                              try {
+                                await deleteMutation.mutateAsync(row._id);
+                                message.success('Đã xóa hotel');
+                              } catch (e: unknown) {
+                                const msg = (e as { message?: string })?.message;
+                                void message.error(msg || 'Xóa thất bại');
+                              }
+                            }}
+                          >
+                            <Button size="small" danger>
+                              Delete
+                            </Button>
+                          </Popconfirm>
+                        ) : null}
+                      </Space>
                     ),
                   },
                 ]

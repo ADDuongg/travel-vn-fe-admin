@@ -1,5 +1,5 @@
 import api from '@/lib/axios';
-import type { Room, RoomListResponse } from '@interface/room';
+import type { Room, RoomListResponse, RoomPayload } from '@interface/room';
 
 export type GetRoomsParams = {
   provinceId?: string;
@@ -51,16 +51,18 @@ export const getRoom = (id: string): Promise<Room> => {
   return api.get<Room>(`/api/v1/public/rooms/${id}`);
 };
 
-export const createRoom = (data: FormData): Promise<Room> => {
-  return api.post<Room>('/api/v1/admin/rooms', data, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+export const createRoom = (data: RoomPayload): Promise<Room> => {
+  return api.post<Room, RoomPayload>('/api/v1/admin/rooms', data);
 };
 
-export const updateRoom = (id: string, data: FormData): Promise<Room> => {
-  return api.patch<Room>(`/api/v1/admin/rooms/${id}`, data, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+export const updateRoom = (
+  id: string,
+  data: Partial<RoomPayload>,
+): Promise<Room> => {
+  return api.patch<Room, Partial<RoomPayload>>(
+    `/api/v1/admin/rooms/${id}`,
+    data,
+  );
 };
 
 export const deleteRoom = (id: string): Promise<boolean> => {

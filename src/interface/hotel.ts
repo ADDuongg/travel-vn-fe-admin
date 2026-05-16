@@ -76,4 +76,10 @@ export interface HotelCreateUpdateBody {
   contact?: HotelContact;
   location?: HotelLocation;
   amenities?: string[];
+  /** References from POST /admin/media/upload */
+  thumbnail?: { url: string; publicId?: string; alt?: string };
+  gallery?: HotelImage[];
 }
+
+/** Alias aligned with Room/Tour upsert naming */
+export type HotelUpsertPayload = HotelCreateUpdateBody;
